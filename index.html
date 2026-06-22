@@ -675,8 +675,20 @@
         source: 'route',
         paint: {
           'line-color': '#0b1223',
-          'line-width': 12,
+          'line-width': 14,
           'line-opacity': 0.45
+        }
+      });
+
+      map.addLayer({
+        id: 'route-dotted-ahead',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': '#8b5cf6',
+          'line-width': 3,
+          'line-dasharray': [0, 2, 1, 2],
+          'line-opacity': 0.75
         }
       });
 
@@ -685,7 +697,7 @@
         type: 'line',
         source: 'route',
         paint: {
-          'line-color': '#2dd4bf',
+          'line-color': '#7c3aed',
           'line-width': 6,
           'line-opacity': 0.95
         }
@@ -697,7 +709,7 @@
     setInitialMapView();
 
     if (routeCoordinates.length > 0) {
-      new mapboxgl.Marker({ color: '#16a34a' })
+      new mapboxgl.Marker({ color: '#22c55e' })
         .setLngLat(routeCoordinates[0])
         .setPopup(
           new mapboxgl.Popup().setHTML(
@@ -706,7 +718,7 @@
         )
         .addTo(map);
 
-      new mapboxgl.Marker({ color: '#f59e0b' })
+      new mapboxgl.Marker({ color: '#f97316' })
         .setLngLat(routeCoordinates[routeCoordinates.length - 1])
         .setPopup(
           new mapboxgl.Popup().setHTML(
