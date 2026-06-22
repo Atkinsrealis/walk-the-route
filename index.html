@@ -189,6 +189,10 @@
       font-weight: 700;
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
     }
 
     .route-center-button {
@@ -201,6 +205,13 @@
       bottom: 154px;
       font-size: 20px;
       line-height: 1;
+    }
+
+    .follow-toggle-button svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+      fill: currentColor;
     }
 
     .card {
@@ -327,7 +338,11 @@
   <span class="route-card__badge" id="route-badge">On route</span>
 </div>
 
-<button class="follow-toggle-button" id="follow-toggle-button" aria-label="Toggle follow mode">📍</button>
+<button class="follow-toggle-button" id="follow-toggle-button" aria-label="Toggle follow mode" title="Follow me">
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18.4A8.4 8.4 0 1 1 20.4 12 8.41 8.41 0 0 1 12 20.4Zm0-13.2a4.8 4.8 0 1 0 4.8 4.8A4.805 4.805 0 0 0 12 7.2Zm0 7.2a2.4 2.4 0 1 1 2.4-2.4A2.403 2.403 0 0 1 12 14.4Z"/>
+  </svg>
+</button>
 <button class="route-center-button" id="route-center-button" aria-label="Center on route">⌂</button>
 <div id="map"></div>
 
