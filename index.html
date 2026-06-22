@@ -330,6 +330,7 @@
   const MIN_SPEED_FOR_FOLLOW = 0.4;
   const POSITION_UPDATE_MIN_METERS = 12;
   const POSITION_UPDATE_MIN_MS = 8000;
+  const FINISH_APPROACH_DISTANCE = 30;
   const WARNING_ID = 'warning';
   const DISTANCE_VALUE_ID = 'distance-value';
   const PROGRESS_VALUE_ID = 'progress-value';
@@ -443,15 +444,17 @@
   }
 
   function getRouteProgress(userPoint) {
+    if (routeCoordinates.length < 2) {
+      return 0;
+    }
+
     let totalLength = 0;
-    const segmentLengths = [];
     const segmentData = [];
 
     for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
       const start = routeCoordinates[i];
       const end = routeCoordinates[i + 1];
       const segmentLength = haversineDistanceMeters(start, end);
-      segmentLengths.push(segmentLength);
       segmentData.push({ start, end, segmentLength });
       totalLength += segmentLength;
     }
@@ -460,9 +463,9 @@
       return 0;
     }
 
-    let runningLength = 0;
-    let bestProgress = 0;
     let bestDistance = Number.POSITIVE_INFINITY;
+    let bestProgress = 0;
+    let runningLength = 0;
 
     for (const segment of segmentData) {
       const { start, end, segmentLength } = segment;
@@ -486,24 +489,33 @@
           bestDistance = pointDistance;
           bestProgress = runningLength;
         }
-      } else {
-        const projection = (dLngU * dLng + dLatU * dLat) / denominator;
-        const clampedProjection = Math.max(0, Math.min(1, projection));
+        runningLength += segmentLength;
+        continue;
+      }
 
-        const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
-        const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-        const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+      const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+      const clampedProjection = Math.max(0, Math.min(1, projection));
 
-        if (pointDistance < bestDistance) {
-          bestDistance = pointDistance;
-          bestProgress = runningLength + segmentLength * clampedProjection;
-        }
+      const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+      const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+      const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+      const candidateProgress = runningLength + segmentLength * clampedProjection;
+
+      if (pointDistance < bestDistance) {
+        bestDistance = pointDistance;
+        bestProgress = candidateProgress;
       }
 
       runningLength += segmentLength;
     }
 
-    return Math.min(100, Math.max(0, (bestProgress / totalLength) * 100));
+    const progress = (bestProgress / totalLength) * 100;
+
+    if (progress >= 99 && bestDistance > FINISH_APPROACH_DISTANCE) {
+      return 99;
+    }
+
+    return Math.min(100, Math.max(0, progress));
   }
 
   function updateDistanceDisplay(distance, progress) {
@@ -511,8 +523,12 @@
     const progressValue = document.getElementById(PROGRESS_VALUE_ID);
     const routeBadge = document.getElementById(ROUTE_BADGE_ID);
     const normalizedDistance = Math.max(0, distance);
+    const displayProgress =
+      progress >= 99 && normalizedDistance > FINISH_APPROACH_DISTANCE
+        ? 99
+        : progress;
 
-    progressValue.textContent = `${Math.round(progress)}%`;
+    progressValue.textContent = `${Math.round(displayProgress)}%`;
     distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
 
     if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
