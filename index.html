@@ -287,7 +287,7 @@
     </div>
     <div class="route-card__meta">
       <span id="distance-value">0 m from route</span>
-      <span class="route-card__source">Route source: heathrow-perimeter-route.geojson</span>
+      <span class="route-card__source">Route source: Heathrow perimeter</span>
     </div>
   </div>
   <span class="route-card__badge" id="route-badge">On route</span>
@@ -341,10 +341,9 @@
     center: [-0.4543, 51.4700],
     zoom: 13.5,
     pitch: 0,
-    bearing: 0
+    bearing: 0,
+    attributionControl: false
   });
-
-  map.addControl(new mapboxgl.NavigationControl());
 
   let userMarker;
   let hasInitialPosition = false;
@@ -534,13 +533,13 @@
     let nextLevel = '';
 
     if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
-      nextState = '🚨 You are far from the official route';
+      nextState = 'You are far from the official route';
       nextLevel = 'alert';
     } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
-      nextState = '⚠️ You may be off the official route';
+      nextState = 'You may be off the official route';
       nextLevel = 'warning';
     } else {
-      nextState = '✅ You are staying on the route';
+      nextState = 'You are staying on the route';
       nextLevel = 'safe';
     }
 
