@@ -175,10 +175,9 @@
       margin: 0 auto;
     }
 
-    .route-center-button {
+    .route-center-button,
+    .follow-toggle-button {
       position: absolute;
-      right: 16px;
-      bottom: 96px;
       z-index: 12;
       width: 48px;
       height: 48px;
@@ -190,6 +189,17 @@
       font-weight: 700;
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
       cursor: pointer;
+    }
+
+    .route-center-button {
+      right: 16px;
+      bottom: 96px;
+    }
+
+    .follow-toggle-button {
+      right: 16px;
+      bottom: 154px;
+      font-size: 14px;
     }
 
     .card {
@@ -316,6 +326,7 @@
   <span class="route-card__badge" id="route-badge">On route</span>
 </div>
 
+<button class="follow-toggle-button" id="follow-toggle-button" aria-label="Toggle follow mode">⟲</button>
 <button class="route-center-button" id="route-center-button" aria-label="Center on route">↺</button>
 <div id="map"></div>
 
@@ -361,6 +372,7 @@
   const PROGRESS_VALUE_ID = 'progress-value';
   const ROUTE_BADGE_ID = 'route-badge';
   const ROUTE_CENTER_BUTTON_ID = 'route-center-button';
+  const FOLLOW_TOGGLE_BUTTON_ID = 'follow-toggle-button';
 
   const map = new mapboxgl.Map({
     container: 'map',
@@ -381,6 +393,8 @@
   let lastPositionTime = 0;
   let lastProcessedPosition = null;
   let lastProcessedPositionTime = 0;
+  let followMode = true;
+  let hasShownReadyState = false;
 
   function toRadians(value) {
     return value * (Math.PI / 180);
@@ -587,7 +601,7 @@
 
     if (!hasValidDistance || normalizedDistance === null) {
       progressValue.textContent = '0%';
-      distanceValue.textContent = 'Calculating route…';
+      distanceValue.textContent = 'Waiting for start';
       routeBadge.textContent = 'Preparing';
       routeBadge.className = 'route-card__badge';
       return;
@@ -662,6 +676,10 @@
       lastViewCenter = newCenter;
       lastPosition = newCenter;
       lastPositionTime = now;
+      return;
+    }
+
+    if (!followMode) {
       return;
     }
 
@@ -844,6 +862,11 @@
   }
 
   document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
+
+  document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
+    followMode = !followMode;
+    document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).textContent = followMode ? '⟲' : '⟳';
+  });
 
   map.on('load', () => {
     loadRouteGeoJson();
