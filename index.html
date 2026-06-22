@@ -175,6 +175,23 @@
       margin: 0 auto;
     }
 
+    .route-center-button {
+      position: absolute;
+      right: 16px;
+      bottom: 96px;
+      z-index: 12;
+      width: 48px;
+      height: 48px;
+      border: 0;
+      border-radius: 999px;
+      background: rgba(10, 15, 31, 0.88);
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      cursor: pointer;
+    }
+
     .card {
       background: linear-gradient(180deg, rgba(16, 22, 40, 0.92), rgba(8, 11, 21, 0.92));
       color: white;
@@ -299,6 +316,7 @@
   <span class="route-card__badge" id="route-badge">On route</span>
 </div>
 
+<button class="route-center-button" id="route-center-button" aria-label="Center on route">↺</button>
 <div id="map"></div>
 
 <div class="bottom-panel">
@@ -336,11 +354,13 @@
   const MIN_SPEED_FOR_FOLLOW = 0.4;
   const POSITION_UPDATE_MIN_METERS = 12;
   const POSITION_UPDATE_MIN_MS = 8000;
+  const START_APPROACH_DISTANCE = 5;
   const FINISH_APPROACH_DISTANCE = 30;
   const WARNING_ID = 'warning';
   const DISTANCE_VALUE_ID = 'distance-value';
   const PROGRESS_VALUE_ID = 'progress-value';
   const ROUTE_BADGE_ID = 'route-badge';
+  const ROUTE_CENTER_BUTTON_ID = 'route-center-button';
 
   const map = new mapboxgl.Map({
     container: 'map',
@@ -371,6 +391,31 @@
       const firstPoint = routeCoordinates[0];
       map.setCenter(firstPoint);
       map.setZoom(13.5);
+    }
+  }
+
+  function centerMapOnRoute() {
+    if (routeCoordinates.length === 0) {
+      return;
+    }
+
+    const bounds = routeCoordinates.reduce((acc, point) => {
+      acc = acc || [point[0], point[1], point[0], point[1]];
+      acc[0] = Math.min(acc[0], point[0]);
+      acc[1] = Math.min(acc[1], point[1]);
+      acc[2] = Math.max(acc[2], point[0]);
+      acc[3] = Math.max(acc[3], point[1]);
+      return acc;
+    }, null);
+
+    if (bounds) {
+      map.fitBounds(
+        [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+        {
+          padding: { top: 120, bottom: 180, left: 40, right: 40 },
+          duration: 800
+        }
+      );
     }
   }
 
@@ -516,6 +561,11 @@
     }
 
     const progress = (bestProgress / totalLength) * 100;
+    const distanceToStart = haversineDistanceMeters(userPoint, routeCoordinates[0]);
+
+    if (distanceToStart > START_APPROACH_DISTANCE) {
+      return 0;
+    }
 
     if (progress >= 99 && bestDistance > FINISH_APPROACH_DISTANCE) {
       return 99;
@@ -543,7 +593,9 @@
       return;
     }
 
-    progressValue.textContent = `${Math.round(displayProgress)}%`;
+    const safeProgress = Math.min(100, Math.max(0, displayProgress));
+
+    progressValue.textContent = `${Math.round(safeProgress)}%`;
     distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
 
     if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
@@ -790,6 +842,8 @@
         showWarning('🗺️ Using fallback route preview', 'warning');
       });
   }
+
+  document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
 
   map.on('load', () => {
     loadRouteGeoJson();
