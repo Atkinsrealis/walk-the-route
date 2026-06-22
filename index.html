@@ -196,6 +196,12 @@
       margin-top: 4px;
     }
 
+    .mapboxgl-ctrl-logo,
+    .mapboxgl-ctrl-group,
+    .mapboxgl-ctrl {
+      display: none !important;
+    }
+
     @media (max-width: 480px) {
       .topbar {
         padding: 16px 12px 22px;
@@ -522,11 +528,20 @@
     const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
     const progressValue = document.getElementById(PROGRESS_VALUE_ID);
     const routeBadge = document.getElementById(ROUTE_BADGE_ID);
-    const normalizedDistance = Math.max(0, distance);
+    const hasValidDistance = Number.isFinite(distance);
+    const normalizedDistance = hasValidDistance ? Math.max(0, distance) : null;
     const displayProgress =
-      progress >= 99 && normalizedDistance > FINISH_APPROACH_DISTANCE
+      progress >= 99 && normalizedDistance !== null && normalizedDistance > FINISH_APPROACH_DISTANCE
         ? 99
         : progress;
+
+    if (!hasValidDistance || normalizedDistance === null) {
+      progressValue.textContent = '0%';
+      distanceValue.textContent = 'Calculating route…';
+      routeBadge.textContent = 'Preparing';
+      routeBadge.className = 'route-card__badge';
+      return;
+    }
 
     progressValue.textContent = `${Math.round(displayProgress)}%`;
     distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
@@ -675,7 +690,7 @@
         source: 'route',
         paint: {
           'line-color': '#0b1223',
-          'line-width': 14,
+          'line-width': 8,
           'line-opacity': 0.45
         }
       });
@@ -686,8 +701,8 @@
         source: 'route',
         paint: {
           'line-color': '#8b5cf6',
-          'line-width': 3,
-          'line-dasharray': [0, 2, 1, 2],
+          'line-width': 2,
+          'line-dasharray': [0, 1.5, 0.8, 1.5],
           'line-opacity': 0.75
         }
       });
@@ -698,7 +713,7 @@
         source: 'route',
         paint: {
           'line-color': '#7c3aed',
-          'line-width': 6,
+          'line-width': 3.5,
           'line-opacity': 0.95
         }
       });
