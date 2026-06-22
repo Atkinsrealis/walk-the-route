@@ -287,7 +287,7 @@
     </div>
     <div class="route-card__meta">
       <span id="distance-value">0 m from route</span>
-      <span class="route-card__source">Route source: predefined points in this page</span>
+      <span class="route-card__source">Route source: heathrow-perimeter-route.geojson</span>
     </div>
   </div>
   <span class="route-card__badge" id="route-badge">On route</span>
@@ -306,6 +306,21 @@
     'pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ';
 
   const routeGeoJsonUrl = 'heathrow-perimeter-route.geojson';
+  const fallbackRouteCoordinates = [
+    [-0.4543, 51.4700],
+    [-0.4552, 51.4706],
+    [-0.4561, 51.4712],
+    [-0.4573, 51.4719],
+    [-0.4588, 51.4724],
+    [-0.4600, 51.4729],
+    [-0.4614, 51.4736],
+    [-0.4629, 51.4742],
+    [-0.4645, 51.4748],
+    [-0.4661, 51.4751],
+    [-0.4676, 51.4754],
+    [-0.4690, 51.4753],
+    [-0.4700, 51.4750]
+  ];
   let routeCoordinates = [];
 
   const ROUTE_WARNING_DISTANCE = 300;
@@ -321,7 +336,7 @@
   const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
-    center: routeCoordinates[0],
+    center: [-0.4543, 51.4700],
     zoom: 13.5,
     pitch: 0,
     bearing: 0
@@ -594,7 +609,84 @@
     lastPositionTime = now;
   }
 
+  function buildRouteFeatureFromCoordinates(coordinates) {
+    return {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'LineString',
+        coordinates
+      }
+    };
+  }
+
+  function addRouteToMap(routeFeature) {
+    routeCoordinates = routeFeature.geometry.coordinates;
+
+    if (!map.getSource('route')) {
+      map.addSource('route', {
+        type: 'geojson',
+        data: routeFeature
+      });
+
+      map.addLayer({
+        id: 'route-shadow',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': '#0b1223',
+          'line-width': 12,
+          'line-opacity': 0.45
+        }
+      });
+
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route',
+        paint: {
+          'line-color': '#2dd4bf',
+          'line-width': 6,
+          'line-opacity': 0.95
+        }
+      });
+    } else {
+      map.getSource('route').setData(routeFeature);
+    }
+
+    setInitialMapView();
+
+    if (routeCoordinates.length > 0) {
+      new mapboxgl.Marker({ color: '#16a34a' })
+        .setLngLat(routeCoordinates[0])
+        .setPopup(
+          new mapboxgl.Popup().setHTML(
+            '<h3>Start</h3><p>Route begins here</p>'
+          )
+        )
+        .addTo(map);
+
+      new mapboxgl.Marker({ color: '#f59e0b' })
+        .setLngLat(routeCoordinates[routeCoordinates.length - 1])
+        .setPopup(
+          new mapboxgl.Popup().setHTML(
+            '<h3>Finish</h3><p>End of route</p>'
+          )
+        )
+        .addTo(map);
+    }
+  }
+
   function loadRouteGeoJson() {
+    if (window.location.protocol === 'file:') {
+      addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
+      showWarning(
+        '🗺️ Open this page from a web server to load the exact route file',
+        'warning'
+      );
+      return;
+    }
+
     fetch(routeGeoJsonUrl)
       .then(response => {
         if (!response.ok) {
@@ -603,70 +695,32 @@
         return response.json();
       })
       .then(geojson => {
-        const geometry = geojson && geojson.geometry;
+        let routeFeature = geojson;
+
+        if (geojson && geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+          routeFeature = geojson.features.find(
+            feature => feature && feature.geometry && feature.geometry.type === 'LineString'
+          ) || geojson.features[0];
+        }
+
+        if (routeFeature && routeFeature.type === 'FeatureCollection') {
+          routeFeature = routeFeature.features.find(
+            feature => feature && feature.geometry && feature.geometry.type === 'LineString'
+          ) || routeFeature.features[0];
+        }
+
+        const geometry = routeFeature && routeFeature.geometry;
 
         if (!geometry || geometry.type !== 'LineString' || !Array.isArray(geometry.coordinates)) {
           throw new Error('GeoJSON must contain a LineString geometry.');
         }
 
-        routeCoordinates = geometry.coordinates;
-
-        if (!map.getSource('route')) {
-          map.addSource('route', {
-            type: 'geojson',
-            data: geojson
-          });
-
-          map.addLayer({
-            id: 'route-shadow',
-            type: 'line',
-            source: 'route',
-            paint: {
-              'line-color': '#0b1223',
-              'line-width': 12,
-              'line-opacity': 0.45
-            }
-          });
-
-          map.addLayer({
-            id: 'route-line',
-            type: 'line',
-            source: 'route',
-            paint: {
-              'line-color': '#2dd4bf',
-              'line-width': 6,
-              'line-opacity': 0.95
-            }
-          });
-        } else {
-          map.getSource('route').setData(geojson);
-        }
-
-        setInitialMapView();
-
-        if (routeCoordinates.length > 0) {
-          new mapboxgl.Marker({ color: '#16a34a' })
-            .setLngLat(routeCoordinates[0])
-            .setPopup(
-              new mapboxgl.Popup().setHTML(
-                '<h3>Start</h3><p>Route begins here</p>'
-              )
-            )
-            .addTo(map);
-
-          new mapboxgl.Marker({ color: '#f59e0b' })
-            .setLngLat(routeCoordinates[routeCoordinates.length - 1])
-            .setPopup(
-              new mapboxgl.Popup().setHTML(
-                '<h3>Finish</h3><p>End of route</p>'
-              )
-            )
-            .addTo(map);
-        }
+        addRouteToMap(routeFeature);
       })
       .catch(error => {
         console.error(error);
-        showWarning('🗺️ Route data could not be loaded', 'alert');
+        addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
+        showWarning('🗺️ Using fallback route preview', 'warning');
       });
   }
 
