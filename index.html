@@ -326,8 +326,10 @@
   const ROUTE_WARNING_DISTANCE = 300;
   const ROUTE_ALERT_DISTANCE = 600;
   const WARNING_UPDATE_INTERVAL = 3000;
-  const VIEW_UPDATE_DISTANCE = 20;
+  const VIEW_UPDATE_DISTANCE = 25;
   const MIN_SPEED_FOR_FOLLOW = 0.4;
+  const POSITION_UPDATE_MIN_METERS = 12;
+  const POSITION_UPDATE_MIN_MS = 8000;
   const WARNING_ID = 'warning';
   const DISTANCE_VALUE_ID = 'distance-value';
   const PROGRESS_VALUE_ID = 'progress-value';
@@ -351,6 +353,8 @@
   let lastViewCenter = null;
   let lastPosition = null;
   let lastPositionTime = 0;
+  let lastProcessedPosition = null;
+  let lastProcessedPositionTime = 0;
 
   function toRadians(value) {
     return value * (Math.PI / 180);
@@ -609,6 +613,27 @@
     lastPositionTime = now;
   }
 
+  function shouldProcessLocationUpdate(lng, lat) {
+    const now = Date.now();
+
+    if (!lastProcessedPosition) {
+      lastProcessedPosition = [lng, lat];
+      lastProcessedPositionTime = now;
+      return true;
+    }
+
+    const moved = haversineDistanceMeters(lastProcessedPosition, [lng, lat]);
+    const elapsed = now - lastProcessedPositionTime;
+
+    if (moved >= POSITION_UPDATE_MIN_METERS || elapsed >= POSITION_UPDATE_MIN_MS) {
+      lastProcessedPosition = [lng, lat];
+      lastProcessedPositionTime = now;
+      return true;
+    }
+
+    return false;
+  }
+
   function buildRouteFeatureFromCoordinates(coordinates) {
     return {
       type: 'Feature',
@@ -733,6 +758,10 @@
       const lng = position.coords.longitude;
       const lat = position.coords.latitude;
 
+      if (!shouldProcessLocationUpdate(lng, lat)) {
+        return;
+      }
+
       updateUserMarker(lng, lat);
       updateMapView(lng, lat);
 
@@ -746,9 +775,9 @@
       showWarning('📍 Location access is unavailable or blocked', 'alert');
     },
     {
-      enableHighAccuracy: true,
-      maximumAge: 10000,
-      timeout: 15000
+      enableHighAccuracy: false,
+      maximumAge: 20000,
+      timeout: 30000
     }
   );
 </script>
