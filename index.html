@@ -1199,7 +1199,7 @@ hazardsButton.addEventListener('click', () => {
   showHazards = !showHazards;
 
   hazardMarkers.forEach(marker => {
-    marker.getElement().style.visibility = showHazards ? 'visible' : 'hidden';
+    marker.getElement().style.visibility = 'hidden';
   });
 
   hazardsButton.classList.toggle('on', showHazards);
@@ -1212,7 +1212,7 @@ restButton.addEventListener('click', () => {
   showRest = !showRest;
 
   restMarkers.forEach(marker => {
-    marker.getElement().style.visibility = showRest ? 'visible' : 'hidden';
+    marker.getElement().style.visibility = 'hidden';
   });
 
   restButton.classList.toggle('on', showRest);
