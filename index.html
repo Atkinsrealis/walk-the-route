@@ -390,6 +390,14 @@
   const ROUTE_CENTER_BUTTON_ID = 'route-center-button';
   const FOLLOW_TOGGLE_BUTTON_ID = 'follow-toggle-button';
 
+  // Route segments - divide 182 waypoints into 4 sections
+  const SEGMENTS = [
+    { name: 'Terminal South', startIdx: 0, endIdx: 45, milestone: 'Terminal building' },
+    { name: 'Cargo perimeter', startIdx: 46, endIdx: 90, milestone: 'Cargo facility' },
+    { name: 'Northern loop', startIdx: 91, endIdx: 136, milestone: 'Northern gate' },
+    { name: 'Return stretch', startIdx: 137, endIdx: 181, milestone: 'Finish line' }
+  ];
+
   const map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
@@ -401,6 +409,9 @@
   });
 
   let userMarker;
+  let lastActualPosition = null;
+  let lastSnappedPosition = null;
+  let userDirectionIndex = 0;
   let hasInitialPosition = false;
   let lastWarningUpdate = 0;
   let lastWarningState = '';
@@ -414,6 +425,102 @@
 
   function toRadians(value) {
     return value * (Math.PI / 180);
+  }
+
+  function getCurrentSegment(userPoint) {
+    if (routeCoordinates.length < 2) {
+      return { segment: SEGMENTS[0], segmentProgress: 0, nextMilestone: SEGMENTS[0].milestone, distanceToMilestone: 0 };
+    }
+
+    let bestDistance = Number.POSITIVE_INFINITY;
+    let bestSegmentProgress = 0;
+    let bestSegmentIndex = 0;
+
+    // Calculate cumulative distances for each segment
+    const segmentDistances = [];
+    let cumulativeDistance = 0;
+
+    for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+      const start = routeCoordinates[i];
+      const end = routeCoordinates[i + 1];
+      const segmentLength = haversineDistanceMeters(start, end);
+      segmentDistances.push(cumulativeDistance);
+      cumulativeDistance += segmentLength;
+    }
+
+    const totalRouteDistance = cumulativeDistance;
+
+    // Find closest point on route and its progress
+    for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+      const start = routeCoordinates[i];
+      const end = routeCoordinates[i + 1];
+      const lat1 = toRadians(start[1]);
+      const lat2 = toRadians(end[1]);
+      const lng1 = toRadians(start[0]);
+      const lng2 = toRadians(end[0]);
+      const latU = toRadians(userPoint[1]);
+      const lngU = toRadians(userPoint[0]);
+
+      const dLng = lng2 - lng1;
+      const dLat = lat2 - lat1;
+      const dLngU = lngU - lng1;
+      const dLatU = latU - lat1;
+
+      const denominator = dLng * dLng + dLat * dLat;
+
+      if (denominator === 0) {
+        const pointDistance = haversineDistanceMeters(userPoint, start);
+        if (pointDistance < bestDistance) {
+          bestDistance = pointDistance;
+          bestSegmentProgress = segmentDistances[i];
+          bestSegmentIndex = i;
+        }
+        continue;
+      }
+
+      const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+      const clampedProjection = Math.max(0, Math.min(1, projection));
+
+      const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+      const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+      const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+      const segmentLength = haversineDistanceMeters(start, end);
+      const candidateProgress = segmentDistances[i] + segmentLength * clampedProjection;
+
+      if (pointDistance < bestDistance) {
+        bestDistance = pointDistance;
+        bestSegmentProgress = candidateProgress;
+        bestSegmentIndex = i;
+      }
+    }
+
+    // Determine which segment based on coordinate index
+    let currentSegmentIndex = 0;
+    for (let s = 0; s < SEGMENTS.length; s += 1) {
+      if (bestSegmentIndex >= SEGMENTS[s].startIdx && bestSegmentIndex <= SEGMENTS[s].endIdx) {
+        currentSegmentIndex = s;
+        break;
+      }
+    }
+
+    const currentSegment = SEGMENTS[currentSegmentIndex];
+    
+    // Calculate distance to next milestone
+    let distanceToMilestone = 0;
+    const nextSegmentIndex = currentSegmentIndex + 1;
+    if (nextSegmentIndex < SEGMENTS.length) {
+      const milestoneCoord = routeCoordinates[SEGMENTS[nextSegmentIndex].startIdx] || routeCoordinates[routeCoordinates.length - 1];
+      distanceToMilestone = haversineDistanceMeters(userPoint, milestoneCoord);
+    }
+
+    return {
+      segment: currentSegment,
+      segmentProgress: (bestSegmentProgress / totalRouteDistance) * 100,
+      nextMilestone: nextSegmentIndex < SEGMENTS.length ? SEGMENTS[nextSegmentIndex].milestone : 'Finish line',
+      distanceToMilestone,
+      currentSegmentNumber: currentSegmentIndex + 1,
+      totalSegments: SEGMENTS.length
+    };
   }
 
   function setInitialMapView() {
@@ -465,6 +572,81 @@
 
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return earthRadius * c;
+  }
+
+  function getClosestPointOnRoute(userPoint) {
+    if (routeCoordinates.length < 2) {
+      return {
+        point: userPoint,
+        distance: 0,
+        segmentIndex: 0,
+        isAhead: false,
+        isBehind: false
+      };
+    }
+
+    let minDistance = Number.POSITIVE_INFINITY;
+    let closestPoint = userPoint;
+    let closestSegmentIndex = 0;
+    let closestProjection = 0;
+
+    for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+      const start = routeCoordinates[i];
+      const end = routeCoordinates[i + 1];
+
+      const lat1 = toRadians(start[1]);
+      const lat2 = toRadians(end[1]);
+      const lng1 = toRadians(start[0]);
+      const lng2 = toRadians(end[0]);
+      const latU = toRadians(userPoint[1]);
+      const lngU = toRadians(userPoint[0]);
+
+      const dLng = lng2 - lng1;
+      const dLat = lat2 - lat1;
+      const dLngU = lngU - lng1;
+      const dLatU = latU - lat1;
+
+      const denominator = dLng * dLng + dLat * dLat;
+
+      if (denominator === 0) {
+        const pointDistance = haversineDistanceMeters(userPoint, start);
+        if (pointDistance < minDistance) {
+          minDistance = pointDistance;
+          closestPoint = start;
+          closestSegmentIndex = i;
+          closestProjection = 0;
+        }
+        continue;
+      }
+
+      const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+      const clampedProjection = Math.max(0, Math.min(1, projection));
+
+      const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+      const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+      const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+
+      if (pointDistance < minDistance) {
+        minDistance = pointDistance;
+        closestPoint = [closestLng, closestLat];
+        closestSegmentIndex = i;
+        closestProjection = clampedProjection;
+      }
+    }
+
+    // Determine if ahead or behind based on projection
+    const isAhead = closestProjection > 0.5;
+    const isBehind = closestProjection < 0.5 && closestSegmentIndex > 0;
+
+    userDirectionIndex = closestSegmentIndex;
+
+    return {
+      point: closestPoint,
+      distance: minDistance,
+      segmentIndex: closestSegmentIndex,
+      isAhead,
+      isBehind
+    };
   }
 
   function getDistanceToRoute(userPoint) {
@@ -604,7 +786,7 @@
     return Math.min(100, Math.max(0, progress));
   }
 
-  function updateDistanceDisplay(distance, progress) {
+  function updateDistanceDisplay(distance, progress, segmentInfo = null) {
     const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
     const progressValue = document.getElementById(PROGRESS_VALUE_ID);
     const routeBadge = document.getElementById(ROUTE_BADGE_ID);
@@ -616,7 +798,7 @@
         : progress;
 
     if (!hasValidDistance || normalizedDistance === null) {
-      progressValue.textContent = '0%';
+      progressValue.textContent = 'Section 1/4';
       distanceValue.textContent = 'Waiting for start';
       routeBadge.textContent = 'Preparing';
       routeBadge.className = 'route-card__badge';
@@ -625,8 +807,15 @@
 
     const safeProgress = Math.min(100, Math.max(0, displayProgress));
 
-    progressValue.textContent = `${Math.round(safeProgress)}%`;
-    distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
+    // Display segment info instead of percentage
+    if (segmentInfo) {
+      progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
+      const nextMilestoneDistance = formatDistance(segmentInfo.distanceToMilestone);
+      distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
+    } else {
+      progressValue.textContent = `${Math.round(safeProgress)}%`;
+      distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
+    }
 
     if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
       routeBadge.textContent = 'Far off route';
@@ -667,19 +856,30 @@
   }
 
   function updateUserMarker(lng, lat) {
+    const actualPosition = [lng, lat];
+    lastActualPosition = actualPosition;
+
+    // Snap to nearest point on route
+    const routeSnapshot = getClosestPointOnRoute(actualPosition);
+    const snappedLng = routeSnapshot.point[0];
+    const snappedLat = routeSnapshot.point[1];
+    lastSnappedPosition = routeSnapshot.point;
+
     if (!userMarker) {
       userMarker = new mapboxgl.Marker({
         color: '#00AEEF'
       })
-        .setLngLat([lng, lat])
+        .setLngLat([snappedLng, snappedLat])
         .addTo(map);
     } else {
-      userMarker.setLngLat([lng, lat]);
+      userMarker.setLngLat([snappedLng, snappedLat]);
     }
   }
 
   function updateMapView(lng, lat) {
-    const newCenter = [lng, lat];
+    // Use snapped position to keep route centered
+    const displayPosition = lastSnappedPosition || [lng, lat];
+    const newCenter = displayPosition;
     const now = Date.now();
 
     if (!hasInitialPosition) {
@@ -903,7 +1103,9 @@
       const userPoint = [lng, lat];
       const distanceToRoute = getDistanceToRoute(userPoint);
       const routeProgress = getRouteProgress(userPoint);
-      updateDistanceDisplay(distanceToRoute, routeProgress);
+      const segmentInfo = getCurrentSegment(userPoint);
+      const routeSnapshot = getClosestPointOnRoute(userPoint);
+      updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo, routeSnapshot);
       updateWarningState(distanceToRoute);
     },
     () => {
