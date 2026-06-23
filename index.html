@@ -1149,6 +1149,11 @@ function getNearestHazard(userPoint) {
   document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
     followMode = !followMode;
     followButton.style.opacity = followMode ? '1' : '0.5';
+    map.easeTo({
+      center: lastSnappedPosition,
+      zoom: 16,
+      duration: 500
+    });
   });
 
   map.on('load', () => {
