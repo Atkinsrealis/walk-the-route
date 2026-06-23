@@ -243,9 +243,15 @@
       display: none !important;
     }
 
+
     .card {
+      background: linear-gradient(180deg, rgba(16, 22, 40, 0.92), rgba(8, 11, 21, 0.92));
       transition: all 0.2s ease;
       cursor: pointer;
+    }
+
+    .card {
+      opacity: 0.85;
     }
 
     .card:active {
@@ -253,15 +259,18 @@
     }
 
     .card.active {
-     background: rgba(124, 58, 237, 0.25);
-     border: 1px solid rgba(124, 58, 237, 0.6);
-    box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+      opacity: 1;
+    }
+
+    .card.active {
+      background: #7c3aed; /* solid purple */
+      color: white;
+      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.5);
     }
  
     .card:hover {
       background: rgba(255, 255, 255, 0.08);
     }
-
 
     @media (max-width: 480px) {
       .topbar {
@@ -1219,9 +1228,12 @@ hazardsButton.addEventListener('click', () => {
     marker.getElement().style.display = showHazards ? 'block' : 'none';
   });
 
-  hazardsButton.classList.toggle('active', showHazards);
+  if (showHazards) {
+    hazardsButton.classList.add('active');
+  } else {
+    hazardsButton.classList.remove('active');
+  }
 });
-
 
 // Rest button
 const restButton = document.getElementById('rest-button');
@@ -1233,7 +1245,11 @@ restButton.addEventListener('click', () => {
     marker.getElement().style.display = showRest ? 'block' : 'none';
   });
 
-  restButton.classList.toggle('active', showRest);
+  if (showRest) {
+    restButton.classList.add('active');
+  } else {
+    restButton.classList.remove('active');
+  }
 });
 
 // Safety button
@@ -1256,7 +1272,19 @@ safetyButton.addEventListener('click', () => {
 
   map.on('load', () => {
     loadRouteGeoJson();
-  });
+
+  if (showHazards) {
+  hazardsButton.classList.add('active');
+  }
+
+  if (showRest) {
+  restButton.classList.add('active');
+  }
+
+  if (showSafety) {
+  safetyButton.classList.add('active');
+  }
+});
 
   navigator.geolocation.watchPosition(
     position => {
