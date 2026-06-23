@@ -1146,15 +1146,23 @@ function getNearestHazard(userPoint) {
 
   document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
 
-  document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
-    followMode = !followMode;
-    followButton.style.opacity = followMode ? '1' : '0.5';
+document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
+  followMode = !followMode;
+
+  followButton.style.opacity = followMode ? '1' : '0.5';
+
+  if (followMode && lastSnappedPosition) {
     map.easeTo({
       center: lastSnappedPosition,
       zoom: 16,
-      duration: 500
+      duration: 600
     });
-  });
+  }
+
+  if (followMode && getDistanceToRoute(lastActualPosition || [-0.4543, 51.4700]) > 300) {
+    showWarning('📍 Move closer to the route to enable tracking', 'warning');
+  }
+});
 
   map.on('load', () => {
     loadRouteGeoJson();
