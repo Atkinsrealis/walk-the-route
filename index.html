@@ -1,761 +1,821 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <title>Walk the Route</title>
-
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
-
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js">
-  </script>
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      overflow: hidden;
-      background: #0a0f1f;
-    }
-
-    #map {
-      width: 100vw;
-      height: 100vh;
-    }
-
-    .topbar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 10;
-      padding: 18px 16px 24px;
-      color: white;
-      background: linear-gradient(to bottom,
-          rgba(5, 10, 22, 0.88),
-          rgba(5, 10, 22, 0));
-    }
-
-    .topbar h1 {
-      margin: 0;
-      font-size: 26px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    .topbar p {
-      margin: 6px 0 0;
-      opacity: 0.72;
-      font-size: 14px;
-    }
-
-    .warning {
-      position: absolute;
-      top: 88px;
-      left: 16px;
-      right: 16px;
-      color: white;
-      padding: 12px 14px;
-      border-radius: 14px;
-      z-index: 20;
-      display: none;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    .warning.safe {
-      background: rgba(17, 170, 98, 0.92);
-    }
-
-    .warning.warning {
-      background: rgba(245, 185, 32, 0.94);
-      color: #15202b;
-    }
-
-    .warning.alert {
-      background: rgba(232, 70, 70, 0.95);
-    }
-
-    .warning.help {
-      background: rgba(6, 17, 31, 0.96);
-      color: white;
-      border-left: 5px solid #14b8a6;
-    }
-
-    .route-card {
-      position: absolute;
-      top: 142px;
-      left: 16px;
-      right: 16px;
-      z-index: 19;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 14px;
-      background: rgba(10, 15, 31, 0.78);
-      color: white;
-      border-radius: 18px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-    }
-
-    .route-card__main {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .route-card__text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
-
-    .route-card__label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      opacity: 0.68;
-    }
-
-    .route-card__value {
-      font-size: 22px;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-    .route-card__meta {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.78);
-    }
-
-    .route-card__source {
-      font-size: 11px;
-      opacity: 0.58;
-    }
-
-    .route-card__badge {
-      flex-shrink: 0;
-      padding: 8px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      background: rgba(17, 170, 98, 0.18);
-      color: #7ef0b3;
-      white-space: nowrap;
-    }
-
-    .route-card__badge.warning {
-      background: rgba(245, 185, 32, 0.18);
-      color: #ffd86a;
-    }
-
-    .route-card__badge.alert {
-      background: rgba(232, 70, 70, 0.18);
-      color: #ff9d9d;
-    }
-
-    .bottom-panel {
-      position: absolute;
-      bottom: 18px;
-      left: 16px;
-      right: 16px;
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      z-index: 10;
-      max-width: 640px;
-      margin: 0 auto;
-    }
-
-    .route-center-button,
-    .follow-toggle-button {
-      position: absolute;
-      z-index: 12;
-      width: 56px;
-      height: 56px;
-      border: 0;
-      border-radius: 999px;
-      background: rgba(10, 15, 31, 0.88);
-      color: #fff;
-      font-size: 22px;
-      font-weight: 700;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-    }
-
-    .route-center-button {
-      right: 16px;
-      bottom: 96px;
-      color: #c4b5fd;
-    }
-
-    .follow-toggle-button {
-      color: #c4b5fd;
-      right: 16px;
-      bottom: 154px;
-      font-size: 20px;
-      line-height: 1;
-    }
-
-
-    .route-center-button svg,
-    .follow-toggle-button svg {
-      width: 26px;
-      height: 26px;
-      display: block;
-      fill: currentColor;
-    }
-
-    .route-center-button:active,
-    .follow-toggle-button:active {
-      transform: scale(0.96);
-    }
-
-    .mapboxgl-ctrl-logo,
-    .mapboxgl-ctrl-group,
-    .mapboxgl-ctrl {
-      display: none !important;
-    }
-
-    .card {
-      background: #060b18;
-      color: white;
-      padding: 14px 10px;
-      border-radius: 16px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      box-shadow: none;
-      transition: background 0.2s ease;
-    }
-
-    .card.on {
-      background: #7c3aed;
-    }
-
-    .card:active {
-      transform: scale(0.98);
-    }
-
-    .card strong {
-      display: block;
-      font-size: 16px;
-    }
-
-    .help-card {
-      background: #06201f;
-      color: white;
-    }
-
-    .help-card.on {
-      background: #14b8a6;
-      color: #06111f;
-    }
-
-    .help-panel {
-      position: absolute;
-      left: 12px;
-      right: 12px;
-      bottom: 92px;
-      z-index: 30;
-
-      background: rgba(6, 17, 31, 0.96);
-      color: white;
-
-      border-radius: 20px;
-      padding: 10px 12px 12px;
-
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
-      border: 1px solid rgba(94, 234, 212, 0.18);
-      backdrop-filter: blur(14px);
-
-      max-height: none;
-      overflow: visible;
-
-      transform: translateY(140%);
-      opacity: 0;
-      pointer-events: none;
-      transition: transform 0.24s ease, opacity 0.24s ease;
-
-      max-width: 640px;
-      margin: 0 auto;
-    }
-
-    .help-panel.open {
-      transform: translateY(0);
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .help-panel__handle {
-      width: 44px;
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.22);
-      margin: 0 auto 10px;
-    }
-
-    .help-panel__header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .help-panel__label {
-      display: block;
-      color: #5eead4;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .help-panel h2 {
-      margin: 0;
-      font-size: 20px;
-      line-height: 1;
-    }
-
-    .help-panel__close {
-      width: 34px;
-      height: 34px;
-      border: none;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
-      color: white;
-      font-size: 24px;
-      line-height: 1;
-      cursor: pointer;
-    }
-
-    .compact-help {
-      display: grid;
-      gap: 10px;
-    }
-
-    .help-summary {
-      padding: 12px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .help-summary p {
-      margin: 0;
-      font-size: 13px;
-      line-height: 1.35;
-      color: rgba(255, 255, 255, 0.82);
-    }
-
-    .help-summary__urgent {
-      margin-top: 8px !important;
-      color: #fecaca !important;
-      font-weight: 800;
-    }
-
-    .help-location {
-      margin-top: 0;
-      padding: 11px 12px;
-      border-radius: 16px;
-      background: rgba(94, 234, 212, 0.10);
-      border: 1px solid rgba(94, 234, 212, 0.22);
-      display: grid;
-      gap: 4px;
-    }
-
-    .help-location__label {
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #5eead4;
-    }
-
-    .help-location strong {
-      font-size: 15px;
-      line-height: 1.2;
-      word-break: break-word;
-    }
-
-    .help-location span:last-child {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.72);
-    }
-
-    .help-panel__actions {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      margin-top: 0;
-    }
-
-    .help-panel__actions--emergency {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .help-action {
-      border: none;
-      border-radius: 14px;
-      padding: 11px 10px;
-      background: #14b8a6;
-      color: #06111f;
-      font-weight: 800;
-      text-align: center;
-      text-decoration: none;
-      cursor: pointer;
-      font-size: 13px;
-    }
-
-    .help-action--danger {
-      background: #fca5a5;
-      color: #111827;
-    }
-
-    .help-guidance {
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.045);
-      overflow: hidden;
-    }
-
-    .help-guidance summary {
-      list-style: none;
-      cursor: pointer;
-      padding: 11px 12px;
-      font-size: 13px;
-      font-weight: 800;
-      color: white;
-    }
-
-    .help-guidance summary::-webkit-details-marker {
-      display: none;
-    }
-
-    .help-guidance summary::after {
-      content: "＋";
-      float: right;
-      opacity: 0.75;
-    }
-
-    .help-guidance[open] summary::after {
-      content: "−";
-    }
-
-    .help-guidance__steps {
-      display: grid;
-      gap: 8px;
-      padding: 0 10px 10px;
-    }
-
-    .help-step {
-      padding: 9px 10px;
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.06);
-      display: grid;
-      gap: 3px;
-    }
-
-    .help-step strong {
-      font-size: 13px;
-    }
-
-    .help-step span {
-      font-size: 12px;
-      line-height: 1.3;
-      color: rgba(255, 255, 255, 0.74);
-    }
-
-    .help-backdrop {
-      position: absolute;
-      inset: 0;
-      z-index: 25;
-
-      background: rgba(3, 7, 18, 0.38);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-
-      opacity: 0;
-      pointer-events: none;
-
-      transition: opacity 0.24s ease;
-    }
-
-    .help-backdrop.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    #next-thing-value {
-      color: rgba(255, 255, 255, 0.9);
-      font-weight: 700;
-    }
-
-    @media (max-width: 480px) {
-      .help-panel {
-        bottom: 86px;
-        left: 10px;
-        right: 10px;
-        padding: 9px 10px 10px;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Walk the Route</title>
+
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+
+    <style>
+      body {
+        margin: 0;
+        font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        overflow: hidden;
+        background: #0a0f1f;
       }
 
-      .help-panel h2 {
-        font-size: 19px;
+      #map {
+        width: 100vw;
+        height: 100vh;
       }
 
-      .help-summary {
-        padding: 10px;
-      }
-
-      .help-summary p {
-        font-size: 12px;
-      }
-
-      .help-location {
-        padding: 10px;
-      }
-
-      .help-location strong {
-        font-size: 13px;
-      }
-
-      .help-action {
-        padding: 10px 8px;
-      }
-    }
-
-    @media (max-width: 480px) {
       .topbar {
-        padding: 16px 12px 22px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        padding: 18px 16px 24px;
+        color: white;
+        background: linear-gradient(
+          to bottom,
+          rgba(5, 10, 22, 0.88),
+          rgba(5, 10, 22, 0)
+        );
       }
 
       .topbar h1 {
-        font-size: 22px;
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
       }
 
       .topbar p {
-        font-size: 13px;
+        margin: 6px 0 0;
+        opacity: 0.72;
+        font-size: 14px;
       }
 
       .warning {
-        top: 82px;
-        left: 12px;
-        right: 12px;
-        padding: 11px 12px;
-        font-size: 13px;
+        position: absolute;
+        top: 88px;
+        left: 16px;
+        right: 16px;
+        color: white;
+        padding: 12px 14px;
+        border-radius: 14px;
+        z-index: 20;
+        display: none;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .warning.safe {
+        background: rgba(17, 170, 98, 0.92);
+      }
+
+      .warning.warning {
+        background: rgba(245, 185, 32, 0.94);
+        color: #15202b;
+      }
+
+      .warning.alert {
+        background: rgba(232, 70, 70, 0.95);
+      }
+
+      .warning.help {
+        background: rgba(6, 17, 31, 0.96);
+        color: white;
+        border-left: 5px solid #14b8a6;
       }
 
       .route-card {
-        top: 132px;
-        left: 12px;
-        right: 12px;
-        padding: 11px 12px;
-        align-items: flex-start;
+        position: absolute;
+        top: 142px;
+        left: 16px;
+        right: 16px;
+        z-index: 19;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        background: rgba(10, 15, 31, 0.78);
+        color: white;
+        border-radius: 18px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .route-card__main {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .route-card__text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .route-card__label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.68;
       }
 
       .route-card__value {
-        font-size: 18px;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1;
       }
 
       .route-card__meta {
-        font-size: 11px;
-      }
-
-      .bottom-panel {
-        left: 12px;
-        right: 12px;
-        bottom: 12px;
-        gap: 8px;
-      }
-
-      .card {
-        padding: 12px 8px;
-        font-size: 12px;
-      }
-
-      .card strong {
-        font-size: 14px;
-      }
-    }
-
-    @media (max-width: 360px) {
-      .route-card {
+        display: flex;
         flex-direction: column;
-        align-items: flex-start;
+        gap: 2px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .route-card__source {
+        font-size: 11px;
+        opacity: 0.58;
       }
 
       .route-card__badge {
-        width: 100%;
-        text-align: center;
+        flex-shrink: 0;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(17, 170, 98, 0.18);
+        color: #7ef0b3;
+        white-space: nowrap;
+      }
+
+      .route-card__badge.warning {
+        background: rgba(245, 185, 32, 0.18);
+        color: #ffd86a;
+      }
+
+      .route-card__badge.alert {
+        background: rgba(232, 70, 70, 0.18);
+        color: #ff9d9d;
       }
 
       .bottom-panel {
-        grid-template-columns: 1fr;
+        position: absolute;
+        bottom: 18px;
+        left: 16px;
+        right: 16px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        z-index: 10;
+        max-width: 640px;
+        margin: 0 auto;
       }
-    }
 
-    @media (min-width: 520px) {
+      .route-center-button,
+      .follow-toggle-button {
+        position: absolute;
+        z-index: 12;
+        width: 56px;
+        height: 56px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(10, 15, 31, 0.88);
+        color: #fff;
+        font-size: 22px;
+        font-weight: 700;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .route-center-button {
+        right: 16px;
+        bottom: 96px;
+        color: #c4b5fd;
+      }
+
+      .follow-toggle-button {
+        color: #c4b5fd;
+        right: 16px;
+        bottom: 154px;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .route-center-button svg,
+      .follow-toggle-button svg {
+        width: 26px;
+        height: 26px;
+        display: block;
+        fill: currentColor;
+      }
+
+      .route-center-button:active,
+      .follow-toggle-button:active {
+        transform: scale(0.96);
+      }
+
+      .mapboxgl-ctrl-logo,
+      .mapboxgl-ctrl-group,
+      .mapboxgl-ctrl {
+        display: none !important;
+      }
+
+      .card {
+        background: #060b18;
+        color: white;
+        padding: 14px 10px;
+        border-radius: 16px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        box-shadow: none;
+        transition: background 0.2s ease;
+      }
+
+      .card.on {
+        background: #7c3aed;
+      }
+
+      .card:active {
+        transform: scale(0.98);
+      }
+
+      .card strong {
+        display: block;
+        font-size: 16px;
+      }
+
+      .help-card {
+        background: #06201f;
+        color: white;
+      }
+
+      .help-card.on {
+        background: #14b8a6;
+        color: #06111f;
+      }
+
+      .help-panel {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 92px;
+        z-index: 30;
+
+        background: rgba(6, 17, 31, 0.96);
+        color: white;
+
+        border-radius: 20px;
+        padding: 10px 12px 12px;
+
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+        border: 1px solid rgba(94, 234, 212, 0.18);
+        backdrop-filter: blur(14px);
+
+        max-height: none;
+        overflow: visible;
+
+        transform: translateY(140%);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          transform 0.24s ease,
+          opacity 0.24s ease;
+
+        max-width: 640px;
+        margin: 0 auto;
+      }
+
+      .help-panel.open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .help-panel__handle {
+        width: 44px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+        margin: 0 auto 10px;
+      }
+
+      .help-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .help-panel__label {
+        display: block;
+        color: #5eead4;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .help-panel h2 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .help-panel__close {
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        font-size: 24px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .compact-help {
+        display: grid;
+        gap: 16px;
+        padding-top: 8px;
+      }
+
+      .help-summary {
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .help-summary p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.35;
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .help-summary__urgent {
+        margin-top: 8px !important;
+        color: #fecaca !important;
+        font-weight: 800;
+      }
+
+      .help-location {
+        margin-top: 0;
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(94, 234, 212, 0.1);
+        border: 1px solid rgba(94, 234, 212, 0.22);
+        display: grid;
+        gap: 4px;
+      }
+
+      .help-location__label {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #5eead4;
+      }
+
+      .help-location strong {
+        font-size: 15px;
+        line-height: 1.2;
+        word-break: break-word;
+      }
+
+      .help-location span:last-child {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
       .help-panel__actions {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
       }
-    }
-  </style>
-</head>
 
-<body>
+      .help-panel__actions--emergency {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+      }
 
-  <div class="topbar">
-    <h1>Walk the Route</h1>
-    <p>Heathrow Charity Event</p>
-  </div>
+      .help-action {
+        border: none;
+        border-radius: 14px;
+        padding: 11px 10px;
+        background: #14b8a6;
+        color: #06111f;
+        font-weight: 800;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        font-size: 13px;
+        all: unset;
+      }
 
-  <div class="warning" id="warning">
-    You may be off the official route
-  </div>
+      .help-action--danger {
+        background: #ef4444;
+        color: white;
+      }
 
-  <div class="route-card" id="route-card">
-    <div class="route-card__main">
-      <div class="route-card__text">
-        <span class="route-card__label">Route progress</span>
-        <span class="route-card__value" id="progress-value">0%</span>
-      </div>
+      .help-guidance {
+        background: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 8px;
+        margin-top: 6px;
+      }
 
-      <div class="route-card__meta">
-        <span id="distance-value">0 m from route</span>
-        <span id="next-thing-value">Next: checking route...</span>
-        <span class="route-card__source">Route source: Heathrow perimeter</span>
-      </div>
+      .help-guidance summary {
+        padding: 6px 0;
+        font-size: 13px;
+        opacity: 0.75;
+      }
+
+      .help-action--emergency {
+        width: 100%;
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #ef4444;
+        color: white;
+        font-weight: 900;
+      }
+
+      .help-guidance summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .help-guidance summary::after {
+        content: "＋";
+        float: right;
+        opacity: 0.75;
+      }
+
+      .help-guidance[open] summary::after {
+        content: "−";
+      }
+
+      .help-guidance__steps {
+        display: grid;
+        gap: 8px;
+        padding: 0 10px 10px;
+      }
+
+      .help-step {
+        padding: 9px 10px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        display: grid;
+        gap: 3px;
+      }
+
+      .help-step strong {
+        font-size: 13px;
+      }
+
+      .help-step span {
+        font-size: 12px;
+        line-height: 1.3;
+        color: rgba(255, 255, 255, 0.74);
+      }
+
+      .help-backdrop {
+        position: absolute;
+        inset: 0;
+        z-index: 25;
+
+        background: rgba(3, 7, 18, 0.38);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+
+        opacity: 0;
+        pointer-events: none;
+
+        transition: opacity 0.24s ease;
+      }
+
+      .help-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      #next-thing-value {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 700;
+      }
+
+      .help-primary {
+        display: block;
+        width: 100%;
+        background: #14b8a6;
+        color: #06111f;
+        font-weight: 800;
+        padding: 14px;
+        border-radius: 16px;
+        text-align: center;
+      }
+
+      .help-link {
+        display: block;
+        text-align: center;
+
+        font-size: 13px;
+        opacity: 0.7;
+      }
+
+      .help-emergency {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        text-align: center;
+        font-size: 13px;
+        opacity: 0.7;
+      }
+
+      .help-emergency a {
+        color: #f87171;
+        font-weight: 700;
+        text-decoration: underline;
+      }
+
+      @media (max-width: 480px) {
+        .help-panel {
+          bottom: 86px;
+          left: 10px;
+          right: 10px;
+          padding: 9px 10px 10px;
+        }
+
+        .help-panel h2 {
+          font-size: 19px;
+        }
+
+        .help-summary {
+          padding: 0;
+          background: none;
+        }
+
+        .help-summary p {
+          font-size: 12px;
+        }
+
+        .help-location {
+          margin-top: 12px;
+          padding: 0;
+          border: none;
+          background: none;
+        }
+
+        .help-location strong {
+          font-size: 13px;
+        }
+
+        .help-action {
+          padding: 10px 8px;
+        }
+      }
+
+      .help-steps {
+        margin: 8px 0 6px;
+        padding-left: 16px;
+        font-size: 13px;
+        line-height: 1.4;
+        opacity: 0.85;
+      }
+
+      .help-steps li {
+        margin-bottom: 4px;
+      }
+
+      .help-primary::after {
+        content: " →";
+        opacity: 0.7;
+      }
+
+      @media (max-width: 480px) {
+        .topbar {
+          padding: 16px 12px 22px;
+        }
+
+        .topbar h1 {
+          font-size: 22px;
+        }
+
+        .topbar p {
+          font-size: 13px;
+        }
+
+        .warning {
+          top: 82px;
+          left: 12px;
+          right: 12px;
+          padding: 11px 12px;
+          font-size: 13px;
+        }
+
+        .route-card {
+          top: 132px;
+          left: 12px;
+          right: 12px;
+          padding: 11px 12px;
+          align-items: flex-start;
+        }
+
+        .route-card__value {
+          font-size: 18px;
+        }
+
+        .route-card__meta {
+          font-size: 11px;
+        }
+
+        .bottom-panel {
+          left: 12px;
+          right: 12px;
+          bottom: 12px;
+          gap: 8px;
+        }
+
+        .card {
+          padding: 12px 8px;
+          font-size: 12px;
+        }
+
+        .card strong {
+          font-size: 14px;
+        }
+      }
+
+      @media (max-width: 360px) {
+        .route-card {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .route-card__badge {
+          width: 100%;
+          text-align: center;
+        }
+
+        .bottom-panel {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (min-width: 520px) {
+        .help-panel__actions {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="topbar">
+      <h1>Walk the Route</h1>
+      <p>Heathrow Charity Event</p>
     </div>
 
-    <span class="route-card__badge" id="route-badge">On route</span>
-  </div>
+    <div class="warning" id="warning">You may be off the official route</div>
 
-  <button class="follow-toggle-button" id="follow-toggle-button" aria-label="Toggle follow mode" title="Follow me">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18.4A8.4 8.4 0 1 1 20.4 12 8.41 8.41 0 0 1 12 20.4Zm0-13.2a4.8 4.8 0 1 0 4.8 4.8A4.805 4.805 0 0 0 12 7.2Zm0 7.2a2.4 2.4 0 1 1 2.4-2.4A2.403 2.403 0 0 1 12 14.4Z" />
-    </svg>
-  </button>
-
-  <button class="route-center-button" id="route-center-button" aria-label="Show full route" title="Show full route">
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        d="M6 4.5a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5S7.4 4.5 6 4.5Zm0 3.6A1.1 1.1 0 1 1 6 5.9a1.1 1.1 0 0 1 0 2.2Zm12 6.4a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5Zm0 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2ZM8.7 8.4l1.1-1.1 6.4 6.4-1.1 1.1-6.4-6.4Zm7.1-1.8h-4.2V5.1h4.2c2.1 0 3.8 1.7 3.8 3.8v1.9h-1.5V8.9c0-1.3-1-2.3-2.3-2.3ZM4.4 13.2h1.5v1.9c0 1.3 1 2.3 2.3 2.3h4.2v1.5H8.2c-2.1 0-3.8-1.7-3.8-3.8v-1.9Z" />
-    </svg>
-  </button>
-
-  <div id="map"></div>
-
-  <div class="help-backdrop" id="help-backdrop"></div>
-
-  <div class="help-panel" id="help-panel">
-    <div class="help-panel__handle"></div>
-
-    <div class="help-panel__header">
-      <div>
-        <span class="help-panel__label">Route help</span>
-        <h2>Need help?</h2>
-      </div>
-
-      <button class="help-panel__close" id="help-close-button" aria-label="Close help panel">
-        ×
-      </button>
-    </div>
-
-    <div class="help-panel__body compact-help">
-
-      <div class="help-summary">
-        <p>
-          Move somewhere safe, away from traffic. Check your location below.
-          If you cannot safely rejoin the route, contact event support.
-        </p>
-
-        <p class="help-summary__urgent">
-          Immediate danger? Call 999.
-        </p>
-      </div>
-
-      <div class="help-location">
-        <span class="help-location__label">Your current location</span>
-        <strong id="help-coordinates">Waiting for location...</strong>
-        <span id="help-route-distance">Distance from route unavailable</span>
-      </div>
-
-      <div class="help-panel__actions">
-        <button class="help-action" id="show-location-button">Show my position</button>
-        <a class="help-action" id="event-support-link" href="#">Event support number TBC</a>
-      </div>
-
-      <details class="help-guidance">
-        <summary>View route guidance</summary>
-
-        <div class="help-guidance__steps">
-          <div class="help-step">
-            <strong>1. Move somewhere safe</strong>
-            <span>Step away from traffic, vehicle crossings or narrow sections before checking the map.</span>
-          </div>
-
-          <div class="help-step">
-            <strong>2. Check your position</strong>
-            <span>Use your blue marker and the purple route line to understand where you are.</span>
-          </div>
-
-          <div class="help-step">
-            <strong>3. Do not guess the route</strong>
-            <span>If you cannot safely rejoin the purple route, stay where it is safe and contact event support.</span>
-          </div>
+    <div class="route-card" id="route-card">
+      <div class="route-card__main">
+        <div class="route-card__text">
+          <span class="route-card__label">Route progress</span>
+          <span class="route-card__value" id="progress-value">0%</span>
         </div>
-      </details>
 
-      <div class="help-panel__actions help-panel__actions--emergency">
-        <a class="help-action help-action--danger" href="tel:999">Call 999</a>
+        <div class="route-card__meta">
+          <span id="distance-value">0 m from route</span>
+          <span id="next-thing-value">Next: checking route...</span>
+          <span class="route-card__source"
+            >Route source: Heathrow perimeter</span
+          >
+        </div>
+      </div>
+
+      <span class="route-card__badge" id="route-badge">On route</span>
+    </div>
+
+    <button
+      class="follow-toggle-button"
+      id="follow-toggle-button"
+      aria-label="Toggle follow mode"
+      title="Follow me"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18.4A8.4 8.4 0 1 1 20.4 12 8.41 8.41 0 0 1 12 20.4Zm0-13.2a4.8 4.8 0 1 0 4.8 4.8A4.805 4.805 0 0 0 12 7.2Zm0 7.2a2.4 2.4 0 1 1 2.4-2.4A2.403 2.403 0 0 1 12 14.4Z"
+        />
+      </svg>
+    </button>
+
+    <button
+      class="route-center-button"
+      id="route-center-button"
+      aria-label="Show full route"
+      title="Show full route"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path
+          d="M6 4.5a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5S7.4 4.5 6 4.5Zm0 3.6A1.1 1.1 0 1 1 6 5.9a1.1 1.1 0 0 1 0 2.2Zm12 6.4a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5Zm0 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2ZM8.7 8.4l1.1-1.1 6.4 6.4-1.1 1.1-6.4-6.4Zm7.1-1.8h-4.2V5.1h4.2c2.1 0 3.8 1.7 3.8 3.8v1.9h-1.5V8.9c0-1.3-1-2.3-2.3-2.3ZM4.4 13.2h1.5v1.9c0 1.3 1 2.3 2.3 2.3h4.2v1.5H8.2c-2.1 0-3.8-1.7-3.8-3.8v-1.9Z"
+        />
+      </svg>
+    </button>
+
+    <div id="map"></div>
+
+    <div class="help-backdrop" id="help-backdrop"></div>
+
+    <div class="help-panel" id="help-panel">
+      <div class="help-panel__handle"></div>
+
+      <div class="help-panel__header">
+        <div>
+          <span class="help-panel__label">Route help</span>
+          <h2>Need help?</h2>
+        </div>
+
+        <button class="help-panel__close" id="help-close-button">×</button>
+      </div>
+
+      <div class="help-panel__body compact-help">
+        <div class="help-summary">
+          <p>Move somewhere safe, away from traffic.</p>
+
+          <ul class="help-steps">
+            <li>Use the map to find the purple route</li>
+            <li>Follow it until you’re back on track</li>
+            <li>If unsure, stay safe and wait for support</li>
+          </ul>
+        </div>
+
+        <div class="help-location">
+          <span class="help-location__label">Your location</span>
+          <strong id="help-coordinates">Waiting for location…</strong>
+          <span id="help-route-distance">Distance from route unavailable</span>
+        </div>
+
+        <button class="help-primary" id="show-location-button">
+          Show my position
+        </button>
+
+        <a class="help-link" id="event-support-link">
+          Event support number TBC
+        </a>
+
+        <p class="help-emergency">
+          If there is immediate danger,
+          <a href="tel:999">call 999</a>
+        </p>
       </div>
     </div>
 
     <div class="bottom-panel">
       <div class="card" id="hazards-button"><strong>Hazards</strong></div>
       <div class="card" id="rest-button"><strong>Rest</strong></div>
-      <div class="card help-card" id="help-button"><strong>Need help</strong></div>
+      <div class="card help-card" id="help-button">
+        <strong>Need help</strong>
+      </div>
     </div>
 
     <script>
       mapboxgl.accessToken =
-        'pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ';
+        "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
 
-      const routeGeoJsonUrl = 'heathrow-perimeter-route.geojson';
+      const routeGeoJsonUrl = "heathrow-perimeter-route.geojson";
       const fallbackRouteCoordinates = [
-        [-0.4543, 51.4700],
+        [-0.4543, 51.47],
         [-0.4552, 51.4706],
         [-0.4561, 51.4712],
         [-0.4573, 51.4719],
         [-0.4588, 51.4724],
-        [-0.4600, 51.4729],
+        [-0.46, 51.4729],
         [-0.4614, 51.4736],
         [-0.4629, 51.4742],
         [-0.4645, 51.4748],
         [-0.4661, 51.4751],
         [-0.4676, 51.4754],
-        [-0.4690, 51.4753],
-        [-0.4700, 51.4750]
+        [-0.469, 51.4753],
+        [-0.47, 51.475],
       ];
       let routeCoordinates = [];
 
@@ -768,30 +828,50 @@
       const POSITION_UPDATE_MIN_MS = 8000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
-      const WARNING_ID = 'warning';
-      const DISTANCE_VALUE_ID = 'distance-value';
-      const PROGRESS_VALUE_ID = 'progress-value';
-      const ROUTE_BADGE_ID = 'route-badge';
-      const NEXT_THING_VALUE_ID = 'next-thing-value';
-      const ROUTE_CENTER_BUTTON_ID = 'route-center-button';
-      const FOLLOW_TOGGLE_BUTTON_ID = 'follow-toggle-button';
+      const WARNING_ID = "warning";
+      const DISTANCE_VALUE_ID = "distance-value";
+      const PROGRESS_VALUE_ID = "progress-value";
+      const ROUTE_BADGE_ID = "route-badge";
+      const NEXT_THING_VALUE_ID = "next-thing-value";
+      const ROUTE_CENTER_BUTTON_ID = "route-center-button";
+      const FOLLOW_TOGGLE_BUTTON_ID = "follow-toggle-button";
 
       // Route segments - divide 182 waypoints into 4 sections
       const SEGMENTS = [
-        { name: 'Terminal South', startIdx: 0, endIdx: 45, milestone: 'Terminal building' },
-        { name: 'Cargo perimeter', startIdx: 46, endIdx: 90, milestone: 'Cargo facility' },
-        { name: 'Northern loop', startIdx: 91, endIdx: 136, milestone: 'Northern gate' },
-        { name: 'Return stretch', startIdx: 137, endIdx: 181, milestone: 'Finish line' }
+        {
+          name: "Terminal South",
+          startIdx: 0,
+          endIdx: 45,
+          milestone: "Terminal building",
+        },
+        {
+          name: "Cargo perimeter",
+          startIdx: 46,
+          endIdx: 90,
+          milestone: "Cargo facility",
+        },
+        {
+          name: "Northern loop",
+          startIdx: 91,
+          endIdx: 136,
+          milestone: "Northern gate",
+        },
+        {
+          name: "Return stretch",
+          startIdx: 137,
+          endIdx: 181,
+          milestone: "Finish line",
+        },
       ];
 
       const map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/dark-v11',
-        center: [-0.4543, 51.4700],
+        container: "map",
+        style: "mapbox://styles/mapbox/dark-v11",
+        center: [-0.4543, 51.47],
         zoom: 13.5,
         pitch: 0,
         bearing: 0,
-        attributionControl: false
+        attributionControl: false,
       });
 
       let userMarker;
@@ -800,7 +880,7 @@
       let userDirectionIndex = 0;
       let hasInitialPosition = false;
       let lastWarningUpdate = 0;
-      let lastWarningState = '';
+      let lastWarningState = "";
       let lastViewCenter = null;
       let lastPosition = null;
       let lastPositionTime = 0;
@@ -821,7 +901,7 @@
           lat: 51.4705,
           type: "No pavement",
           message: "No pavement – walk single file",
-          radius: 150
+          radius: 150,
         },
         {
           id: 2,
@@ -829,15 +909,15 @@
           lat: 51.4725,
           type: "Vehicle crossing",
           message: "Active vehicle crossing",
-          radius: 150
+          radius: 150,
         },
         {
           id: 3,
           lng: -0.4665,
-          lat: 51.4750,
+          lat: 51.475,
           type: "Narrow verge",
           message: "Narrow walking space",
-          radius: 120
+          radius: 120,
         },
         {
           id: 4,
@@ -845,47 +925,47 @@
           lat: 51.4753,
           type: "Poor lighting",
           message: "Low visibility area",
-          radius: 200
+          radius: 200,
         },
         {
           id: 5,
-          lng: -0.4620,
+          lng: -0.462,
           lat: 51.4735,
           type: "Mixed traffic",
           message: "Shared with vehicles",
-          radius: 150
-        }
+          radius: 150,
+        },
       ];
 
       // HAZARDS
-      hazards.forEach(h => {
-        const marker = new mapboxgl.Marker({ color: '#ef4444' })
+      hazards.forEach((h) => {
+        const marker = new mapboxgl.Marker({ color: "#ef4444" })
           .setLngLat([h.lng, h.lat])
           .setPopup(
-            new mapboxgl.Popup().setHTML(`<strong>${h.type}</strong><p>${h.message}</p>`)
+            new mapboxgl.Popup().setHTML(
+              `<strong>${h.type}</strong><p>${h.message}</p>`,
+            ),
           )
           .addTo(map);
 
-        marker.getElement().style.display = showHazards ? 'block' : 'none';
+        marker.getElement().style.display = showHazards ? "block" : "none";
 
         hazardMarkers.push(marker);
       });
 
       // REST STOPS
       const restStops = [
-        { lng: -0.4580, lat: 51.4715, label: "Water + Toilets" },
-        { lng: -0.4665, lat: 51.4750, label: "Rest Area" }
+        { lng: -0.458, lat: 51.4715, label: "Water + Toilets" },
+        { lng: -0.4665, lat: 51.475, label: "Rest Area" },
       ];
 
-      restStops.forEach(r => {
-        const marker = new mapboxgl.Marker({ color: '#3b82f6' })
+      restStops.forEach((r) => {
+        const marker = new mapboxgl.Marker({ color: "#3b82f6" })
           .setLngLat([r.lng, r.lat])
-          .setPopup(
-            new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`)
-          )
+          .setPopup(new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`))
           .addTo(map);
 
-        marker.getElement().style.display = showRest ? 'block' : 'none';
+        marker.getElement().style.display = showRest ? "block" : "none";
 
         restMarkers.push(marker);
       });
@@ -896,7 +976,12 @@
 
       function getCurrentSegment(userPoint) {
         if (routeCoordinates.length < 2) {
-          return { segment: SEGMENTS[0], segmentProgress: 0, nextMilestone: SEGMENTS[0].milestone, distanceToMilestone: 0 };
+          return {
+            segment: SEGMENTS[0],
+            segmentProgress: 0,
+            nextMilestone: SEGMENTS[0].milestone,
+            distanceToMilestone: 0,
+          };
         }
 
         let bestDistance = Number.POSITIVE_INFINITY;
@@ -950,9 +1035,13 @@
 
           const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
           const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-          const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+          const pointDistance = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
           const segmentLength = haversineDistanceMeters(start, end);
-          const candidateProgress = segmentDistances[i] + segmentLength * clampedProjection;
+          const candidateProgress =
+            segmentDistances[i] + segmentLength * clampedProjection;
 
           if (pointDistance < bestDistance) {
             bestDistance = pointDistance;
@@ -964,7 +1053,10 @@
         // Determine which segment based on coordinate index
         let currentSegmentIndex = 0;
         for (let s = 0; s < SEGMENTS.length; s += 1) {
-          if (bestSegmentIndex >= SEGMENTS[s].startIdx && bestSegmentIndex <= SEGMENTS[s].endIdx) {
+          if (
+            bestSegmentIndex >= SEGMENTS[s].startIdx &&
+            bestSegmentIndex <= SEGMENTS[s].endIdx
+          ) {
             currentSegmentIndex = s;
             break;
           }
@@ -976,17 +1068,25 @@
         let distanceToMilestone = 0;
         const nextSegmentIndex = currentSegmentIndex + 1;
         if (nextSegmentIndex < SEGMENTS.length) {
-          const milestoneCoord = routeCoordinates[SEGMENTS[nextSegmentIndex].startIdx] || routeCoordinates[routeCoordinates.length - 1];
-          distanceToMilestone = haversineDistanceMeters(userPoint, milestoneCoord);
+          const milestoneCoord =
+            routeCoordinates[SEGMENTS[nextSegmentIndex].startIdx] ||
+            routeCoordinates[routeCoordinates.length - 1];
+          distanceToMilestone = haversineDistanceMeters(
+            userPoint,
+            milestoneCoord,
+          );
         }
 
         return {
           segment: currentSegment,
           segmentProgress: (bestSegmentProgress / totalRouteDistance) * 100,
-          nextMilestone: nextSegmentIndex < SEGMENTS.length ? SEGMENTS[nextSegmentIndex].milestone : 'Finish line',
+          nextMilestone:
+            nextSegmentIndex < SEGMENTS.length
+              ? SEGMENTS[nextSegmentIndex].milestone
+              : "Finish line",
           distanceToMilestone,
           currentSegmentNumber: currentSegmentIndex + 1,
-          totalSegments: SEGMENTS.length
+          totalSegments: SEGMENTS.length,
         };
       }
 
@@ -1014,11 +1114,14 @@
 
         if (bounds) {
           map.fitBounds(
-            [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+            [
+              [bounds[0], bounds[1]],
+              [bounds[2], bounds[3]],
+            ],
             {
               padding: { top: 120, bottom: 180, left: 40, right: 40 },
-              duration: 800
-            }
+              duration: 800,
+            },
           );
         }
       }
@@ -1034,8 +1137,8 @@
         const a =
           Math.sin(dLat / 2) ** 2 +
           Math.cos(toRadians(lat1)) *
-          Math.cos(toRadians(lat2)) *
-          Math.sin(dLng / 2) ** 2;
+            Math.cos(toRadians(lat2)) *
+            Math.sin(dLng / 2) ** 2;
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return earthRadius * c;
@@ -1048,7 +1151,7 @@
             distance: 0,
             segmentIndex: 0,
             isAhead: false,
-            isBehind: false
+            isBehind: false,
           };
         }
 
@@ -1091,7 +1194,10 @@
 
           const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
           const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-          const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+          const pointDistance = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
 
           if (pointDistance < minDistance) {
             minDistance = pointDistance;
@@ -1112,7 +1218,7 @@
           distance: minDistance,
           segmentIndex: closestSegmentIndex,
           isAhead,
-          isBehind
+          isBehind,
         };
       }
 
@@ -1145,15 +1251,22 @@
           const dLatU = latU - lat1;
 
           const projection =
-            (dLngU * dLng + dLatU * dLat) /
-            (dLng * dLng + dLat * dLat);
+            (dLngU * dLng + dLatU * dLat) / (dLng * dLng + dLat * dLat);
 
           const clampedProjection = Math.max(0, Math.min(1, projection));
           const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
           const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-          const distanceToSegment = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+          const distanceToSegment = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
 
-          minDistance = Math.min(minDistance, distanceToSegment, startToUser, endToUser);
+          minDistance = Math.min(
+            minDistance,
+            distanceToSegment,
+            startToUser,
+            endToUser,
+          );
         }
 
         return minDistance;
@@ -1162,7 +1275,7 @@
         if (routeCoordinates.length < 2) {
           return {
             distanceAlongRoute: 0,
-            distanceFromRoute: Infinity
+            distanceFromRoute: Infinity,
           };
         }
 
@@ -1200,8 +1313,12 @@
           const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
           const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
 
-          const distanceFromRoute = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
-          const distanceAlongRoute = totalBeforeSegment + segmentLength * clampedProjection;
+          const distanceFromRoute = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
+          const distanceAlongRoute =
+            totalBeforeSegment + segmentLength * clampedProjection;
 
           if (distanceFromRoute < bestDistance) {
             bestDistance = distanceFromRoute;
@@ -1213,7 +1330,7 @@
 
         return {
           distanceAlongRoute: bestDistanceAlongRoute,
-          distanceFromRoute: bestDistance
+          distanceFromRoute: bestDistance,
         };
       }
 
@@ -1225,29 +1342,30 @@
         const userMeasure = getRouteMeasure(userPoint);
 
         const routeItems = [
-          ...hazards.map(h => ({
-            type: 'hazard',
+          ...hazards.map((h) => ({
+            type: "hazard",
             label: h.type,
-            point: [h.lng, h.lat]
+            point: [h.lng, h.lat],
           })),
-          ...restStops.map(r => ({
-            type: 'rest',
+          ...restStops.map((r) => ({
+            type: "rest",
             label: r.label,
-            point: [r.lng, r.lat]
-          }))
+            point: [r.lng, r.lat],
+          })),
         ];
 
         const upcomingItems = routeItems
-          .map(item => {
+          .map((item) => {
             const itemMeasure = getRouteMeasure(item.point);
 
             return {
               ...item,
-              distanceAhead: itemMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
-              distanceFromRoute: itemMeasure.distanceFromRoute
+              distanceAhead:
+                itemMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
+              distanceFromRoute: itemMeasure.distanceFromRoute,
             };
           })
-          .filter(item => item.distanceAhead > 15)
+          .filter((item) => item.distanceAhead > 15)
           .sort((a, b) => a.distanceAhead - b.distanceAhead);
 
         return upcomingItems[0] || null;
@@ -1261,17 +1379,19 @@
         const userMeasure = getRouteMeasure(userPoint);
 
         const upcomingHazards = hazards
-          .map(h => {
+          .map((h) => {
             const hazardPoint = [h.lng, h.lat];
             const hazardMeasure = getRouteMeasure(hazardPoint);
 
             return {
               ...h,
-              distanceAhead: hazardMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
-              distanceFromRoute: hazardMeasure.distanceFromRoute
+              distanceAhead:
+                hazardMeasure.distanceAlongRoute -
+                userMeasure.distanceAlongRoute,
+              distanceFromRoute: hazardMeasure.distanceFromRoute,
             };
           })
-          .filter(h => h.distanceAhead > 25)
+          .filter((h) => h.distanceAhead > 25)
           .sort((a, b) => a.distanceAhead - b.distanceAhead);
 
         return upcomingHazards[0] || null;
@@ -1290,26 +1410,25 @@
           const distanceToRoute = getDistanceToRoute(userPoint);
 
           if (distanceToRoute < 50) {
-            nextThingValue.textContent = 'You’re at the finish';
+            nextThingValue.textContent = "You’re at the finish";
           } else {
-            nextThingValue.textContent = 'Finish ahead';
+            nextThingValue.textContent = "Finish ahead";
           }
 
           return;
         }
 
-        const icon = nextThing.type === 'hazard' ? '⚠️' : '☕';
+        const icon = nextThing.type === "hazard" ? "⚠️" : "☕";
         const distance = formatDistance(nextThing.distanceAhead);
 
         nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
       }
 
-
-      function showWarning(message, level = '') {
+      function showWarning(message, level = "") {
         const warning = document.getElementById(WARNING_ID);
         warning.textContent = message;
         warning.className = `warning ${level}`.trim();
-        warning.style.display = message ? 'block' : 'none';
+        warning.style.display = message ? "block" : "none";
       }
 
       function formatDistance(distance) {
@@ -1374,8 +1493,12 @@
 
           const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
           const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-          const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
-          const candidateProgress = runningLength + segmentLength * clampedProjection;
+          const pointDistance = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
+          const candidateProgress =
+            runningLength + segmentLength * clampedProjection;
 
           if (pointDistance < bestDistance) {
             bestDistance = pointDistance;
@@ -1386,7 +1509,10 @@
         }
 
         const progress = (bestProgress / totalLength) * 100;
-        const distanceToStart = haversineDistanceMeters(userPoint, routeCoordinates[0]);
+        const distanceToStart = haversineDistanceMeters(
+          userPoint,
+          routeCoordinates[0],
+        );
 
         if (distanceToStart > START_APPROACH_DISTANCE) {
           return 0;
@@ -1404,17 +1530,21 @@
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
         const hasValidDistance = Number.isFinite(distance);
-        const normalizedDistance = hasValidDistance ? Math.max(0, distance) : null;
+        const normalizedDistance = hasValidDistance
+          ? Math.max(0, distance)
+          : null;
         const displayProgress =
-          progress >= 99 && normalizedDistance !== null && normalizedDistance > FINISH_APPROACH_DISTANCE
+          progress >= 99 &&
+          normalizedDistance !== null &&
+          normalizedDistance > FINISH_APPROACH_DISTANCE
             ? 99
             : progress;
 
         if (!hasValidDistance || normalizedDistance === null) {
-          progressValue.textContent = 'Section 1/4';
-          distanceValue.textContent = 'Waiting for start';
-          routeBadge.textContent = 'Preparing';
-          routeBadge.className = 'route-card__badge';
+          progressValue.textContent = "Section 1/4";
+          distanceValue.textContent = "Waiting for start";
+          routeBadge.textContent = "Preparing";
+          routeBadge.className = "route-card__badge";
           return;
         }
 
@@ -1423,7 +1553,9 @@
         // Display segment info instead of percentage
         if (segmentInfo) {
           progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
-          const nextMilestoneDistance = formatDistance(segmentInfo.distanceToMilestone);
+          const nextMilestoneDistance = formatDistance(
+            segmentInfo.distanceToMilestone,
+          );
           distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
         } else {
           progressValue.textContent = `${Math.round(safeProgress)}%`;
@@ -1431,31 +1563,31 @@
         }
 
         if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
-          routeBadge.textContent = 'Far off route';
-          routeBadge.className = 'route-card__badge alert';
+          routeBadge.textContent = "Far off route";
+          routeBadge.className = "route-card__badge alert";
         } else if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
-          routeBadge.textContent = 'Near edge';
-          routeBadge.className = 'route-card__badge warning';
+          routeBadge.textContent = "Near edge";
+          routeBadge.className = "route-card__badge warning";
         } else {
-          routeBadge.textContent = 'On route';
-          routeBadge.className = 'route-card__badge';
+          routeBadge.textContent = "On route";
+          routeBadge.className = "route-card__badge";
         }
       }
 
       function updateWarningState(distanceToRoute) {
         const now = Date.now();
-        let nextState = '';
-        let nextLevel = '';
+        let nextState = "";
+        let nextLevel = "";
 
         if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
-          nextState = 'You are far from the official route';
-          nextLevel = 'alert';
+          nextState = "You are far from the official route";
+          nextLevel = "alert";
         } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
-          nextState = 'You may be off the official route';
-          nextLevel = 'warning';
+          nextState = "You may be off the official route";
+          nextLevel = "warning";
         } else {
-          nextState = 'You are staying on the route';
-          nextLevel = 'safe';
+          nextState = "You are staying on the route";
+          nextLevel = "safe";
         }
 
         if (
@@ -1477,7 +1609,7 @@
         lastSnappedPosition = routeSnapshot.point;
 
         if (!userMarker) {
-          userMarker = new mapboxgl.Marker({ color: '#00AEEF' })
+          userMarker = new mapboxgl.Marker({ color: "#00AEEF" })
             .setLngLat(routeSnapshot.point)
             .addTo(map);
         } else {
@@ -1497,7 +1629,7 @@
           map.flyTo({
             center: newCenter,
             speed: 0.8,
-            zoom: 16
+            zoom: 16,
           });
           hasInitialPosition = true;
           lastViewCenter = newCenter;
@@ -1515,13 +1647,20 @@
           return;
         }
 
-        const distanceMoved = haversineDistanceMeters(lastViewCenter, newCenter);
+        const distanceMoved = haversineDistanceMeters(
+          lastViewCenter,
+          newCenter,
+        );
 
         if (lastPosition && lastPositionTime) {
           const elapsed = Math.max(1, now - lastPositionTime);
-          const speedMps = haversineDistanceMeters(lastPosition, newCenter) / (elapsed / 1000);
+          const speedMps =
+            haversineDistanceMeters(lastPosition, newCenter) / (elapsed / 1000);
 
-          if (speedMps < MIN_SPEED_FOR_FOLLOW && distanceMoved < VIEW_UPDATE_DISTANCE) {
+          if (
+            speedMps < MIN_SPEED_FOR_FOLLOW &&
+            distanceMoved < VIEW_UPDATE_DISTANCE
+          ) {
             lastPosition = newCenter;
             lastPositionTime = now;
             return;
@@ -1531,7 +1670,7 @@
         if (distanceMoved >= VIEW_UPDATE_DISTANCE) {
           map.easeTo({
             center: newCenter,
-            duration: 1000
+            duration: 1000,
           });
           lastViewCenter = newCenter;
         }
@@ -1549,10 +1688,16 @@
           return true;
         }
 
-        const moved = haversineDistanceMeters(lastProcessedPosition, [lng, lat]);
+        const moved = haversineDistanceMeters(lastProcessedPosition, [
+          lng,
+          lat,
+        ]);
         const elapsed = now - lastProcessedPositionTime;
 
-        if (moved >= POSITION_UPDATE_MIN_METERS || elapsed >= POSITION_UPDATE_MIN_MS) {
+        if (
+          moved >= POSITION_UPDATE_MIN_METERS ||
+          elapsed >= POSITION_UPDATE_MIN_MS
+        ) {
           lastProcessedPosition = [lng, lat];
           lastProcessedPositionTime = now;
           return true;
@@ -1563,195 +1708,229 @@
 
       function buildRouteFeatureFromCoordinates(coordinates) {
         return {
-          type: 'Feature',
+          type: "Feature",
           properties: {},
           geometry: {
-            type: 'LineString',
-            coordinates
-          }
+            type: "LineString",
+            coordinates,
+          },
         };
       }
 
       function addRouteToMap(routeFeature) {
         routeCoordinates = routeFeature.geometry.coordinates;
 
-        if (!map.getSource('route')) {
-          map.addSource('route', {
-            type: 'geojson',
-            data: routeFeature
+        if (!map.getSource("route")) {
+          map.addSource("route", {
+            type: "geojson",
+            data: routeFeature,
           });
 
           map.addLayer({
-            id: 'route-shadow',
-            type: 'line',
-            source: 'route',
+            id: "route-shadow",
+            type: "line",
+            source: "route",
             paint: {
-              'line-color': '#0b1223',
-              'line-width': 8,
-              'line-opacity': 0.45
-            }
+              "line-color": "#0b1223",
+              "line-width": 8,
+              "line-opacity": 0.45,
+            },
           });
 
           map.addLayer({
-            id: 'route-dotted-ahead',
-            type: 'line',
-            source: 'route',
+            id: "route-dotted-ahead",
+            type: "line",
+            source: "route",
             paint: {
-              'line-color': '#8b5cf6',
-              'line-width': 2,
-              'line-dasharray': [0, 1.5, 0.8, 1.5],
-              'line-opacity': 0.75
-            }
+              "line-color": "#8b5cf6",
+              "line-width": 2,
+              "line-dasharray": [0, 1.5, 0.8, 1.5],
+              "line-opacity": 0.75,
+            },
           });
 
           map.addLayer({
-            id: 'route-line',
-            type: 'line',
-            source: 'route',
+            id: "route-line",
+            type: "line",
+            source: "route",
             paint: {
-              'line-color': '#7c3aed',
-              'line-width': 3.5,
-              'line-opacity': 0.95
-            }
+              "line-color": "#7c3aed",
+              "line-width": 3.5,
+              "line-opacity": 0.95,
+            },
           });
         } else {
-          map.getSource('route').setData(routeFeature);
+          map.getSource("route").setData(routeFeature);
         }
 
         setInitialMapView();
 
         if (routeCoordinates.length > 0) {
-          new mapboxgl.Marker({ color: '#22c55e' })
+          new mapboxgl.Marker({ color: "#22c55e" })
             .setLngLat(routeCoordinates[0])
             .setPopup(
               new mapboxgl.Popup().setHTML(
-                '<h3>Start</h3><p>Route begins here</p>'
-              )
+                "<h3>Start</h3><p>Route begins here</p>",
+              ),
             )
             .addTo(map);
 
-          new mapboxgl.Marker({ color: '#f97316' })
+          new mapboxgl.Marker({ color: "#f97316" })
             .setLngLat(routeCoordinates[routeCoordinates.length - 1])
             .setPopup(
               new mapboxgl.Popup().setHTML(
-                '<h3>Finish</h3><p>End of route</p>'
-              )
+                "<h3>Finish</h3><p>End of route</p>",
+              ),
             )
             .addTo(map);
         }
       }
 
       function loadRouteGeoJson() {
-        if (window.location.protocol === 'file:') {
-          addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
+        if (window.location.protocol === "file:") {
+          addRouteToMap(
+            buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+          );
           showWarning(
-            'Open this page from a web server to load the exact route file',
-            'warning'
+            "Open this page from a web server to load the exact route file",
+            "warning",
           );
           return;
         }
 
         fetch(routeGeoJsonUrl)
-          .then(response => {
+          .then((response) => {
             if (!response.ok) {
-              throw new Error(`Failed to load route geojson: ${response.status}`);
+              throw new Error(
+                `Failed to load route geojson: ${response.status}`,
+              );
             }
             return response.json();
           })
-          .then(geojson => {
+          .then((geojson) => {
             let routeFeature = geojson;
 
-            if (geojson && geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
-              routeFeature = geojson.features.find(
-                feature => feature && feature.geometry && feature.geometry.type === 'LineString'
-              ) || geojson.features[0];
+            if (
+              geojson &&
+              geojson.type === "FeatureCollection" &&
+              Array.isArray(geojson.features)
+            ) {
+              routeFeature =
+                geojson.features.find(
+                  (feature) =>
+                    feature &&
+                    feature.geometry &&
+                    feature.geometry.type === "LineString",
+                ) || geojson.features[0];
             }
 
-            if (routeFeature && routeFeature.type === 'FeatureCollection') {
-              routeFeature = routeFeature.features.find(
-                feature => feature && feature.geometry && feature.geometry.type === 'LineString'
-              ) || routeFeature.features[0];
+            if (routeFeature && routeFeature.type === "FeatureCollection") {
+              routeFeature =
+                routeFeature.features.find(
+                  (feature) =>
+                    feature &&
+                    feature.geometry &&
+                    feature.geometry.type === "LineString",
+                ) || routeFeature.features[0];
             }
 
             const geometry = routeFeature && routeFeature.geometry;
 
-            if (!geometry || geometry.type !== 'LineString' || !Array.isArray(geometry.coordinates)) {
-              throw new Error('GeoJSON must contain a LineString geometry.');
+            if (
+              !geometry ||
+              geometry.type !== "LineString" ||
+              !Array.isArray(geometry.coordinates)
+            ) {
+              throw new Error("GeoJSON must contain a LineString geometry.");
             }
 
             addRouteToMap(routeFeature);
           })
-          .catch(error => {
+          .catch((error) => {
             console.error(error);
-            addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
-            showWarning('Using fallback route preview', 'warning');
+            addRouteToMap(
+              buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+            );
+            showWarning("Using fallback route preview", "warning");
           });
       }
 
       // Route button
-      document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
+      document
+        .getElementById(ROUTE_CENTER_BUTTON_ID)
+        .addEventListener("click", centerMapOnRoute);
 
       // Follow button
       const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
 
-      document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
-        followMode = !followMode;
+      document
+        .getElementById(FOLLOW_TOGGLE_BUTTON_ID)
+        .addEventListener("click", () => {
+          followMode = !followMode;
 
-        followButton.style.opacity = followMode ? '1' : '0.5';
+          followButton.style.opacity = followMode ? "1" : "0.5";
 
-        if (followMode && lastSnappedPosition) {
-          map.easeTo({
-            center: lastSnappedPosition,
-            zoom: 16,
-            duration: 600
-          });
-        }
+          if (followMode && lastSnappedPosition) {
+            map.easeTo({
+              center: lastSnappedPosition,
+              zoom: 16,
+              duration: 600,
+            });
+          }
 
-        if (followMode && getDistanceToRoute(lastActualPosition || [-0.4543, 51.4700]) > 300) {
-          showWarning('Move closer to the route to enable tracking', 'warning');
-        }
-      });
-
-      // Hazards button
-      const hazardsButton = document.getElementById('hazards-button');
-
-      hazardsButton.addEventListener('click', () => {
-        showHazards = !showHazards;
-
-        hazardMarkers.forEach(marker => {
-          marker.getElement().style.display = showHazards ? 'block' : 'none';
+          if (
+            followMode &&
+            getDistanceToRoute(lastActualPosition || [-0.4543, 51.47]) > 300
+          ) {
+            showWarning(
+              "Move closer to the route to enable tracking",
+              "warning",
+            );
+          }
         });
 
-        hazardsButton.classList.toggle('on', showHazards);
+      // Hazards button
+      const hazardsButton = document.getElementById("hazards-button");
+
+      hazardsButton.addEventListener("click", () => {
+        showHazards = !showHazards;
+
+        hazardMarkers.forEach((marker) => {
+          marker.getElement().style.display = showHazards ? "block" : "none";
+        });
+
+        hazardsButton.classList.toggle("on", showHazards);
       });
 
       // Rest button
-      const restButton = document.getElementById('rest-button');
+      const restButton = document.getElementById("rest-button");
 
-      restButton.addEventListener('click', () => {
+      restButton.addEventListener("click", () => {
         showRest = !showRest;
 
-        restMarkers.forEach(marker => {
-          marker.getElement().style.display = showRest ? 'block' : 'none';
+        restMarkers.forEach((marker) => {
+          marker.getElement().style.display = showRest ? "block" : "none";
         });
 
-        restButton.classList.toggle('on', showRest);
+        restButton.classList.toggle("on", showRest);
       });
 
       // Help button
-      const helpButton = document.getElementById('help-button');
-      const helpPanel = document.getElementById('help-panel');
-      const helpBackdrop = document.getElementById('help-backdrop');
-      const helpCloseButton = document.getElementById('help-close-button');
-      const showLocationButton = document.getElementById('show-location-button');
-      const helpCoordinates = document.getElementById('help-coordinates');
-      const helpRouteDistance = document.getElementById('help-route-distance');
-      const eventSupportLink = document.getElementById('event-support-link');
-      const EVENT_SUPPORT_PHONE = 'REPLACE_WITH_EVENT_SUPPORT_NUMBER';
-      if (EVENT_SUPPORT_PHONE === 'REPLACE_WITH_EVENT_SUPPORT_NUMBER') {
-        eventSupportLink.removeAttribute('href');
-        eventSupportLink.textContent = 'Event support number TBC';
-        eventSupportLink.style.opacity = '0.6';
+      const helpButton = document.getElementById("help-button");
+      const helpPanel = document.getElementById("help-panel");
+      const helpBackdrop = document.getElementById("help-backdrop");
+      const helpCloseButton = document.getElementById("help-close-button");
+      const showLocationButton = document.getElementById(
+        "show-location-button",
+      );
+      const helpCoordinates = document.getElementById("help-coordinates");
+      const helpRouteDistance = document.getElementById("help-route-distance");
+      const eventSupportLink = document.getElementById("event-support-link");
+      const EVENT_SUPPORT_PHONE = "REPLACE_WITH_EVENT_SUPPORT_NUMBER";
+      if (EVENT_SUPPORT_PHONE === "REPLACE_WITH_EVENT_SUPPORT_NUMBER") {
+        eventSupportLink.removeAttribute("href");
+        eventSupportLink.textContent = "Event support number TBC";
+        eventSupportLink.style.opacity = "0.6";
       } else {
         eventSupportLink.href = `tel:${EVENT_SUPPORT_PHONE}`;
       }
@@ -1762,8 +1941,8 @@
         }
 
         if (!lastActualPosition) {
-          helpCoordinates.textContent = 'Waiting for location...';
-          helpRouteDistance.textContent = 'Distance from route unavailable';
+          helpCoordinates.textContent = "Getting your location…";
+          helpRouteDistance.textContent = "Make sure location is enabled";
           return;
         }
 
@@ -1775,35 +1954,35 @@
         if (Number.isFinite(distanceToRoute)) {
           helpRouteDistance.textContent = `${formatDistance(distanceToRoute)} from the purple route`;
         } else {
-          helpRouteDistance.textContent = 'Distance from route unavailable';
+          helpRouteDistance.textContent = "Distance from route unavailable";
         }
       }
 
       function setHelpPanel(open) {
         showHelp = open;
 
-        helpButton.classList.toggle('on', showHelp);
-        helpPanel.classList.toggle('open', showHelp);
-        helpBackdrop.classList.toggle('open', showHelp);
+        helpButton.classList.toggle("on", showHelp);
+        helpPanel.classList.toggle("open", showHelp);
+        helpBackdrop.classList.toggle("open", showHelp);
 
         if (showHelp) {
           updateHelpLocationPanel();
         }
       }
 
-      helpButton.addEventListener('click', () => {
+      helpButton.addEventListener("click", () => {
         setHelpPanel(!showHelp);
       });
 
-      helpCloseButton.addEventListener('click', () => {
+      helpCloseButton.addEventListener("click", () => {
         setHelpPanel(false);
       });
 
-      helpBackdrop.addEventListener('click', () => {
+      helpBackdrop.addEventListener("click", () => {
         setHelpPanel(false);
       });
 
-      showLocationButton.addEventListener('click', () => {
+      showLocationButton.addEventListener("click", () => {
         updateHelpLocationPanel();
 
         const target = lastActualPosition || lastSnappedPosition;
@@ -1814,28 +1993,30 @@
           map.easeTo({
             center: target,
             zoom: 17,
-            duration: 700
+            duration: 700,
           });
         } else {
-          showWarning('Location is not available yet. Check location permissions.', 'warning');
+          showWarning(
+            "Location is not available yet. Check location permissions.",
+            "warning",
+          );
         }
       });
 
-
-      hazardsButton.classList.toggle('on', showHazards);
-      restButton.classList.toggle('on', showRest);
+      hazardsButton.classList.toggle("on", showHazards);
+      restButton.classList.toggle("on", showRest);
       setHelpPanel(false);
 
-      map.on('load', () => {
+      map.on("load", () => {
         loadRouteGeoJson();
 
-        hazardsButton.classList.toggle('on', showHazards);
-        restButton.classList.toggle('on', showRest);
+        hazardsButton.classList.toggle("on", showHazards);
+        restButton.classList.toggle("on", showRest);
         setHelpPanel(false);
       });
 
       navigator.geolocation.watchPosition(
-        position => {
+        (position) => {
           const lng = position.coords.longitude;
           const lat = position.coords.latitude;
 
@@ -1866,28 +2047,31 @@
 
             showWarning(
               `⚠️ ${nextHazardAhead.type} in ${d}m`,
-              d < 100 ? 'alert' : 'warning'
+              d < 100 ? "alert" : "warning",
             );
 
             hazardWarningShown = true;
           }
-          updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo, routeSnapshot);
+          updateDistanceDisplay(
+            distanceToRoute,
+            routeProgress,
+            segmentInfo,
+            routeSnapshot,
+          );
 
           if (!hazardWarningShown) {
             updateWarningState(distanceToRoute);
           }
         },
         () => {
-          showWarning('Location access is unavailable or blocked', 'alert');
+          showWarning("Location access is unavailable or blocked", "alert");
         },
         {
           enableHighAccuracy: false,
           maximumAge: 20000,
-          timeout: 30000
-        }
+          timeout: 30000,
+        },
       );
     </script>
-
-</body>
-
+  </body>
 </html>
