@@ -443,14 +443,15 @@
     radius: 150
   },
   
-  {
-    id: 3,
-    lng: -0.4555,
-    lat: 51.4705,
-    type: "Test hazard",
-    message: "Test hazard near start",
-    radius: 200
-  }
+{
+  id: 3,
+  lng: -0.4543,
+  lat: 51.4700,
+  type: "Test hazard",
+  message: "Test hazard near route",
+  radius: 300
+}
+
 
 ];
 
@@ -1159,7 +1160,7 @@ function getNearestHazard(userPoint) {
       const segmentInfo = getCurrentSegment(userPoint);
       const routeSnapshot = updateUserMarker(lng, lat);
       const nearestHazard = getNearestHazard([lng, lat]);
-      if (nearestHazard && nearestHazard.distance < 300) {
+      if (nearestHazard && nearestHazard.distance < 1500) {
         const d = Math.round(nearestHazard.distance);
         
         showWarning(
