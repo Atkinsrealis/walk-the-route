@@ -243,6 +243,26 @@
       display: none !important;
     }
 
+    .card {
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .card:active {
+      transform: scale(0.96);
+    }
+
+    .card.active {
+     background: rgba(124, 58, 237, 0.25);
+     border: 1px solid rgba(124, 58, 237, 0.6);
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.4);
+    }
+ 
+    .card:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+
     @media (max-width: 480px) {
       .topbar {
         padding: 16px 12px 22px;
@@ -349,10 +369,11 @@
 <div id="map"></div>
 
 <div class="bottom-panel">
-  <div class="card"><strong>Hazards</strong></div>
-  <div class="card"><strong>Rest</strong></div>
-  <div class="card"><strong>Safety</strong></div>
+  <div class="card" id="hazards-button"><strong>Hazards</strong></div>
+  <div class="card" id="rest-button"><strong>Rest</strong></div>
+  <div class="card" id="safety-button"><strong>Safety</strong></div>
 </div>
+
 
 <script>
   mapboxgl.accessToken =
@@ -424,6 +445,11 @@
   let lastProcessedPositionTime = 0;
   let followMode = true;
   let hasShownReadyState = false;
+  let showHazards = true;
+  let hazardMarkers = [];
+  let showRest = true;
+  let restMarkers = [];
+  let showSafety = false;
 
 const hazards = [
   {
@@ -468,13 +494,30 @@ const hazards = [
   }
 ];
 
+// Hazards
 hazards.forEach(h => {
-  new mapboxgl.Marker({ color: '#ef4444' })
+  const marker = new mapboxgl.Marker({ color: '#ef4444' })
     .setLngLat([h.lng, h.lat])
+    .addTo(map);
+
+  hazardMarkers.push(marker);
+});
+
+// REST STOPS
+const restStops = [
+  { lng: -0.4580, lat: 51.4715, label: "Water + Toilets" },
+  { lng: -0.4665, lat: 51.4750, label: "Rest Area" }
+];
+
+restStops.forEach(r => {
+  const marker = new mapboxgl.Marker({ color: '#3b82f6' })
+    .setLngLat([r.lng, r.lat])
     .setPopup(
-      new mapboxgl.Popup().setHTML(`<strong>${h.type}</strong><p>${h.message}</p>`)
+      new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`)
     )
     .addTo(map);
+
+  restMarkers.push(marker);
 });
 
 function getNearestHazard(userPoint) {
@@ -1101,7 +1144,7 @@ function getNearestHazard(userPoint) {
     if (window.location.protocol === 'file:') {
       addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
       showWarning(
-        '🗺️ Open this page from a web server to load the exact route file',
+        'Open this page from a web server to load the exact route file',
         'warning'
       );
       return;
@@ -1144,8 +1187,10 @@ function getNearestHazard(userPoint) {
       });
   }
 
-  document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
+// Route button  
+document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
 
+// Follow button
 document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
   followMode = !followMode;
 
@@ -1160,7 +1205,52 @@ document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () =>
   }
 
   if (followMode && getDistanceToRoute(lastActualPosition || [-0.4543, 51.4700]) > 300) {
-    showWarning('📍 Move closer to the route to enable tracking', 'warning');
+    showWarning('Move closer to the route to enable tracking', 'warning');
+  }
+});
+
+// Hazards button
+const hazardsButton = document.getElementById('hazards-button');
+
+hazardsButton.addEventListener('click', () => {
+  showHazards = !showHazards;
+
+  hazardMarkers.forEach(marker => {
+    marker.getElement().style.display = showHazards ? 'block' : 'none';
+  });
+
+  hazardsButton.classList.toggle('active', showHazards);
+});
+
+
+// Rest button
+const restButton = document.getElementById('rest-button');
+
+restButton.addEventListener('click', () => {
+  showRest = !showRest;
+
+  restMarkers.forEach(marker => {
+    marker.getElement().style.display = showRest ? 'block' : 'none';
+  });
+
+  restButton.classList.toggle('active', showRest);
+});
+
+// Safety button
+const safetyButton = document.getElementById('safety-button');
+
+safetyButton.addEventListener('click', () => {
+  showSafety = !showSafety;
+
+  safetyButton.classList.toggle('active', showSafety);
+
+  if (showSafety) {
+    showWarning(
+      'Stay on route • Watch for vehicles • Keep hydrated',
+      ''
+    );
+  } else {
+    showWarning('', '');
   }
 });
 
@@ -1199,7 +1289,7 @@ document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () =>
       updateWarningState(distanceToRoute);
     },
     () => {
-      showWarning('📍 Location access is unavailable or blocked', 'alert');
+      showWarning('Location access is unavailable or blocked', 'alert');
     },
     {
       enableHighAccuracy: false,
