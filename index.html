@@ -7,10 +7,9 @@
 
   <title>Walk the Route</title>
 
-  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" 
-  rel="stylesheet" />
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet" />
 
-  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"> 
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js">
   </script>
 
   <style>
@@ -409,6 +408,12 @@
       margin-top: 0;
     }
 
+    .help-panel__actions--emergency {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
     .help-action {
       border: none;
       border-radius: 14px;
@@ -698,7 +703,6 @@
       <div class="help-panel__actions">
         <button class="help-action" id="show-location-button">Show my position</button>
         <a class="help-action" id="event-support-link" href="#">Event support number TBC</a>
-        <a class="help-action help-action--danger" href="tel:999">Call 999</a>
       </div>
 
       <details class="help-guidance">
@@ -722,1158 +726,1167 @@
         </div>
       </details>
 
+      <div class="help-panel__actions help-panel__actions--emergency">
+        <a class="help-action help-action--danger" href="tel:999">Call 999</a>
+      </div>
     </div>
-  </div>
 
-  <div class="bottom-panel">
-    <div class="card" id="hazards-button"><strong>Hazards</strong></div>
-    <div class="card" id="rest-button"><strong>Rest</strong></div>
-    <div class="card help-card" id="help-button"><strong>Need help</strong></div>
-  </div>
-
-  <script>
-    mapboxgl.accessToken =
-      'pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ';
-
-    const routeGeoJsonUrl = 'heathrow-perimeter-route.geojson';
-    const fallbackRouteCoordinates = [
-      [-0.4543, 51.4700],
-      [-0.4552, 51.4706],
-      [-0.4561, 51.4712],
-      [-0.4573, 51.4719],
-      [-0.4588, 51.4724],
-      [-0.4600, 51.4729],
-      [-0.4614, 51.4736],
-      [-0.4629, 51.4742],
-      [-0.4645, 51.4748],
-      [-0.4661, 51.4751],
-      [-0.4676, 51.4754],
-      [-0.4690, 51.4753],
-      [-0.4700, 51.4750]
-    ];
-    let routeCoordinates = [];
-
-    const ROUTE_WARNING_DISTANCE = 300;
-    const ROUTE_ALERT_DISTANCE = 600;
-    const WARNING_UPDATE_INTERVAL = 3000;
-    const VIEW_UPDATE_DISTANCE = 25;
-    const MIN_SPEED_FOR_FOLLOW = 0.4;
-    const POSITION_UPDATE_MIN_METERS = 12;
-    const POSITION_UPDATE_MIN_MS = 8000;
-    const START_APPROACH_DISTANCE = 30;
-    const FINISH_APPROACH_DISTANCE = 30;
-    const WARNING_ID = 'warning';
-    const DISTANCE_VALUE_ID = 'distance-value';
-    const PROGRESS_VALUE_ID = 'progress-value';
-    const ROUTE_BADGE_ID = 'route-badge';
-    const NEXT_THING_VALUE_ID = 'next-thing-value';
-    const ROUTE_CENTER_BUTTON_ID = 'route-center-button';
-    const FOLLOW_TOGGLE_BUTTON_ID = 'follow-toggle-button';
-
-    // Route segments - divide 182 waypoints into 4 sections
-    const SEGMENTS = [
-      { name: 'Terminal South', startIdx: 0, endIdx: 45, milestone: 'Terminal building' },
-      { name: 'Cargo perimeter', startIdx: 46, endIdx: 90, milestone: 'Cargo facility' },
-      { name: 'Northern loop', startIdx: 91, endIdx: 136, milestone: 'Northern gate' },
-      { name: 'Return stretch', startIdx: 137, endIdx: 181, milestone: 'Finish line' }
-    ];
-
-    const map = new mapboxgl.Map({
-      container: 'map',
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [-0.4543, 51.4700],
-      zoom: 13.5,
-      pitch: 0,
-      bearing: 0,
-      attributionControl: false
-    });
-
-    let userMarker;
-    let lastActualPosition = null;
-    let lastSnappedPosition = null;
-    let userDirectionIndex = 0;
-    let hasInitialPosition = false;
-    let lastWarningUpdate = 0;
-    let lastWarningState = '';
-    let lastViewCenter = null;
-    let lastPosition = null;
-    let lastPositionTime = 0;
-    let lastProcessedPosition = null;
-    let lastProcessedPositionTime = 0;
-    let followMode = true;
-    let hasShownReadyState = false;
-    let showHazards = false;
-    let hazardMarkers = [];
-    let showRest = false;
-    let restMarkers = [];
-    let showHelp = false;
-
-    const hazards = [
-      {
-        id: 1,
-        lng: -0.4555,
-        lat: 51.4705,
-        type: "No pavement",
-        message: "No pavement – walk single file",
-        radius: 150
-      },
-      {
-        id: 2,
-        lng: -0.4605,
-        lat: 51.4725,
-        type: "Vehicle crossing",
-        message: "Active vehicle crossing",
-        radius: 150
-      },
-      {
-        id: 3,
-        lng: -0.4665,
-        lat: 51.4750,
-        type: "Narrow verge",
-        message: "Narrow walking space",
-        radius: 120
-      },
-      {
-        id: 4,
-        lng: -0.4685,
-        lat: 51.4753,
-        type: "Poor lighting",
-        message: "Low visibility area",
-        radius: 200
-      },
-      {
-        id: 5,
-        lng: -0.4620,
-        lat: 51.4735,
-        type: "Mixed traffic",
-        message: "Shared with vehicles",
-        radius: 150
-      }
-    ];
-
-    // HAZARDS
-    hazards.forEach(h => {
-      const marker = new mapboxgl.Marker({ color: '#ef4444' })
-        .setLngLat([h.lng, h.lat])
-        .setPopup(
-          new mapboxgl.Popup().setHTML(`<strong>${h.type}</strong><p>${h.message}</p>`)
-        )
-        .addTo(map);
-
-      marker.getElement().style.display = showHazards ? 'block' : 'none';
-
-      hazardMarkers.push(marker);
-    });
-
-    // REST STOPS
-    const restStops = [
-      { lng: -0.4580, lat: 51.4715, label: "Water + Toilets" },
-      { lng: -0.4665, lat: 51.4750, label: "Rest Area" }
-    ];
-
-    restStops.forEach(r => {
-      const marker = new mapboxgl.Marker({ color: '#3b82f6' })
-        .setLngLat([r.lng, r.lat])
-        .setPopup(
-          new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`)
-        )
-        .addTo(map);
-
-      marker.getElement().style.display = showRest ? 'block' : 'none';
-
-      restMarkers.push(marker);
-    });
-
-    function toRadians(value) {
-      return value * (Math.PI / 180);
-    }
-
-    function getCurrentSegment(userPoint) {
-      if (routeCoordinates.length < 2) {
-        return { segment: SEGMENTS[0], segmentProgress: 0, nextMilestone: SEGMENTS[0].milestone, distanceToMilestone: 0 };
-      }
-
-      let bestDistance = Number.POSITIVE_INFINITY;
-      let bestSegmentProgress = 0;
-      let bestSegmentIndex = 0;
-
-      // Calculate cumulative distances for each segment
-      const segmentDistances = [];
-      let cumulativeDistance = 0;
-
-      for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
-        const start = routeCoordinates[i];
-        const end = routeCoordinates[i + 1];
-        const segmentLength = haversineDistanceMeters(start, end);
-        segmentDistances.push(cumulativeDistance);
-        cumulativeDistance += segmentLength;
-      }
-
-      const totalRouteDistance = cumulativeDistance;
-
-      // Find closest point on route and its progress
-      for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
-        const start = routeCoordinates[i];
-        const end = routeCoordinates[i + 1];
-        const lat1 = toRadians(start[1]);
-        const lat2 = toRadians(end[1]);
-        const lng1 = toRadians(start[0]);
-        const lng2 = toRadians(end[0]);
-        const latU = toRadians(userPoint[1]);
-        const lngU = toRadians(userPoint[0]);
-
-        const dLng = lng2 - lng1;
-        const dLat = lat2 - lat1;
-        const dLngU = lngU - lng1;
-        const dLatU = latU - lat1;
-
-        const denominator = dLng * dLng + dLat * dLat;
-
-        if (denominator === 0) {
-          const pointDistance = haversineDistanceMeters(userPoint, start);
-          if (pointDistance < bestDistance) {
-            bestDistance = pointDistance;
-            bestSegmentProgress = segmentDistances[i];
-            bestSegmentIndex = i;
-          }
-          continue;
-        }
-
-        const projection = (dLngU * dLng + dLatU * dLat) / denominator;
-        const clampedProjection = Math.max(0, Math.min(1, projection));
-
-        const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
-        const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-        const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
-        const segmentLength = haversineDistanceMeters(start, end);
-        const candidateProgress = segmentDistances[i] + segmentLength * clampedProjection;
-
-        if (pointDistance < bestDistance) {
-          bestDistance = pointDistance;
-          bestSegmentProgress = candidateProgress;
-          bestSegmentIndex = i;
-        }
-      }
-
-      // Determine which segment based on coordinate index
-      let currentSegmentIndex = 0;
-      for (let s = 0; s < SEGMENTS.length; s += 1) {
-        if (bestSegmentIndex >= SEGMENTS[s].startIdx && bestSegmentIndex <= SEGMENTS[s].endIdx) {
-          currentSegmentIndex = s;
-          break;
-        }
-      }
-
-      const currentSegment = SEGMENTS[currentSegmentIndex];
-
-      // Calculate distance to next milestone
-      let distanceToMilestone = 0;
-      const nextSegmentIndex = currentSegmentIndex + 1;
-      if (nextSegmentIndex < SEGMENTS.length) {
-        const milestoneCoord = routeCoordinates[SEGMENTS[nextSegmentIndex].startIdx] || routeCoordinates[routeCoordinates.length - 1];
-        distanceToMilestone = haversineDistanceMeters(userPoint, milestoneCoord);
-      }
-
-      return {
-        segment: currentSegment,
-        segmentProgress: (bestSegmentProgress / totalRouteDistance) * 100,
-        nextMilestone: nextSegmentIndex < SEGMENTS.length ? SEGMENTS[nextSegmentIndex].milestone : 'Finish line',
-        distanceToMilestone,
-        currentSegmentNumber: currentSegmentIndex + 1,
-        totalSegments: SEGMENTS.length
-      };
-    }
-
-    function setInitialMapView() {
-      if (routeCoordinates.length > 0) {
-        const firstPoint = routeCoordinates[0];
-        map.setCenter(firstPoint);
-        map.setZoom(13.5);
-      }
-    }
-
-    function centerMapOnRoute() {
-      if (routeCoordinates.length === 0) {
-        return;
-      }
-
-      const bounds = routeCoordinates.reduce((acc, point) => {
-        acc = acc || [point[0], point[1], point[0], point[1]];
-        acc[0] = Math.min(acc[0], point[0]);
-        acc[1] = Math.min(acc[1], point[1]);
-        acc[2] = Math.max(acc[2], point[0]);
-        acc[3] = Math.max(acc[3], point[1]);
-        return acc;
-      }, null);
-
-      if (bounds) {
-        map.fitBounds(
-          [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
-          {
-            padding: { top: 120, bottom: 180, left: 40, right: 40 },
-            duration: 800
-          }
-        );
-      }
-    }
-
-    function haversineDistanceMeters(pointA, pointB) {
-      const [lng1, lat1] = pointA;
-      const [lng2, lat2] = pointB;
-
-      const earthRadius = 6371000;
-      const dLat = toRadians(lat2 - lat1);
-      const dLng = toRadians(lng2 - lng1);
-
-      const a =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRadians(lat1)) *
-        Math.cos(toRadians(lat2)) *
-        Math.sin(dLng / 2) ** 2;
-
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return earthRadius * c;
-    }
-
-    function getClosestPointOnRoute(userPoint) {
-      if (routeCoordinates.length < 2) {
-        return {
-          point: userPoint,
-          distance: 0,
-          segmentIndex: 0,
-          isAhead: false,
-          isBehind: false
-        };
-      }
-
-      let minDistance = Number.POSITIVE_INFINITY;
-      let closestPoint = userPoint;
-      let closestSegmentIndex = 0;
-      let closestProjection = 0;
-
-      for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
-        const start = routeCoordinates[i];
-        const end = routeCoordinates[i + 1];
-
-        const lat1 = toRadians(start[1]);
-        const lat2 = toRadians(end[1]);
-        const lng1 = toRadians(start[0]);
-        const lng2 = toRadians(end[0]);
-        const latU = toRadians(userPoint[1]);
-        const lngU = toRadians(userPoint[0]);
-
-        const dLng = lng2 - lng1;
-        const dLat = lat2 - lat1;
-        const dLngU = lngU - lng1;
-        const dLatU = latU - lat1;
-
-        const denominator = dLng * dLng + dLat * dLat;
-
-        if (denominator === 0) {
-          const pointDistance = haversineDistanceMeters(userPoint, start);
-          if (pointDistance < minDistance) {
-            minDistance = pointDistance;
-            closestPoint = start;
-            closestSegmentIndex = i;
-            closestProjection = 0;
-          }
-          continue;
-        }
-
-        const projection = (dLngU * dLng + dLatU * dLat) / denominator;
-        const clampedProjection = Math.max(0, Math.min(1, projection));
-
-        const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
-        const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-        const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
-
-        if (pointDistance < minDistance) {
-          minDistance = pointDistance;
-          closestPoint = [closestLng, closestLat];
-          closestSegmentIndex = i;
-          closestProjection = clampedProjection;
-        }
-      }
-
-      // Determine if ahead or behind based on projection
-      const isAhead = closestProjection > 0.5;
-      const isBehind = closestProjection < 0.5 && closestSegmentIndex > 0;
-
-      userDirectionIndex = closestSegmentIndex;
-
-      return {
-        point: closestPoint,
-        distance: minDistance,
-        segmentIndex: closestSegmentIndex,
-        isAhead,
-        isBehind
-      };
-    }
-
-    function getDistanceToRoute(userPoint) {
-      let minDistance = Number.POSITIVE_INFINITY;
-
-      for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
-        const start = routeCoordinates[i];
-        const end = routeCoordinates[i + 1];
-
-        const startToUser = haversineDistanceMeters(userPoint, start);
-        const endToUser = haversineDistanceMeters(userPoint, end);
-        const segmentLength = haversineDistanceMeters(start, end);
-
-        if (segmentLength === 0) {
-          minDistance = Math.min(minDistance, startToUser);
-          continue;
-        }
-
-        const lat1 = toRadians(start[1]);
-        const lat2 = toRadians(end[1]);
-        const lng1 = toRadians(start[0]);
-        const lng2 = toRadians(end[0]);
-        const latU = toRadians(userPoint[1]);
-        const lngU = toRadians(userPoint[0]);
-
-        const dLng = lng2 - lng1;
-        const dLat = lat2 - lat1;
-        const dLngU = lngU - lng1;
-        const dLatU = latU - lat1;
-
-        const projection =
-          (dLngU * dLng + dLatU * dLat) /
-          (dLng * dLng + dLat * dLat);
-
-        const clampedProjection = Math.max(0, Math.min(1, projection));
-        const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
-        const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-        const distanceToSegment = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
-
-        minDistance = Math.min(minDistance, distanceToSegment, startToUser, endToUser);
-      }
-
-      return minDistance;
-    }
-    function getRouteMeasure(userPoint) {
-      if (routeCoordinates.length < 2) {
-        return {
-          distanceAlongRoute: 0,
-          distanceFromRoute: Infinity
-        };
-      }
-
-      let totalBeforeSegment = 0;
-      let bestDistance = Infinity;
-      let bestDistanceAlongRoute = 0;
-
-      for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
-        const start = routeCoordinates[i];
-        const end = routeCoordinates[i + 1];
-        const segmentLength = haversineDistanceMeters(start, end);
-
-        const lat1 = toRadians(start[1]);
-        const lat2 = toRadians(end[1]);
-        const lng1 = toRadians(start[0]);
-        const lng2 = toRadians(end[0]);
-        const latU = toRadians(userPoint[1]);
-        const lngU = toRadians(userPoint[0]);
-
-        const dLng = lng2 - lng1;
-        const dLat = lat2 - lat1;
-        const dLngU = lngU - lng1;
-        const dLatU = latU - lat1;
-
-        const denominator = dLng * dLng + dLat * dLat;
-
-        if (denominator === 0) {
-          totalBeforeSegment += segmentLength;
-          continue;
-        }
-
-        const projection = (dLngU * dLng + dLatU * dLat) / denominator;
-        const clampedProjection = Math.max(0, Math.min(1, projection));
-
-        const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
-        const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-
-        const distanceFromRoute = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
-        const distanceAlongRoute = totalBeforeSegment + segmentLength * clampedProjection;
-
-        if (distanceFromRoute < bestDistance) {
-          bestDistance = distanceFromRoute;
-          bestDistanceAlongRoute = distanceAlongRoute;
-        }
-
-        totalBeforeSegment += segmentLength;
-      }
-
-      return {
-        distanceAlongRoute: bestDistanceAlongRoute,
-        distanceFromRoute: bestDistance
-      };
-    }
-
-    function getNextThingAhead(userPoint) {
-      if (routeCoordinates.length < 2) {
-        return null;
-      }
-
-      const userMeasure = getRouteMeasure(userPoint);
-
-      const routeItems = [
-        ...hazards.map(h => ({
-          type: 'hazard',
-          label: h.type,
-          point: [h.lng, h.lat]
-        })),
-        ...restStops.map(r => ({
-          type: 'rest',
-          label: r.label,
-          point: [r.lng, r.lat]
-        }))
+    <div class="bottom-panel">
+      <div class="card" id="hazards-button"><strong>Hazards</strong></div>
+      <div class="card" id="rest-button"><strong>Rest</strong></div>
+      <div class="card help-card" id="help-button"><strong>Need help</strong></div>
+    </div>
+
+    <script>
+      mapboxgl.accessToken =
+        'pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ';
+
+      const routeGeoJsonUrl = 'heathrow-perimeter-route.geojson';
+      const fallbackRouteCoordinates = [
+        [-0.4543, 51.4700],
+        [-0.4552, 51.4706],
+        [-0.4561, 51.4712],
+        [-0.4573, 51.4719],
+        [-0.4588, 51.4724],
+        [-0.4600, 51.4729],
+        [-0.4614, 51.4736],
+        [-0.4629, 51.4742],
+        [-0.4645, 51.4748],
+        [-0.4661, 51.4751],
+        [-0.4676, 51.4754],
+        [-0.4690, 51.4753],
+        [-0.4700, 51.4750]
+      ];
+      let routeCoordinates = [];
+
+      const ROUTE_WARNING_DISTANCE = 300;
+      const ROUTE_ALERT_DISTANCE = 600;
+      const WARNING_UPDATE_INTERVAL = 3000;
+      const VIEW_UPDATE_DISTANCE = 25;
+      const MIN_SPEED_FOR_FOLLOW = 0.4;
+      const POSITION_UPDATE_MIN_METERS = 12;
+      const POSITION_UPDATE_MIN_MS = 8000;
+      const START_APPROACH_DISTANCE = 30;
+      const FINISH_APPROACH_DISTANCE = 30;
+      const WARNING_ID = 'warning';
+      const DISTANCE_VALUE_ID = 'distance-value';
+      const PROGRESS_VALUE_ID = 'progress-value';
+      const ROUTE_BADGE_ID = 'route-badge';
+      const NEXT_THING_VALUE_ID = 'next-thing-value';
+      const ROUTE_CENTER_BUTTON_ID = 'route-center-button';
+      const FOLLOW_TOGGLE_BUTTON_ID = 'follow-toggle-button';
+
+      // Route segments - divide 182 waypoints into 4 sections
+      const SEGMENTS = [
+        { name: 'Terminal South', startIdx: 0, endIdx: 45, milestone: 'Terminal building' },
+        { name: 'Cargo perimeter', startIdx: 46, endIdx: 90, milestone: 'Cargo facility' },
+        { name: 'Northern loop', startIdx: 91, endIdx: 136, milestone: 'Northern gate' },
+        { name: 'Return stretch', startIdx: 137, endIdx: 181, milestone: 'Finish line' }
       ];
 
-      const upcomingItems = routeItems
-        .map(item => {
-          const itemMeasure = getRouteMeasure(item.point);
+      const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [-0.4543, 51.4700],
+        zoom: 13.5,
+        pitch: 0,
+        bearing: 0,
+        attributionControl: false
+      });
 
-          return {
-            ...item,
-            distanceAhead: itemMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
-            distanceFromRoute: itemMeasure.distanceFromRoute
-          };
-        })
-        .filter(item => item.distanceAhead > 15)
-        .sort((a, b) => a.distanceAhead - b.distanceAhead);
+      let userMarker;
+      let lastActualPosition = null;
+      let lastSnappedPosition = null;
+      let userDirectionIndex = 0;
+      let hasInitialPosition = false;
+      let lastWarningUpdate = 0;
+      let lastWarningState = '';
+      let lastViewCenter = null;
+      let lastPosition = null;
+      let lastPositionTime = 0;
+      let lastProcessedPosition = null;
+      let lastProcessedPositionTime = 0;
+      let followMode = true;
+      let hasShownReadyState = false;
+      let showHazards = false;
+      let hazardMarkers = [];
+      let showRest = false;
+      let restMarkers = [];
+      let showHelp = false;
 
-      return upcomingItems[0] || null;
-    }
+      const hazards = [
+        {
+          id: 1,
+          lng: -0.4555,
+          lat: 51.4705,
+          type: "No pavement",
+          message: "No pavement – walk single file",
+          radius: 150
+        },
+        {
+          id: 2,
+          lng: -0.4605,
+          lat: 51.4725,
+          type: "Vehicle crossing",
+          message: "Active vehicle crossing",
+          radius: 150
+        },
+        {
+          id: 3,
+          lng: -0.4665,
+          lat: 51.4750,
+          type: "Narrow verge",
+          message: "Narrow walking space",
+          radius: 120
+        },
+        {
+          id: 4,
+          lng: -0.4685,
+          lat: 51.4753,
+          type: "Poor lighting",
+          message: "Low visibility area",
+          radius: 200
+        },
+        {
+          id: 5,
+          lng: -0.4620,
+          lat: 51.4735,
+          type: "Mixed traffic",
+          message: "Shared with vehicles",
+          radius: 150
+        }
+      ];
 
-function getNextHazardAhead(userPoint) {
-  if (routeCoordinates.length < 2) {
-    return null;
-  }
+      // HAZARDS
+      hazards.forEach(h => {
+        const marker = new mapboxgl.Marker({ color: '#ef4444' })
+          .setLngLat([h.lng, h.lat])
+          .setPopup(
+            new mapboxgl.Popup().setHTML(`<strong>${h.type}</strong><p>${h.message}</p>`)
+          )
+          .addTo(map);
 
-  const userMeasure = getRouteMeasure(userPoint);
+        marker.getElement().style.display = showHazards ? 'block' : 'none';
 
-  const upcomingHazards = hazards
-    .map(h => {
-      const hazardPoint = [h.lng, h.lat];
-      const hazardMeasure = getRouteMeasure(hazardPoint);
+        hazardMarkers.push(marker);
+      });
 
-      return {
-        ...h,
-        distanceAhead: hazardMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
-        distanceFromRoute: hazardMeasure.distanceFromRoute
-      };
-    })
-    .filter(h => h.distanceAhead > 25)
-    .sort((a, b) => a.distanceAhead - b.distanceAhead);
+      // REST STOPS
+      const restStops = [
+        { lng: -0.4580, lat: 51.4715, label: "Water + Toilets" },
+        { lng: -0.4665, lat: 51.4750, label: "Rest Area" }
+      ];
 
-  return upcomingHazards[0] || null;
-}
+      restStops.forEach(r => {
+        const marker = new mapboxgl.Marker({ color: '#3b82f6' })
+          .setLngLat([r.lng, r.lat])
+          .setPopup(
+            new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`)
+          )
+          .addTo(map);
 
-    function updateNextThingAhead(userPoint) {
-      const nextThingValue = document.getElementById(NEXT_THING_VALUE_ID);
+        marker.getElement().style.display = showRest ? 'block' : 'none';
 
-      if (!nextThingValue) {
-        return;
+        restMarkers.push(marker);
+      });
+
+      function toRadians(value) {
+        return value * (Math.PI / 180);
       }
 
-      const nextThing = getNextThingAhead(userPoint);
+      function getCurrentSegment(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return { segment: SEGMENTS[0], segmentProgress: 0, nextMilestone: SEGMENTS[0].milestone, distanceToMilestone: 0 };
+        }
 
-      if (!nextThing) {
-        nextThingValue.textContent = 'Next: finish ahead';
-        return;
-      }
+        let bestDistance = Number.POSITIVE_INFINITY;
+        let bestSegmentProgress = 0;
+        let bestSegmentIndex = 0;
 
-      const icon = nextThing.type === 'hazard' ? '⚠️' : '☕';
-      const distance = formatDistance(nextThing.distanceAhead);
+        // Calculate cumulative distances for each segment
+        const segmentDistances = [];
+        let cumulativeDistance = 0;
 
-      nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
-    }
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+          segmentDistances.push(cumulativeDistance);
+          cumulativeDistance += segmentLength;
+        }
 
+        const totalRouteDistance = cumulativeDistance;
 
-    function showWarning(message, level = '') {
-      const warning = document.getElementById(WARNING_ID);
-      warning.textContent = message;
-      warning.className = `warning ${level}`.trim();
-      warning.style.display = message ? 'block' : 'none';
-    }
+        // Find closest point on route and its progress
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
 
-    function formatDistance(distance) {
-      if (distance >= 1000) {
-        return `${(distance / 1000).toFixed(1)} km`;
-      }
-      return `${Math.round(distance)} m`;
-    }
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
 
-    function getRouteProgress(userPoint) {
-      if (routeCoordinates.length < 2) {
-        return 0;
-      }
+          const denominator = dLng * dLng + dLat * dLat;
 
-      let totalLength = 0;
-      const segmentData = [];
+          if (denominator === 0) {
+            const pointDistance = haversineDistanceMeters(userPoint, start);
+            if (pointDistance < bestDistance) {
+              bestDistance = pointDistance;
+              bestSegmentProgress = segmentDistances[i];
+              bestSegmentIndex = i;
+            }
+            continue;
+          }
 
-      for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
-        const start = routeCoordinates[i];
-        const end = routeCoordinates[i + 1];
-        const segmentLength = haversineDistanceMeters(start, end);
-        segmentData.push({ start, end, segmentLength });
-        totalLength += segmentLength;
-      }
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
 
-      if (totalLength === 0) {
-        return 0;
-      }
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+          const segmentLength = haversineDistanceMeters(start, end);
+          const candidateProgress = segmentDistances[i] + segmentLength * clampedProjection;
 
-      let bestDistance = Number.POSITIVE_INFINITY;
-      let bestProgress = 0;
-      let runningLength = 0;
-
-      for (const segment of segmentData) {
-        const { start, end, segmentLength } = segment;
-        const lat1 = toRadians(start[1]);
-        const lat2 = toRadians(end[1]);
-        const lng1 = toRadians(start[0]);
-        const lng2 = toRadians(end[0]);
-        const latU = toRadians(userPoint[1]);
-        const lngU = toRadians(userPoint[0]);
-
-        const dLng = lng2 - lng1;
-        const dLat = lat2 - lat1;
-        const dLngU = lngU - lng1;
-        const dLatU = latU - lat1;
-
-        const denominator = dLng * dLng + dLat * dLat;
-
-        if (denominator === 0) {
-          const pointDistance = haversineDistanceMeters(userPoint, start);
           if (pointDistance < bestDistance) {
             bestDistance = pointDistance;
-            bestProgress = runningLength;
+            bestSegmentProgress = candidateProgress;
+            bestSegmentIndex = i;
           }
+        }
+
+        // Determine which segment based on coordinate index
+        let currentSegmentIndex = 0;
+        for (let s = 0; s < SEGMENTS.length; s += 1) {
+          if (bestSegmentIndex >= SEGMENTS[s].startIdx && bestSegmentIndex <= SEGMENTS[s].endIdx) {
+            currentSegmentIndex = s;
+            break;
+          }
+        }
+
+        const currentSegment = SEGMENTS[currentSegmentIndex];
+
+        // Calculate distance to next milestone
+        let distanceToMilestone = 0;
+        const nextSegmentIndex = currentSegmentIndex + 1;
+        if (nextSegmentIndex < SEGMENTS.length) {
+          const milestoneCoord = routeCoordinates[SEGMENTS[nextSegmentIndex].startIdx] || routeCoordinates[routeCoordinates.length - 1];
+          distanceToMilestone = haversineDistanceMeters(userPoint, milestoneCoord);
+        }
+
+        return {
+          segment: currentSegment,
+          segmentProgress: (bestSegmentProgress / totalRouteDistance) * 100,
+          nextMilestone: nextSegmentIndex < SEGMENTS.length ? SEGMENTS[nextSegmentIndex].milestone : 'Finish line',
+          distanceToMilestone,
+          currentSegmentNumber: currentSegmentIndex + 1,
+          totalSegments: SEGMENTS.length
+        };
+      }
+
+      function setInitialMapView() {
+        if (routeCoordinates.length > 0) {
+          const firstPoint = routeCoordinates[0];
+          map.setCenter(firstPoint);
+          map.setZoom(13.5);
+        }
+      }
+
+      function centerMapOnRoute() {
+        if (routeCoordinates.length === 0) {
+          return;
+        }
+
+        const bounds = routeCoordinates.reduce((acc, point) => {
+          acc = acc || [point[0], point[1], point[0], point[1]];
+          acc[0] = Math.min(acc[0], point[0]);
+          acc[1] = Math.min(acc[1], point[1]);
+          acc[2] = Math.max(acc[2], point[0]);
+          acc[3] = Math.max(acc[3], point[1]);
+          return acc;
+        }, null);
+
+        if (bounds) {
+          map.fitBounds(
+            [[bounds[0], bounds[1]], [bounds[2], bounds[3]]],
+            {
+              padding: { top: 120, bottom: 180, left: 40, right: 40 },
+              duration: 800
+            }
+          );
+        }
+      }
+
+      function haversineDistanceMeters(pointA, pointB) {
+        const [lng1, lat1] = pointA;
+        const [lng2, lat2] = pointB;
+
+        const earthRadius = 6371000;
+        const dLat = toRadians(lat2 - lat1);
+        const dLng = toRadians(lng2 - lng1);
+
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRadians(lat1)) *
+          Math.cos(toRadians(lat2)) *
+          Math.sin(dLng / 2) ** 2;
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadius * c;
+      }
+
+      function getClosestPointOnRoute(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return {
+            point: userPoint,
+            distance: 0,
+            segmentIndex: 0,
+            isAhead: false,
+            isBehind: false
+          };
+        }
+
+        let minDistance = Number.POSITIVE_INFINITY;
+        let closestPoint = userPoint;
+        let closestSegmentIndex = 0;
+        let closestProjection = 0;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const denominator = dLng * dLng + dLat * dLat;
+
+          if (denominator === 0) {
+            const pointDistance = haversineDistanceMeters(userPoint, start);
+            if (pointDistance < minDistance) {
+              minDistance = pointDistance;
+              closestPoint = start;
+              closestSegmentIndex = i;
+              closestProjection = 0;
+            }
+            continue;
+          }
+
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+
+          if (pointDistance < minDistance) {
+            minDistance = pointDistance;
+            closestPoint = [closestLng, closestLat];
+            closestSegmentIndex = i;
+            closestProjection = clampedProjection;
+          }
+        }
+
+        // Determine if ahead or behind based on projection
+        const isAhead = closestProjection > 0.5;
+        const isBehind = closestProjection < 0.5 && closestSegmentIndex > 0;
+
+        userDirectionIndex = closestSegmentIndex;
+
+        return {
+          point: closestPoint,
+          distance: minDistance,
+          segmentIndex: closestSegmentIndex,
+          isAhead,
+          isBehind
+        };
+      }
+
+      function getDistanceToRoute(userPoint) {
+        let minDistance = Number.POSITIVE_INFINITY;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+
+          const startToUser = haversineDistanceMeters(userPoint, start);
+          const endToUser = haversineDistanceMeters(userPoint, end);
+          const segmentLength = haversineDistanceMeters(start, end);
+
+          if (segmentLength === 0) {
+            minDistance = Math.min(minDistance, startToUser);
+            continue;
+          }
+
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const projection =
+            (dLngU * dLng + dLatU * dLat) /
+            (dLng * dLng + dLat * dLat);
+
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const distanceToSegment = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+
+          minDistance = Math.min(minDistance, distanceToSegment, startToUser, endToUser);
+        }
+
+        return minDistance;
+      }
+      function getRouteMeasure(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return {
+            distanceAlongRoute: 0,
+            distanceFromRoute: Infinity
+          };
+        }
+
+        let totalBeforeSegment = 0;
+        let bestDistance = Infinity;
+        let bestDistanceAlongRoute = 0;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const denominator = dLng * dLng + dLat * dLat;
+
+          if (denominator === 0) {
+            totalBeforeSegment += segmentLength;
+            continue;
+          }
+
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+
+          const distanceFromRoute = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+          const distanceAlongRoute = totalBeforeSegment + segmentLength * clampedProjection;
+
+          if (distanceFromRoute < bestDistance) {
+            bestDistance = distanceFromRoute;
+            bestDistanceAlongRoute = distanceAlongRoute;
+          }
+
+          totalBeforeSegment += segmentLength;
+        }
+
+        return {
+          distanceAlongRoute: bestDistanceAlongRoute,
+          distanceFromRoute: bestDistance
+        };
+      }
+
+      function getNextThingAhead(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return null;
+        }
+
+        const userMeasure = getRouteMeasure(userPoint);
+
+        const routeItems = [
+          ...hazards.map(h => ({
+            type: 'hazard',
+            label: h.type,
+            point: [h.lng, h.lat]
+          })),
+          ...restStops.map(r => ({
+            type: 'rest',
+            label: r.label,
+            point: [r.lng, r.lat]
+          }))
+        ];
+
+        const upcomingItems = routeItems
+          .map(item => {
+            const itemMeasure = getRouteMeasure(item.point);
+
+            return {
+              ...item,
+              distanceAhead: itemMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
+              distanceFromRoute: itemMeasure.distanceFromRoute
+            };
+          })
+          .filter(item => item.distanceAhead > 15)
+          .sort((a, b) => a.distanceAhead - b.distanceAhead);
+
+        return upcomingItems[0] || null;
+      }
+
+      function getNextHazardAhead(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return null;
+        }
+
+        const userMeasure = getRouteMeasure(userPoint);
+
+        const upcomingHazards = hazards
+          .map(h => {
+            const hazardPoint = [h.lng, h.lat];
+            const hazardMeasure = getRouteMeasure(hazardPoint);
+
+            return {
+              ...h,
+              distanceAhead: hazardMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
+              distanceFromRoute: hazardMeasure.distanceFromRoute
+            };
+          })
+          .filter(h => h.distanceAhead > 25)
+          .sort((a, b) => a.distanceAhead - b.distanceAhead);
+
+        return upcomingHazards[0] || null;
+      }
+
+      function updateNextThingAhead(userPoint) {
+        const nextThingValue = document.getElementById(NEXT_THING_VALUE_ID);
+
+        if (!nextThingValue) {
+          return;
+        }
+
+        const nextThing = getNextThingAhead(userPoint);
+
+        if (!nextThing) {
+          const distanceToRoute = getDistanceToRoute(userPoint);
+
+          if (distanceToRoute < 50) {
+            nextThingValue.textContent = 'You’re at the finish';
+          } else {
+            nextThingValue.textContent = 'Finish ahead';
+          }
+
+          return;
+        }
+
+        const icon = nextThing.type === 'hazard' ? '⚠️' : '☕';
+        const distance = formatDistance(nextThing.distanceAhead);
+
+        nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
+      }
+
+
+      function showWarning(message, level = '') {
+        const warning = document.getElementById(WARNING_ID);
+        warning.textContent = message;
+        warning.className = `warning ${level}`.trim();
+        warning.style.display = message ? 'block' : 'none';
+      }
+
+      function formatDistance(distance) {
+        if (distance >= 1000) {
+          return `${(distance / 1000).toFixed(1)} km`;
+        }
+        return `${Math.round(distance)} m`;
+      }
+
+      function getRouteProgress(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return 0;
+        }
+
+        let totalLength = 0;
+        const segmentData = [];
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+          segmentData.push({ start, end, segmentLength });
+          totalLength += segmentLength;
+        }
+
+        if (totalLength === 0) {
+          return 0;
+        }
+
+        let bestDistance = Number.POSITIVE_INFINITY;
+        let bestProgress = 0;
+        let runningLength = 0;
+
+        for (const segment of segmentData) {
+          const { start, end, segmentLength } = segment;
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const denominator = dLng * dLng + dLat * dLat;
+
+          if (denominator === 0) {
+            const pointDistance = haversineDistanceMeters(userPoint, start);
+            if (pointDistance < bestDistance) {
+              bestDistance = pointDistance;
+              bestProgress = runningLength;
+            }
+            runningLength += segmentLength;
+            continue;
+          }
+
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
+          const candidateProgress = runningLength + segmentLength * clampedProjection;
+
+          if (pointDistance < bestDistance) {
+            bestDistance = pointDistance;
+            bestProgress = candidateProgress;
+          }
+
           runningLength += segmentLength;
-          continue;
         }
 
-        const projection = (dLngU * dLng + dLatU * dLat) / denominator;
-        const clampedProjection = Math.max(0, Math.min(1, projection));
+        const progress = (bestProgress / totalLength) * 100;
+        const distanceToStart = haversineDistanceMeters(userPoint, routeCoordinates[0]);
 
-        const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
-        const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
-        const pointDistance = haversineDistanceMeters(userPoint, [closestLng, closestLat]);
-        const candidateProgress = runningLength + segmentLength * clampedProjection;
-
-        if (pointDistance < bestDistance) {
-          bestDistance = pointDistance;
-          bestProgress = candidateProgress;
+        if (distanceToStart > START_APPROACH_DISTANCE) {
+          return 0;
         }
 
-        runningLength += segmentLength;
+        if (progress >= 99 && bestDistance > FINISH_APPROACH_DISTANCE) {
+          return 99;
+        }
+
+        return Math.min(100, Math.max(0, progress));
       }
 
-      const progress = (bestProgress / totalLength) * 100;
-      const distanceToStart = haversineDistanceMeters(userPoint, routeCoordinates[0]);
+      function updateDistanceDisplay(distance, progress, segmentInfo = null) {
+        const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
+        const progressValue = document.getElementById(PROGRESS_VALUE_ID);
+        const routeBadge = document.getElementById(ROUTE_BADGE_ID);
+        const hasValidDistance = Number.isFinite(distance);
+        const normalizedDistance = hasValidDistance ? Math.max(0, distance) : null;
+        const displayProgress =
+          progress >= 99 && normalizedDistance !== null && normalizedDistance > FINISH_APPROACH_DISTANCE
+            ? 99
+            : progress;
 
-      if (distanceToStart > START_APPROACH_DISTANCE) {
-        return 0;
+        if (!hasValidDistance || normalizedDistance === null) {
+          progressValue.textContent = 'Section 1/4';
+          distanceValue.textContent = 'Waiting for start';
+          routeBadge.textContent = 'Preparing';
+          routeBadge.className = 'route-card__badge';
+          return;
+        }
+
+        const safeProgress = Math.min(100, Math.max(0, displayProgress));
+
+        // Display segment info instead of percentage
+        if (segmentInfo) {
+          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
+          const nextMilestoneDistance = formatDistance(segmentInfo.distanceToMilestone);
+          distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
+        } else {
+          progressValue.textContent = `${Math.round(safeProgress)}%`;
+          distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
+        }
+
+        if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
+          routeBadge.textContent = 'Far off route';
+          routeBadge.className = 'route-card__badge alert';
+        } else if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
+          routeBadge.textContent = 'Near edge';
+          routeBadge.className = 'route-card__badge warning';
+        } else {
+          routeBadge.textContent = 'On route';
+          routeBadge.className = 'route-card__badge';
+        }
       }
 
-      if (progress >= 99 && bestDistance > FINISH_APPROACH_DISTANCE) {
-        return 99;
+      function updateWarningState(distanceToRoute) {
+        const now = Date.now();
+        let nextState = '';
+        let nextLevel = '';
+
+        if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
+          nextState = 'You are far from the official route';
+          nextLevel = 'alert';
+        } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
+          nextState = 'You may be off the official route';
+          nextLevel = 'warning';
+        } else {
+          nextState = 'You are staying on the route';
+          nextLevel = 'safe';
+        }
+
+        if (
+          now - lastWarningUpdate >= WARNING_UPDATE_INTERVAL ||
+          nextLevel !== lastWarningState
+        ) {
+          showWarning(nextState, nextLevel);
+          lastWarningUpdate = now;
+          lastWarningState = nextLevel;
+        }
       }
 
-      return Math.min(100, Math.max(0, progress));
-    }
+      function updateUserMarker(lng, lat) {
+        const actualPosition = [lng, lat];
+        lastActualPosition = actualPosition;
 
-    function updateDistanceDisplay(distance, progress, segmentInfo = null) {
-      const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
-      const progressValue = document.getElementById(PROGRESS_VALUE_ID);
-      const routeBadge = document.getElementById(ROUTE_BADGE_ID);
-      const hasValidDistance = Number.isFinite(distance);
-      const normalizedDistance = hasValidDistance ? Math.max(0, distance) : null;
-      const displayProgress =
-        progress >= 99 && normalizedDistance !== null && normalizedDistance > FINISH_APPROACH_DISTANCE
-          ? 99
-          : progress;
+        const routeSnapshot = getClosestPointOnRoute(actualPosition);
 
-      if (!hasValidDistance || normalizedDistance === null) {
-        progressValue.textContent = 'Section 1/4';
-        distanceValue.textContent = 'Waiting for start';
-        routeBadge.textContent = 'Preparing';
-        routeBadge.className = 'route-card__badge';
-        return;
+        lastSnappedPosition = routeSnapshot.point;
+
+        if (!userMarker) {
+          userMarker = new mapboxgl.Marker({ color: '#00AEEF' })
+            .setLngLat(routeSnapshot.point)
+            .addTo(map);
+        } else {
+          userMarker.setLngLat(routeSnapshot.point);
+        }
+
+        return routeSnapshot;
       }
 
-      const safeProgress = Math.min(100, Math.max(0, displayProgress));
+      function updateMapView(lng, lat) {
+        // Use snapped position to keep route centered
+        const displayPosition = lastSnappedPosition || [lng, lat];
+        const newCenter = displayPosition;
+        const now = Date.now();
 
-      // Display segment info instead of percentage
-      if (segmentInfo) {
-        progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
-        const nextMilestoneDistance = formatDistance(segmentInfo.distanceToMilestone);
-        distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
-      } else {
-        progressValue.textContent = `${Math.round(safeProgress)}%`;
-        distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
-      }
-
-      if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
-        routeBadge.textContent = 'Far off route';
-        routeBadge.className = 'route-card__badge alert';
-      } else if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
-        routeBadge.textContent = 'Near edge';
-        routeBadge.className = 'route-card__badge warning';
-      } else {
-        routeBadge.textContent = 'On route';
-        routeBadge.className = 'route-card__badge';
-      }
-    }
-
-    function updateWarningState(distanceToRoute) {
-      const now = Date.now();
-      let nextState = '';
-      let nextLevel = '';
-
-      if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
-        nextState = 'You are far from the official route';
-        nextLevel = 'alert';
-      } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
-        nextState = 'You may be off the official route';
-        nextLevel = 'warning';
-      } else {
-        nextState = 'You are staying on the route';
-        nextLevel = 'safe';
-      }
-
-      if (
-        now - lastWarningUpdate >= WARNING_UPDATE_INTERVAL ||
-        nextLevel !== lastWarningState
-      ) {
-        showWarning(nextState, nextLevel);
-        lastWarningUpdate = now;
-        lastWarningState = nextLevel;
-      }
-    }
-
-    function updateUserMarker(lng, lat) {
-      const actualPosition = [lng, lat];
-      lastActualPosition = actualPosition;
-
-      const routeSnapshot = getClosestPointOnRoute(actualPosition);
-
-      lastSnappedPosition = routeSnapshot.point;
-
-      if (!userMarker) {
-        userMarker = new mapboxgl.Marker({ color: '#00AEEF' })
-          .setLngLat(routeSnapshot.point)
-          .addTo(map);
-      } else {
-        userMarker.setLngLat(routeSnapshot.point);
-      }
-
-      return routeSnapshot;
-    }
-
-    function updateMapView(lng, lat) {
-      // Use snapped position to keep route centered
-      const displayPosition = lastSnappedPosition || [lng, lat];
-      const newCenter = displayPosition;
-      const now = Date.now();
-
-      if (!hasInitialPosition) {
-        map.flyTo({
-          center: newCenter,
-          speed: 0.8,
-          zoom: 16
-        });
-        hasInitialPosition = true;
-        lastViewCenter = newCenter;
-        lastPosition = newCenter;
-        lastPositionTime = now;
-        return;
-      }
-
-      if (!followMode) {
-        return;
-      }
-
-      if (!lastViewCenter) {
-        lastViewCenter = newCenter;
-        return;
-      }
-
-      const distanceMoved = haversineDistanceMeters(lastViewCenter, newCenter);
-
-      if (lastPosition && lastPositionTime) {
-        const elapsed = Math.max(1, now - lastPositionTime);
-        const speedMps = haversineDistanceMeters(lastPosition, newCenter) / (elapsed / 1000);
-
-        if (speedMps < MIN_SPEED_FOR_FOLLOW && distanceMoved < VIEW_UPDATE_DISTANCE) {
+        if (!hasInitialPosition) {
+          map.flyTo({
+            center: newCenter,
+            speed: 0.8,
+            zoom: 16
+          });
+          hasInitialPosition = true;
+          lastViewCenter = newCenter;
           lastPosition = newCenter;
           lastPositionTime = now;
           return;
         }
-      }
 
-      if (distanceMoved >= VIEW_UPDATE_DISTANCE) {
-        map.easeTo({
-          center: newCenter,
-          duration: 1000
-        });
-        lastViewCenter = newCenter;
-      }
-
-      lastPosition = newCenter;
-      lastPositionTime = now;
-    }
-
-    function shouldProcessLocationUpdate(lng, lat) {
-      const now = Date.now();
-
-      if (!lastProcessedPosition) {
-        lastProcessedPosition = [lng, lat];
-        lastProcessedPositionTime = now;
-        return true;
-      }
-
-      const moved = haversineDistanceMeters(lastProcessedPosition, [lng, lat]);
-      const elapsed = now - lastProcessedPositionTime;
-
-      if (moved >= POSITION_UPDATE_MIN_METERS || elapsed >= POSITION_UPDATE_MIN_MS) {
-        lastProcessedPosition = [lng, lat];
-        lastProcessedPositionTime = now;
-        return true;
-      }
-
-      return false;
-    }
-
-    function buildRouteFeatureFromCoordinates(coordinates) {
-      return {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates
-        }
-      };
-    }
-
-    function addRouteToMap(routeFeature) {
-      routeCoordinates = routeFeature.geometry.coordinates;
-
-      if (!map.getSource('route')) {
-        map.addSource('route', {
-          type: 'geojson',
-          data: routeFeature
-        });
-
-        map.addLayer({
-          id: 'route-shadow',
-          type: 'line',
-          source: 'route',
-          paint: {
-            'line-color': '#0b1223',
-            'line-width': 8,
-            'line-opacity': 0.45
-          }
-        });
-
-        map.addLayer({
-          id: 'route-dotted-ahead',
-          type: 'line',
-          source: 'route',
-          paint: {
-            'line-color': '#8b5cf6',
-            'line-width': 2,
-            'line-dasharray': [0, 1.5, 0.8, 1.5],
-            'line-opacity': 0.75
-          }
-        });
-
-        map.addLayer({
-          id: 'route-line',
-          type: 'line',
-          source: 'route',
-          paint: {
-            'line-color': '#7c3aed',
-            'line-width': 3.5,
-            'line-opacity': 0.95
-          }
-        });
-      } else {
-        map.getSource('route').setData(routeFeature);
-      }
-
-      setInitialMapView();
-
-      if (routeCoordinates.length > 0) {
-        new mapboxgl.Marker({ color: '#22c55e' })
-          .setLngLat(routeCoordinates[0])
-          .setPopup(
-            new mapboxgl.Popup().setHTML(
-              '<h3>Start</h3><p>Route begins here</p>'
-            )
-          )
-          .addTo(map);
-
-        new mapboxgl.Marker({ color: '#f97316' })
-          .setLngLat(routeCoordinates[routeCoordinates.length - 1])
-          .setPopup(
-            new mapboxgl.Popup().setHTML(
-              '<h3>Finish</h3><p>End of route</p>'
-            )
-          )
-          .addTo(map);
-      }
-    }
-
-    function loadRouteGeoJson() {
-      if (window.location.protocol === 'file:') {
-        addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
-        showWarning(
-          'Open this page from a web server to load the exact route file',
-          'warning'
-        );
-        return;
-      }
-
-      fetch(routeGeoJsonUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Failed to load route geojson: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then(geojson => {
-          let routeFeature = geojson;
-
-          if (geojson && geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
-            routeFeature = geojson.features.find(
-              feature => feature && feature.geometry && feature.geometry.type === 'LineString'
-            ) || geojson.features[0];
-          }
-
-          if (routeFeature && routeFeature.type === 'FeatureCollection') {
-            routeFeature = routeFeature.features.find(
-              feature => feature && feature.geometry && feature.geometry.type === 'LineString'
-            ) || routeFeature.features[0];
-          }
-
-          const geometry = routeFeature && routeFeature.geometry;
-
-          if (!geometry || geometry.type !== 'LineString' || !Array.isArray(geometry.coordinates)) {
-            throw new Error('GeoJSON must contain a LineString geometry.');
-          }
-
-          addRouteToMap(routeFeature);
-        })
-        .catch(error => {
-          console.error(error);
-          addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
-          showWarning('Using fallback route preview', 'warning');
-        });
-    }
-
-    // Route button
-    document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
-
-    // Follow button
-    const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
-
-    document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
-      followMode = !followMode;
-
-      followButton.style.opacity = followMode ? '1' : '0.5';
-
-      if (followMode && lastSnappedPosition) {
-        map.easeTo({
-          center: lastSnappedPosition,
-          zoom: 16,
-          duration: 600
-        });
-      }
-
-      if (followMode && getDistanceToRoute(lastActualPosition || [-0.4543, 51.4700]) > 300) {
-        showWarning('Move closer to the route to enable tracking', 'warning');
-      }
-    });
-
-    // Hazards button
-    const hazardsButton = document.getElementById('hazards-button');
-
-    hazardsButton.addEventListener('click', () => {
-      showHazards = !showHazards;
-
-      hazardMarkers.forEach(marker => {
-        marker.getElement().style.display = showHazards ? 'block' : 'none';
-      });
-
-      hazardsButton.classList.toggle('on', showHazards);
-    });
-
-    // Rest button
-    const restButton = document.getElementById('rest-button');
-
-    restButton.addEventListener('click', () => {
-      showRest = !showRest;
-
-      restMarkers.forEach(marker => {
-        marker.getElement().style.display = showRest ? 'block' : 'none';
-      });
-
-      restButton.classList.toggle('on', showRest);
-    });
-
-    // Help button
-    const helpButton = document.getElementById('help-button');
-    const helpPanel = document.getElementById('help-panel');
-    const helpBackdrop = document.getElementById('help-backdrop');
-    const helpCloseButton = document.getElementById('help-close-button');
-    const showLocationButton = document.getElementById('show-location-button');
-    const helpCoordinates = document.getElementById('help-coordinates');
-    const helpRouteDistance = document.getElementById('help-route-distance');
-    const eventSupportLink = document.getElementById('event-support-link');
-    const EVENT_SUPPORT_PHONE = 'REPLACE_WITH_EVENT_SUPPORT_NUMBER';
-    if (EVENT_SUPPORT_PHONE === 'REPLACE_WITH_EVENT_SUPPORT_NUMBER') {
-      eventSupportLink.removeAttribute('href');
-      eventSupportLink.textContent = 'Event support number TBC';
-      eventSupportLink.style.opacity = '0.6';
-    } else {
-      eventSupportLink.href = `tel:${EVENT_SUPPORT_PHONE}`;
-    }
-
-    function updateHelpLocationPanel() {
-      if (!helpCoordinates || !helpRouteDistance) {
-        return;
-      }
-
-      if (!lastActualPosition) {
-        helpCoordinates.textContent = 'Waiting for location...';
-        helpRouteDistance.textContent = 'Distance from route unavailable';
-        return;
-      }
-
-      const [lng, lat] = lastActualPosition;
-      const distanceToRoute = getDistanceToRoute(lastActualPosition);
-
-      helpCoordinates.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-
-      if (Number.isFinite(distanceToRoute)) {
-        helpRouteDistance.textContent = `${formatDistance(distanceToRoute)} from the purple route`;
-      } else {
-        helpRouteDistance.textContent = 'Distance from route unavailable';
-      }
-    }
-
-    function setHelpPanel(open) {
-      showHelp = open;
-
-      helpButton.classList.toggle('on', showHelp);
-      helpPanel.classList.toggle('open', showHelp);
-      helpBackdrop.classList.toggle('open', showHelp);
-
-      if (showHelp) {
-        updateHelpLocationPanel();
-      }
-    }
-
-    helpButton.addEventListener('click', () => {
-      setHelpPanel(!showHelp);
-    });
-
-    helpCloseButton.addEventListener('click', () => {
-      setHelpPanel(false);
-    });
-
-    helpBackdrop.addEventListener('click', () => {
-      setHelpPanel(false);
-    });
-
-    showLocationButton.addEventListener('click', () => {
-      updateHelpLocationPanel();
-
-      const target = lastActualPosition || lastSnappedPosition;
-
-      if (target) {
-        setHelpPanel(false);
-
-        map.easeTo({
-          center: target,
-          zoom: 17,
-          duration: 700
-        });
-      } else {
-        showWarning('Location is not available yet. Check location permissions.', 'warning');
-      }
-    });
-
-
-    hazardsButton.classList.toggle('on', showHazards);
-    restButton.classList.toggle('on', showRest);
-    setHelpPanel(false);
-
-    map.on('load', () => {
-      loadRouteGeoJson();
-
-      hazardsButton.classList.toggle('on', showHazards);
-      restButton.classList.toggle('on', showRest);
-      setHelpPanel(false);
-    });
-
-    navigator.geolocation.watchPosition(
-      position => {
-        const lng = position.coords.longitude;
-        const lat = position.coords.latitude;
-
-        if (!shouldProcessLocationUpdate(lng, lat)) {
+        if (!followMode) {
           return;
         }
 
-        const routeSnapshot = updateUserMarker(lng, lat);
-        updateMapView(lng, lat);
+        if (!lastViewCenter) {
+          lastViewCenter = newCenter;
+          return;
+        }
 
-        const userPoint = [lng, lat];
+        const distanceMoved = haversineDistanceMeters(lastViewCenter, newCenter);
+
+        if (lastPosition && lastPositionTime) {
+          const elapsed = Math.max(1, now - lastPositionTime);
+          const speedMps = haversineDistanceMeters(lastPosition, newCenter) / (elapsed / 1000);
+
+          if (speedMps < MIN_SPEED_FOR_FOLLOW && distanceMoved < VIEW_UPDATE_DISTANCE) {
+            lastPosition = newCenter;
+            lastPositionTime = now;
+            return;
+          }
+        }
+
+        if (distanceMoved >= VIEW_UPDATE_DISTANCE) {
+          map.easeTo({
+            center: newCenter,
+            duration: 1000
+          });
+          lastViewCenter = newCenter;
+        }
+
+        lastPosition = newCenter;
+        lastPositionTime = now;
+      }
+
+      function shouldProcessLocationUpdate(lng, lat) {
+        const now = Date.now();
+
+        if (!lastProcessedPosition) {
+          lastProcessedPosition = [lng, lat];
+          lastProcessedPositionTime = now;
+          return true;
+        }
+
+        const moved = haversineDistanceMeters(lastProcessedPosition, [lng, lat]);
+        const elapsed = now - lastProcessedPositionTime;
+
+        if (moved >= POSITION_UPDATE_MIN_METERS || elapsed >= POSITION_UPDATE_MIN_MS) {
+          lastProcessedPosition = [lng, lat];
+          lastProcessedPositionTime = now;
+          return true;
+        }
+
+        return false;
+      }
+
+      function buildRouteFeatureFromCoordinates(coordinates) {
+        return {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates
+          }
+        };
+      }
+
+      function addRouteToMap(routeFeature) {
+        routeCoordinates = routeFeature.geometry.coordinates;
+
+        if (!map.getSource('route')) {
+          map.addSource('route', {
+            type: 'geojson',
+            data: routeFeature
+          });
+
+          map.addLayer({
+            id: 'route-shadow',
+            type: 'line',
+            source: 'route',
+            paint: {
+              'line-color': '#0b1223',
+              'line-width': 8,
+              'line-opacity': 0.45
+            }
+          });
+
+          map.addLayer({
+            id: 'route-dotted-ahead',
+            type: 'line',
+            source: 'route',
+            paint: {
+              'line-color': '#8b5cf6',
+              'line-width': 2,
+              'line-dasharray': [0, 1.5, 0.8, 1.5],
+              'line-opacity': 0.75
+            }
+          });
+
+          map.addLayer({
+            id: 'route-line',
+            type: 'line',
+            source: 'route',
+            paint: {
+              'line-color': '#7c3aed',
+              'line-width': 3.5,
+              'line-opacity': 0.95
+            }
+          });
+        } else {
+          map.getSource('route').setData(routeFeature);
+        }
+
+        setInitialMapView();
+
+        if (routeCoordinates.length > 0) {
+          new mapboxgl.Marker({ color: '#22c55e' })
+            .setLngLat(routeCoordinates[0])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(
+                '<h3>Start</h3><p>Route begins here</p>'
+              )
+            )
+            .addTo(map);
+
+          new mapboxgl.Marker({ color: '#f97316' })
+            .setLngLat(routeCoordinates[routeCoordinates.length - 1])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(
+                '<h3>Finish</h3><p>End of route</p>'
+              )
+            )
+            .addTo(map);
+        }
+      }
+
+      function loadRouteGeoJson() {
+        if (window.location.protocol === 'file:') {
+          addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
+          showWarning(
+            'Open this page from a web server to load the exact route file',
+            'warning'
+          );
+          return;
+        }
+
+        fetch(routeGeoJsonUrl)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`Failed to load route geojson: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(geojson => {
+            let routeFeature = geojson;
+
+            if (geojson && geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
+              routeFeature = geojson.features.find(
+                feature => feature && feature.geometry && feature.geometry.type === 'LineString'
+              ) || geojson.features[0];
+            }
+
+            if (routeFeature && routeFeature.type === 'FeatureCollection') {
+              routeFeature = routeFeature.features.find(
+                feature => feature && feature.geometry && feature.geometry.type === 'LineString'
+              ) || routeFeature.features[0];
+            }
+
+            const geometry = routeFeature && routeFeature.geometry;
+
+            if (!geometry || geometry.type !== 'LineString' || !Array.isArray(geometry.coordinates)) {
+              throw new Error('GeoJSON must contain a LineString geometry.');
+            }
+
+            addRouteToMap(routeFeature);
+          })
+          .catch(error => {
+            console.error(error);
+            addRouteToMap(buildRouteFeatureFromCoordinates(fallbackRouteCoordinates));
+            showWarning('Using fallback route preview', 'warning');
+          });
+      }
+
+      // Route button
+      document.getElementById(ROUTE_CENTER_BUTTON_ID).addEventListener('click', centerMapOnRoute);
+
+      // Follow button
+      const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
+
+      document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
+        followMode = !followMode;
+
+        followButton.style.opacity = followMode ? '1' : '0.5';
+
+        if (followMode && lastSnappedPosition) {
+          map.easeTo({
+            center: lastSnappedPosition,
+            zoom: 16,
+            duration: 600
+          });
+        }
+
+        if (followMode && getDistanceToRoute(lastActualPosition || [-0.4543, 51.4700]) > 300) {
+          showWarning('Move closer to the route to enable tracking', 'warning');
+        }
+      });
+
+      // Hazards button
+      const hazardsButton = document.getElementById('hazards-button');
+
+      hazardsButton.addEventListener('click', () => {
+        showHazards = !showHazards;
+
+        hazardMarkers.forEach(marker => {
+          marker.getElement().style.display = showHazards ? 'block' : 'none';
+        });
+
+        hazardsButton.classList.toggle('on', showHazards);
+      });
+
+      // Rest button
+      const restButton = document.getElementById('rest-button');
+
+      restButton.addEventListener('click', () => {
+        showRest = !showRest;
+
+        restMarkers.forEach(marker => {
+          marker.getElement().style.display = showRest ? 'block' : 'none';
+        });
+
+        restButton.classList.toggle('on', showRest);
+      });
+
+      // Help button
+      const helpButton = document.getElementById('help-button');
+      const helpPanel = document.getElementById('help-panel');
+      const helpBackdrop = document.getElementById('help-backdrop');
+      const helpCloseButton = document.getElementById('help-close-button');
+      const showLocationButton = document.getElementById('show-location-button');
+      const helpCoordinates = document.getElementById('help-coordinates');
+      const helpRouteDistance = document.getElementById('help-route-distance');
+      const eventSupportLink = document.getElementById('event-support-link');
+      const EVENT_SUPPORT_PHONE = 'REPLACE_WITH_EVENT_SUPPORT_NUMBER';
+      if (EVENT_SUPPORT_PHONE === 'REPLACE_WITH_EVENT_SUPPORT_NUMBER') {
+        eventSupportLink.removeAttribute('href');
+        eventSupportLink.textContent = 'Event support number TBC';
+        eventSupportLink.style.opacity = '0.6';
+      } else {
+        eventSupportLink.href = `tel:${EVENT_SUPPORT_PHONE}`;
+      }
+
+      function updateHelpLocationPanel() {
+        if (!helpCoordinates || !helpRouteDistance) {
+          return;
+        }
+
+        if (!lastActualPosition) {
+          helpCoordinates.textContent = 'Waiting for location...';
+          helpRouteDistance.textContent = 'Distance from route unavailable';
+          return;
+        }
+
+        const [lng, lat] = lastActualPosition;
+        const distanceToRoute = getDistanceToRoute(lastActualPosition);
+
+        helpCoordinates.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+        if (Number.isFinite(distanceToRoute)) {
+          helpRouteDistance.textContent = `${formatDistance(distanceToRoute)} from the purple route`;
+        } else {
+          helpRouteDistance.textContent = 'Distance from route unavailable';
+        }
+      }
+
+      function setHelpPanel(open) {
+        showHelp = open;
+
+        helpButton.classList.toggle('on', showHelp);
+        helpPanel.classList.toggle('open', showHelp);
+        helpBackdrop.classList.toggle('open', showHelp);
 
         if (showHelp) {
           updateHelpLocationPanel();
         }
-
-        updateNextThingAhead(userPoint);
-
-        const distanceToRoute = getDistanceToRoute(userPoint);
-        const routeProgress = getRouteProgress(userPoint);
-        const segmentInfo = getCurrentSegment(userPoint);
-        
-        const nextHazardAhead = getNextHazardAhead(userPoint);
-        let hazardWarningShown = false;
-
-        if (nextHazardAhead && nextHazardAhead.distanceAhead < 400) {
-          const d = Math.round(nextHazardAhead.distanceAhead);
-
-          showWarning(
-            `⚠️ ${nextHazardAhead.type} in ${d}m`,
-            d < 100 ? 'alert' : 'warning'
-          );
-
-          hazardWarningShown = true;
-        }
-        updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo, routeSnapshot);
-
-        if (!hazardWarningShown) {
-          updateWarningState(distanceToRoute);
-        }
-      },
-      () => {
-        showWarning('Location access is unavailable or blocked', 'alert');
-      },
-      {
-        enableHighAccuracy: false,
-        maximumAge: 20000,
-        timeout: 30000
       }
-    );
-  </script>
+
+      helpButton.addEventListener('click', () => {
+        setHelpPanel(!showHelp);
+      });
+
+      helpCloseButton.addEventListener('click', () => {
+        setHelpPanel(false);
+      });
+
+      helpBackdrop.addEventListener('click', () => {
+        setHelpPanel(false);
+      });
+
+      showLocationButton.addEventListener('click', () => {
+        updateHelpLocationPanel();
+
+        const target = lastActualPosition || lastSnappedPosition;
+
+        if (target) {
+          setHelpPanel(false);
+
+          map.easeTo({
+            center: target,
+            zoom: 17,
+            duration: 700
+          });
+        } else {
+          showWarning('Location is not available yet. Check location permissions.', 'warning');
+        }
+      });
+
+
+      hazardsButton.classList.toggle('on', showHazards);
+      restButton.classList.toggle('on', showRest);
+      setHelpPanel(false);
+
+      map.on('load', () => {
+        loadRouteGeoJson();
+
+        hazardsButton.classList.toggle('on', showHazards);
+        restButton.classList.toggle('on', showRest);
+        setHelpPanel(false);
+      });
+
+      navigator.geolocation.watchPosition(
+        position => {
+          const lng = position.coords.longitude;
+          const lat = position.coords.latitude;
+
+          if (!shouldProcessLocationUpdate(lng, lat)) {
+            return;
+          }
+
+          const routeSnapshot = updateUserMarker(lng, lat);
+          updateMapView(lng, lat);
+
+          const userPoint = [lng, lat];
+
+          if (showHelp) {
+            updateHelpLocationPanel();
+          }
+
+          updateNextThingAhead(userPoint);
+
+          const distanceToRoute = getDistanceToRoute(userPoint);
+          const routeProgress = getRouteProgress(userPoint);
+          const segmentInfo = getCurrentSegment(userPoint);
+
+          const nextHazardAhead = getNextHazardAhead(userPoint);
+          let hazardWarningShown = false;
+
+          if (nextHazardAhead && nextHazardAhead.distanceAhead < 400) {
+            const d = Math.round(nextHazardAhead.distanceAhead);
+
+            showWarning(
+              `⚠️ ${nextHazardAhead.type} in ${d}m`,
+              d < 100 ? 'alert' : 'warning'
+            );
+
+            hazardWarningShown = true;
+          }
+          updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo, routeSnapshot);
+
+          if (!hazardWarningShown) {
+            updateWarningState(distanceToRoute);
+          }
+        },
+        () => {
+          showWarning('Location access is unavailable or blocked', 'alert');
+        },
+        {
+          enableHighAccuracy: false,
+          maximumAge: 20000,
+          timeout: 30000
+        }
+      );
+    </script>
 
 </body>
 
