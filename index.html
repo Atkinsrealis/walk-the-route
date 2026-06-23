@@ -480,8 +480,13 @@ const hazards = [
 // Hazards
 hazards.forEach(h => {
   const marker = new mapboxgl.Marker({ color: '#ef4444' })
-    .setLngLat([h.lng, h.lat])
-    .addTo(map);
+    .setLngLat([h.lng, h.lat]);
+
+  if (!showHazards) {
+    marker.getElement().style.display = 'none';
+  }
+
+  marker.addTo(map);
 
   hazardMarkers.push(marker);
 });
@@ -497,8 +502,13 @@ restStops.forEach(r => {
     .setLngLat([r.lng, r.lat])
     .setPopup(
       new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`)
-    )
-    .addTo(map);
+    );
+
+  if (!showRest) {
+    marker.getElement().style.display = 'none';
+  }
+
+  marker.addTo(map);
 
   restMarkers.push(marker);
 });
@@ -1199,7 +1209,7 @@ hazardsButton.addEventListener('click', () => {
   showHazards = !showHazards;
 
   hazardMarkers.forEach(marker => {
-    marker.getElement().style.visibility = 'hidden';
+    marker.getElement().style.visibility = showHazards ? 'visible' : 'hidden';
   });
 
   hazardsButton.classList.toggle('on', showHazards);
@@ -1212,7 +1222,7 @@ restButton.addEventListener('click', () => {
   showRest = !showRest;
 
   restMarkers.forEach(marker => {
-    marker.getElement().style.visibility = 'hidden';
+    marker.getElement().style.visibility = showRest ? 'visible' : 'hidden';
   });
 
   restButton.classList.toggle('on', showRest);
