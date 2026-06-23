@@ -901,6 +901,7 @@
       let showRest = false;
       let restMarkers = [];
       let showHelp = false;
+      let resizeTimer;
 
       const hazards = [
         {
@@ -1121,13 +1122,26 @@
         }, null);
 
         if (bounds) {
+          const topOffset =
+            document.querySelector(".route-card")?.offsetHeight || 140;
+
+          const bottomOffset =
+            document.querySelector(".bottom-panel")?.offsetHeight || 180;
+
+          const uiGap = 60; // consistent breathing space
+
           map.fitBounds(
             [
               [bounds[0], bounds[1]],
               [bounds[2], bounds[3]],
             ],
             {
-              padding: { top: 120, bottom: 180, left: 40, right: 40 },
+              padding: {
+                top: topOffset + uiGap,
+                bottom: bottomOffset + uiGap,
+                left: 40,
+                right: 40,
+              },
               duration: 800,
             },
           );
@@ -2080,6 +2094,21 @@
           timeout: 30000,
         },
       );
+
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+
+        resizeTimer = setTimeout(() => {
+          centerMapOnRoute();
+        }, 200);
+      });
+
+      //Handle device rotation (mobile)
+      window.addEventListener("orientationchange", () => {
+        setTimeout(() => {
+          centerMapOnRoute();
+        }, 300);
+      });
     </script>
   </body>
 </html>
