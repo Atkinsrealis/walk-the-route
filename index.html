@@ -425,34 +425,47 @@
   let followMode = true;
   let hasShownReadyState = false;
 
-  const hazards = [
+const hazards = [
   {
     id: 1,
-    lng: -0.4600,
-    lat: 51.4720,
+    lng: -0.4555,
+    lat: 51.4705,
     type: "No pavement",
-    message: "No pavement ahead – walk single file",
-    radius: 120
+    message: "No pavement – walk single file",
+    radius: 150
   },
   {
     id: 2,
-    lng: -0.4660,
-    lat: 51.4750,
+    lng: -0.4605,
+    lat: 51.4725,
     type: "Vehicle crossing",
     message: "Active vehicle crossing",
     radius: 150
   },
-  
-{
-  id: 3,
-  lng: -0.4543,
-  lat: 51.4700,
-  type: "Test hazard",
-  message: "Test hazard near route",
-  radius: 300
-}
-
-
+  {
+    id: 3,
+    lng: -0.4665,
+    lat: 51.4750,
+    type: "Narrow verge",
+    message: "Narrow walking space",
+    radius: 120
+  },
+  {
+    id: 4,
+    lng: -0.4685,
+    lat: 51.4753,
+    type: "Poor lighting",
+    message: "Low visibility area",
+    radius: 200
+  },
+  {
+    id: 5,
+    lng: -0.4620,
+    lat: 51.4735,
+    type: "Mixed traffic",
+    message: "Shared with vehicles",
+    radius: 150
+  }
 ];
 
 hazards.forEach(h => {
