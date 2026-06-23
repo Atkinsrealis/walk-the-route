@@ -243,9 +243,10 @@
       display: none !important;
     }
 
-
     .card {
-      background: linear-gradient(180deg, rgba(16, 22, 40, 0.92), rgba(8, 11, 21, 0.92));
+      background: rgba(10, 15, 31, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: none;
       transition: all 0.2s ease;
       cursor: pointer;
     }
@@ -263,11 +264,12 @@
     }
 
     .card.active {
-      background: #7c3aed; /* solid purple */
+      background: #7c3aed;              
+      border: none;
+      box-shadow: none;
       color: white;
-      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.5);
     }
- 
+
     .card:hover {
       background: rgba(255, 255, 255, 0.08);
     }
