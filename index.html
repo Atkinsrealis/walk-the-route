@@ -383,7 +383,7 @@
   const MIN_SPEED_FOR_FOLLOW = 0.4;
   const POSITION_UPDATE_MIN_METERS = 12;
   const POSITION_UPDATE_MIN_MS = 8000;
-  const START_APPROACH_DISTANCE = 5;
+  const START_APPROACH_DISTANCE = 30;
   const FINISH_APPROACH_DISTANCE = 30;
   const WARNING_ID = 'warning';
   const DISTANCE_VALUE_ID = 'distance-value';
@@ -1083,7 +1083,7 @@
 
   document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).addEventListener('click', () => {
     followMode = !followMode;
-    document.getElementById(FOLLOW_TOGGLE_BUTTON_ID).textContent = followMode ? '⟲' : '⟳';
+    followButton.style.opacity = followMode ? '1' : '0.5';
   });
 
   map.on('load', () => {
