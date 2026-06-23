@@ -425,6 +425,59 @@
   let followMode = true;
   let hasShownReadyState = false;
 
+  const hazards = [
+  {
+    id: 1,
+    lng: -0.4600,
+    lat: 51.4720,
+    type: "No pavement",
+    message: "No pavement ahead – walk single file",
+    radius: 120
+  },
+  {
+    id: 2,
+    lng: -0.4660,
+    lat: 51.4750,
+    type: "Vehicle crossing",
+    message: "Active vehicle crossing",
+    radius: 150
+  },
+  
+  {
+    id: 3,
+    lng: -0.4555,
+    lat: 51.4705,
+    type: "Test hazard",
+    message: "Test hazard near start",
+    radius: 200
+  }
+
+];
+
+hazards.forEach(h => {
+  new mapboxgl.Marker({ color: '#ef4444' })
+    .setLngLat([h.lng, h.lat])
+    .setPopup(
+      new mapboxgl.Popup().setHTML(`<strong>${h.type}</strong><p>${h.message}</p>`)
+    )
+    .addTo(map);
+});
+
+function getNearestHazard(userPoint) {
+  let nearest = null;
+  let minDistance = Infinity;
+
+  hazards.forEach(h => {
+    const d = haversineDistanceMeters(userPoint, [h.lng, h.lat]);
+    if (d < minDistance) {
+      minDistance = d;
+      nearest = { ...h, distance: d };
+    }
+  });
+
+  return nearest;
+}
+
   function toRadians(value) {
     return value * (Math.PI / 180);
   }
@@ -858,25 +911,23 @@
   }
 
   function updateUserMarker(lng, lat) {
-    const actualPosition = [lng, lat];
-    lastActualPosition = actualPosition;
+  const actualPosition = [lng, lat];
+  lastActualPosition = actualPosition;
 
-    // Snap to nearest point on route
-    const routeSnapshot = getClosestPointOnRoute(actualPosition);
-    const snappedLng = routeSnapshot.point[0];
-    const snappedLat = routeSnapshot.point[1];
-    lastSnappedPosition = routeSnapshot.point;
+  const routeSnapshot = getClosestPointOnRoute(actualPosition);
 
-    if (!userMarker) {
-      userMarker = new mapboxgl.Marker({
-        color: '#00AEEF'
-      })
-        .setLngLat([snappedLng, snappedLat])
-        .addTo(map);
-    } else {
-      userMarker.setLngLat([snappedLng, snappedLat]);
-    }
+  lastSnappedPosition = routeSnapshot.point;
+
+  if (!userMarker) {
+    userMarker = new mapboxgl.Marker({ color: '#00AEEF' })
+      .setLngLat(routeSnapshot.point)
+      .addTo(map);
+  } else {
+    userMarker.setLngLat(routeSnapshot.point);
   }
+
+  return routeSnapshot;
+}
 
   function updateMapView(lng, lat) {
     // Use snapped position to keep route centered
@@ -1106,7 +1157,13 @@
       const distanceToRoute = getDistanceToRoute(userPoint);
       const routeProgress = getRouteProgress(userPoint);
       const segmentInfo = getCurrentSegment(userPoint);
-      const routeSnapshot = getClosestPointOnRoute(userPoint);
+      const routeSnapshot = updateUserMarker(lng, lat);
+      const nearestHazard = getNearestHazard([lng, lat]);
+      
+      if (nearestHazard && nearestHazard.distance < nearestHazard.radius) {
+        showWarning(`⚠️ ${nearestHazard.message}`, 'warning');
+      }
+
       updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo, routeSnapshot);
       updateWarningState(distanceToRoute);
     },
