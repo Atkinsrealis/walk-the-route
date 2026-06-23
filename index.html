@@ -1159,10 +1159,14 @@ function getNearestHazard(userPoint) {
       const segmentInfo = getCurrentSegment(userPoint);
       const routeSnapshot = updateUserMarker(lng, lat);
       const nearestHazard = getNearestHazard([lng, lat]);
-      
-      if (nearestHazard && nearestHazard.distance < nearestHazard.radius) {
-        showWarning(`⚠️ ${nearestHazard.message}`, 'warning');
-      }
+      if (nearestHazard && nearestHazard.distance < 300) {
+        const d = Math.round(nearestHazard.distance);
+        
+        showWarning(
+        `⚠️ ${nearestHazard.type} in ${d}m`,
+        d < 100 ? 'alert' : 'warning'
+      );
+}
 
       updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo, routeSnapshot);
       updateWarningState(distanceToRoute);
