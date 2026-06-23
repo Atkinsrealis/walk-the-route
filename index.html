@@ -1128,7 +1128,8 @@
           const bottomOffset =
             document.querySelector(".bottom-panel")?.offsetHeight || 180;
 
-          const uiGap = 60; // consistent breathing space
+          const uiGap = 60;
+          const isLandscape = window.innerWidth > window.innerHeight;
 
           map.fitBounds(
             [
@@ -1137,10 +1138,14 @@
             ],
             {
               padding: {
-                top: topOffset + uiGap,
-                bottom: bottomOffset + uiGap,
-                left: 40,
-                right: 40,
+                top: isLandscape
+                  ? topOffset + 20 // ↓ LESS space in landscape
+                  : topOffset + uiGap,
+
+                bottom: isLandscape ? bottomOffset + 20 : bottomOffset + uiGap,
+
+                left: 60, // give more horizontal breathing room in landscape
+                right: 60,
               },
               duration: 800,
             },
