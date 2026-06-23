@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="screen-orientation" content="portrait" />
 
     <title>Walk the Route</title>
 
@@ -689,6 +690,31 @@
       @media (min-width: 520px) {
         .help-panel__actions {
           grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+
+      @media screen and (orientation: landscape) {
+        body {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #0a0f1f;
+        }
+
+        #map,
+        .topbar,
+        .route-card,
+        .bottom-panel,
+        .help-panel {
+          display: none !important;
+        }
+
+        body::after {
+          content: "For the best experience, use portrait mode";
+          color: white;
+          font-size: 18px;
+          text-align: center;
+          padding: 20px;
         }
       }
     </style>
