@@ -225,25 +225,28 @@
     .card {
       background: #060b18;
       color: white;
-      border: none;
-      box-shadow: none;
       padding: 14px 10px;
       border-radius: 16px;
       text-align: center;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      border: none;
+      box-shadow: none;
+      transition: background 0.2s ease;
     }
 
     .card.on {
       background: #7c3aed;
-      color: white;
     }
 
-    /* optional — tap feel */
     .card:active {
-      transform: scale(0.97);
+      transform: scale(0.98);
+    }
+
+    .card strong {
+      display: block;
+      font-size: 16px;
     }
 
     @media (max-width: 480px) {
@@ -477,16 +480,16 @@ const hazards = [
   }
 ];
 
-// Hazards
+// HAZARDS
 hazards.forEach(h => {
   const marker = new mapboxgl.Marker({ color: '#ef4444' })
-    .setLngLat([h.lng, h.lat]);
+    .setLngLat([h.lng, h.lat])
+    .setPopup(
+      new mapboxgl.Popup().setHTML(`<strong>${h.type}</strong><p>${h.message}</p>`)
+    )
+    .addTo(map);
 
-  if (!showHazards) {
-    marker.getElement().style.display = 'none';
-  }
-
-  marker.addTo(map);
+  marker.getElement().style.display = showHazards ? 'block' : 'none';
 
   hazardMarkers.push(marker);
 });
@@ -502,13 +505,10 @@ restStops.forEach(r => {
     .setLngLat([r.lng, r.lat])
     .setPopup(
       new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`)
-    );
+    )
+    .addTo(map);
 
-  if (!showRest) {
-    marker.getElement().style.display = 'none';
-  }
-
-  marker.addTo(map);
+  marker.getElement().style.display = showRest ? 'block' : 'none';
 
   restMarkers.push(marker);
 });
@@ -1209,7 +1209,7 @@ hazardsButton.addEventListener('click', () => {
   showHazards = !showHazards;
 
   hazardMarkers.forEach(marker => {
-    marker.getElement().style.visibility = showHazards ? 'visible' : 'hidden';
+    marker.getElement().style.display = showHazards ? 'block' : 'none';
   });
 
   hazardsButton.classList.toggle('on', showHazards);
@@ -1222,7 +1222,7 @@ restButton.addEventListener('click', () => {
   showRest = !showRest;
 
   restMarkers.forEach(marker => {
-    marker.getElement().style.visibility = showRest ? 'visible' : 'hidden';
+    marker.getElement().style.display = showRest ? 'block' : 'none';
   });
 
   restButton.classList.toggle('on', showRest);
@@ -1242,6 +1242,10 @@ safetyButton.addEventListener('click', () => {
     showWarning('', '');
   }
 });
+
+hazardsButton.classList.toggle('on', showHazards);
+restButton.classList.toggle('on', showRest);
+safetyButton.classList.toggle('on', showSafety);
 
   map.on('load', () => {
     loadRouteGeoJson();
