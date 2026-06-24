@@ -810,20 +810,21 @@
         }
       }
 
+      /* Installed PWA only */
       html.is-standalone {
-        --floating-button-bottom: calc(76px + env(safe-area-inset-bottom));
+        --floating-button-bottom: 74px;
       }
 
       html.is-standalone .bottom-panel {
-        bottom: calc(6px + env(safe-area-inset-bottom));
+        bottom: 0;
       }
 
       html.is-standalone .help-panel {
-        bottom: calc(82px + env(safe-area-inset-bottom));
+        bottom: 76px;
       }
 
       html.is-standalone .toast {
-        bottom: calc(96px + env(safe-area-inset-bottom));
+        bottom: 88px;
       }
 
       @media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
