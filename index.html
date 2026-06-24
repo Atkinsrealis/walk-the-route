@@ -665,23 +665,13 @@
         pointer-events: none;
         white-space: nowrap;
 
-        opacity: 1;
-        transform: translateY(0) scale(1);
         transform-origin: center;
 
-        transition:
-          opacity 0.5s ease,
-          transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
       }
 
-      .surface-map-tooltip.is-fading {
-        opacity: 0;
-        transform: translateY(8px) scale(0.94);
-      }
-
-      .surface-map-tooltip.is-hard-hidden {
-        display: none !important;
-      }
+.surface-map-tooltip.is-hidden {
+  display: none !important;
+}
       .surface-map-tooltip__line {
         width: 26px;
         height: 5px;
@@ -1132,6 +1122,7 @@
       let routeSurfaceSummary = null;
       let surfaceTooltipMoveTimer = null;
       let surfaceTooltipHideTimer = null;
+      let isMapInteracting = false;
 
       const hazards = [
         {
@@ -1826,85 +1817,75 @@
         updateSurfaceTooltipVisibility();
       }
 
-      function fadeOutSurfaceTooltip({ hardHide = false } = {}) {
-        if (!surfaceTooltipElement) {
-          return;
-        }
+function hideSurfaceTooltip() {
+  if (!surfaceTooltipElement) {
+    return;
+  }
 
-        clearTimeout(surfaceTooltipHideTimer);
+  surfaceTooltipElement.classList.add("is-hidden");
+}
 
-        surfaceTooltipElement.classList.remove("is-hard-hidden");
-        surfaceTooltipElement.classList.add("is-fading");
+function showSurfaceTooltip() {
+  if (!surfaceTooltipElement) return;
 
-        if (hardHide) {
-          surfaceTooltipHideTimer = setTimeout(() => {
-            surfaceTooltipElement.classList.add("is-hard-hidden");
-          }, 520);
-        }
-      }
+  // BLOCK: never show while user is interacting
+  if (isMapInteracting) return;
 
-      function fadeInSurfaceTooltip() {
-        if (!surfaceTooltipElement) {
-          return;
-        }
+  if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+    hideSurfaceTooltip();
+    return;
+  }
 
-        clearTimeout(surfaceTooltipHideTimer);
+  surfaceTooltipElement.classList.remove("is-hidden");
+}
 
-        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-          fadeOutSurfaceTooltip({ hardHide: true });
-          return;
-        }
+function updateSurfaceTooltipVisibility() {
+  if (!surfaceTooltipElement) {
+    return;
+  }
 
-        surfaceTooltipElement.classList.remove("is-hard-hidden");
+  if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+    hideSurfaceTooltip();
+  } else {
+    showSurfaceTooltip();
+  }
+}
 
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            surfaceTooltipElement.classList.remove("is-fading");
-          });
-        });
-      }
+function repositionSurfaceTooltip() {
+  if (
+    !surfaceTooltipMarker ||
+    !surfaceTooltipElement ||
+    !routeSurfaceSummary ||
+    routeCoordinates.length === 0
+  ) {
+    return;
+  }
 
-      function updateSurfaceTooltipVisibility() {
-        if (!surfaceTooltipElement) {
-          return;
-        }
+  clearTimeout(surfaceTooltipMoveTimer);
 
-        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-          fadeOutSurfaceTooltip({ hardHide: true });
-        }
-      }
+  // STILL interacting? do nothing
+  if (isMapInteracting) return;
 
-      function repositionSurfaceTooltip() {
-        if (
-          !surfaceTooltipMarker ||
-          !surfaceTooltipElement ||
-          !routeSurfaceSummary ||
-          routeCoordinates.length === 0
-        ) {
-          return;
-        }
+  hideSurfaceTooltip();
 
-        clearTimeout(surfaceTooltipMoveTimer);
+  surfaceTooltipMoveTimer = setTimeout(() => {
+    if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+      hideSurfaceTooltip();
+      return;
+    }
 
-        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-          fadeOutSurfaceTooltip({ hardHide: true });
-          return;
-        }
+    const coordinate = getBestVisibleRouteTooltipCoordinate();
+    if (!coordinate) return;
 
-        const coordinate = getBestVisibleRouteTooltipCoordinate();
+    surfaceTooltipMarker.setLngLat(coordinate);
 
-        if (!coordinate) {
-          return;
-        }
+    // Only show if interaction has finished
+    if (!isMapInteracting) {
+      showSurfaceTooltip();
+    }
+  }, 350);
+}
 
-        fadeOutSurfaceTooltip();
-
-        surfaceTooltipMoveTimer = setTimeout(() => {
-          surfaceTooltipMarker.setLngLat(coordinate);
-          surfaceTooltipMoveTimer = null;
-          fadeInSurfaceTooltip();
-        }, 540);
-      }
 
       function loadRouteSurfaceSummary() {
         fetch("route-surface-summary.json")
@@ -2575,33 +2556,27 @@
         setHelpPanel(false);
       });
 
-      map.on("movestart", () => {
-        fadeOutSurfaceTooltip();
-      });
+map.on("movestart", () => {
+  isMapInteracting = true;
+  hideSurfaceTooltip();
+});
 
-      map.on("zoomstart", () => {
-        fadeOutSurfaceTooltip();
-      });
+map.on("zoomstart", () => {
+  isMapInteracting = true;
+  hideSurfaceTooltip();
+});
 
-      map.on("zoom", () => {
-        updateSurfaceTooltipVisibility();
-      });
+map.on("moveend", () => {
+  isMapInteracting = false;
 
-      map.on("zoomend", () => {
-        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-          fadeOutSurfaceTooltip({ hardHide: true });
-        } else {
-          repositionSurfaceTooltip();
-        }
-      });
+  repositionSurfaceTooltip();
+});
 
-      map.on("moveend", () => {
-        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-          fadeOutSurfaceTooltip({ hardHide: true });
-        } else {
-          repositionSurfaceTooltip();
-        }
-      });
+map.on("zoomend", () => {
+  isMapInteracting = false;
+
+  repositionSurfaceTooltip();
+});
 
       navigator.geolocation.watchPosition(
         (position) => {
