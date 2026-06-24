@@ -782,51 +782,48 @@
         }
       }
 
-      @media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
-        /* Hide everything interactive on mobile landscape only */
-        .topbar,
-        .warning,
-        .route-card,
-        .bottom-panel,
-        .route-center-button,
-        .follow-toggle-button,
-        .share-location-button,
-        .help-panel,
-        .help-backdrop,
-        .toast,
-        #map {
-          display: none !important;
-        }
+@media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+  .topbar,
+  .warning,
+  .route-card,
+  .bottom-panel,
+  .route-center-button,
+  .follow-toggle-button,
+  .share-location-button,
+  .help-panel,
+  .help-backdrop,
+  .toast,
+  #map {
+    display: none !important;
+  }
 
-        body {
-          margin: 0;
-          background: #0a0f1f;
-          overflow: hidden;
-        }
+  body {
+    margin: 0;
+    background: #0a0f1f;
+    overflow: hidden;
+  }
 
-        body::after {
-          content: "Rotate your device\Afor the best experience";
-          white-space: pre-line;
+  body::after {
+    content: "Rotate your device for the best experience";
 
-          position: fixed;
-          inset: 0;
+    position: fixed;
+    left: 50%;
+    top: 44%;
+    transform: translate(-50%, -50%);
 
-          display: flex;
-          align-items: center;
-          justify-content: center;
+    width: min(82vw, 360px);
+    box-sizing: border-box;
+    padding: 0 24px;
 
-          box-sizing: border-box;
-          padding: 24px;
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.25;
+    text-align: center;
 
-          color: rgba(255, 255, 255, 0.85);
-          font-size: 18px;
-          line-height: 1.4;
-          text-align: center;
-
-          width: 100vw;
-          height: 100vh;
-        }
-      }
+    z-index: 999;
+  }
+}
     </style>
   </head>
 
