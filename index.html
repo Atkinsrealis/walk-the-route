@@ -703,6 +703,81 @@
         background: #7c3aed;
       }
 
+      .compass-button {
+        position: fixed;
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom) + (var(--floating-button-size) * 3) +
+            (var(--floating-button-gap) * 3)
+        );
+
+        z-index: 12;
+
+        width: 46px;
+        height: 46px;
+
+        border: 0;
+        border-radius: 999px;
+
+        background: rgba(10, 15, 31, 0.88);
+        color: #14b8a6;
+
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+      }
+
+      .compass-button[hidden] {
+        display: none;
+      }
+
+      .compass-button:active {
+        transform: scale(0.96);
+      }
+
+      .compass-button__dial {
+        position: relative;
+
+        width: 30px;
+        height: 30px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .compass-button__icon {
+        width: 30px;
+        height: 30px;
+
+        display: block;
+
+        color: #14b8a6;
+
+        transform-origin: center;
+        transition: transform 0.12s linear;
+
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.24));
+      }
+      .compass-button__label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+
+        transform: translate(-50%, -50%);
+
+        color: white;
+
+        font-size: 11px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: 0.03em;
+      }
+
       @media (max-width: 480px) {
         :root {
           --floating-button-gap: 12px;
@@ -881,6 +956,7 @@
         .route-center-button,
         .follow-toggle-button,
         .share-location-button,
+        .compass-button,
         .help-panel,
         .help-backdrop,
         .toast,
@@ -944,6 +1020,64 @@
 
       <span class="route-card__badge" id="route-badge">On route</span>
     </div>
+
+    <button
+      class="compass-button"
+      id="compass-button"
+      aria-label="Point map north"
+      title="Point north"
+      hidden
+    >
+      <span class="compass-button__dial">
+        <svg
+          class="compass-button__icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="8.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          />
+          <path
+            d="M12 3.8v3.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="2.4"
+          />
+          <path
+            d="M12 20.2v-2.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="1.8"
+            opacity="0.55"
+          />
+          <path
+            d="M3.8 12h2.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="1.8"
+            opacity="0.55"
+          />
+          <path
+            d="M20.2 12h-2.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="1.8"
+            opacity="0.55"
+          />
+        </svg>
+
+        <span class="compass-button__label" id="compass-label">N</span>
+      </span>
+    </button>
 
     <button
       class="share-location-button"
@@ -1082,6 +1216,8 @@
       const NEXT_THING_VALUE_ID = "next-thing-value";
       const ROUTE_CENTER_BUTTON_ID = "route-center-button";
       const FOLLOW_TOGGLE_BUTTON_ID = "follow-toggle-button";
+      const COMPASS_BUTTON_ID = "compass-button";
+      const COMPASS_LABEL_ID = "compass-label";
 
       // Route segments - divide 182 waypoints into 4 sections
       const SEGMENTS = [
@@ -1395,6 +1531,53 @@
               duration: 800,
             },
           );
+        }
+      }
+
+      function normalizeBearing(bearing) {
+        return ((bearing + 180) % 360) - 180;
+      }
+
+      function getCompassDirectionLabel(bearing) {
+        const normalized = ((bearing % 360) + 360) % 360;
+
+        const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+        const index = Math.round(normalized / 45) % 8;
+
+        return directions[index];
+      }
+
+      function updateCompassButton() {
+        if (!compassButton || !compassLabel) {
+          return;
+        }
+
+        const bearing = normalizeBearing(map.getBearing());
+        const shouldShow = Math.abs(bearing) > 5;
+
+        compassButton.hidden = !shouldShow;
+
+        if (!shouldShow) {
+          compassLabel.textContent = "N";
+
+          const resetIcon = compassButton.querySelector(
+            ".compass-button__icon",
+          );
+
+          if (resetIcon) {
+            resetIcon.style.transform = "rotate(0deg)";
+          }
+
+          return;
+        }
+
+        compassLabel.textContent = getCompassDirectionLabel(map.getBearing());
+
+        const icon = compassButton.querySelector(".compass-button__icon");
+
+        if (icon) {
+          icon.style.transform = `rotate(${-bearing}deg)`;
         }
       }
 
@@ -2394,7 +2577,8 @@
 
       // Follow button
       const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
-
+      const compassButton = document.getElementById(COMPASS_BUTTON_ID);
+      const compassLabel = document.getElementById(COMPASS_LABEL_ID);
       document
         .getElementById(FOLLOW_TOGGLE_BUTTON_ID)
         .addEventListener("click", () => {
@@ -2420,6 +2604,19 @@
             );
           }
         });
+
+      if (compassButton) {
+        compassButton.addEventListener("click", () => {
+          map.easeTo({
+            bearing: 0,
+            pitch: 0,
+            duration: 450,
+          });
+
+          setTimeout(updateCompassButton, 500);
+        });
+      }
+
       // Share button
       const shareBtn = document.getElementById("share-location-button");
 
@@ -2577,6 +2774,7 @@
         hazardsButton.classList.toggle("on", showHazards);
         restButton.classList.toggle("on", showRest);
         setHelpPanel(false);
+        updateCompassButton();
       });
 
       map.on("movestart", () => {
@@ -2593,12 +2791,22 @@
         isMapInteracting = false;
 
         repositionSurfaceTooltip();
+        updateCompassButton();
       });
 
       map.on("zoomend", () => {
         isMapInteracting = false;
 
         repositionSurfaceTooltip();
+        updateCompassButton();
+      });
+
+      map.on("rotate", () => {
+        updateCompassButton();
+      });
+
+      map.on("rotateend", () => {
+        updateCompassButton();
       });
 
       navigator.geolocation.watchPosition(
@@ -2669,6 +2877,7 @@
 
           centerMapOnRoute();
           repositionSurfaceTooltip();
+          updateCompassButton();
         }, 350);
 
         setTimeout(() => {
@@ -2680,6 +2889,7 @@
 
           centerMapOnRoute();
           repositionSurfaceTooltip();
+          updateCompassButton();
         }, 800);
       });
 
