@@ -284,41 +284,6 @@
         display: none !important;
       }
 
-      .surface-pill {
-        position: fixed;
-        left: 50%;
-        bottom: calc(96px + env(safe-area-inset-bottom));
-        transform: translateX(-50%);
-        z-index: 11;
-
-        display: inline-flex;
-        align-items: center;
-        gap: 9px;
-
-        padding: 9px 13px;
-        border-radius: 12px;
-
-        background: rgba(10, 15, 31, 0.88);
-        color: rgba(255, 255, 255, 0.92);
-
-        font-size: 13px;
-        font-weight: 800;
-
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-        backdrop-filter: blur(10px);
-      }
-
-      .surface-pill[hidden] {
-        display: none;
-      }
-
-      .surface-pill__line {
-        width: 26px;
-        height: 5px;
-        border-radius: 999px;
-        background: #7c3aed;
-      }
-
       .card {
         background: #060b18;
         color: white;
@@ -909,11 +874,6 @@
           <span class="route-card__value" id="progress-value">0%</span>
         </div>
 
-        <div class="surface-pill" id="surface-pill" hidden>
-          <span class="surface-pill__line"></span>
-          <span id="surface-pill-text">Surface data loading…</span>
-        </div>
-
         <div class="route-card__meta">
           <span id="distance-value">0 m from route</span>
           <span id="next-thing-value">Next: checking route...</span>
@@ -1121,6 +1081,9 @@
       let restMarkers = [];
       let showHelp = false;
       let resizeTimer;
+      let surfaceTooltipMarker = null;
+      let surfaceTooltipElement = null;
+      let routeSurfaceSummary = null;
 
       const hazards = [
         {
@@ -1370,6 +1333,19 @@
             },
           );
         }
+      }
+
+      function getRouteMidpointCoordinate() {
+        if (!routeCoordinates || routeCoordinates.length === 0) {
+          return null;
+        }
+
+        const midpointIndex = Math.floor(routeCoordinates.length * 0.5);
+
+        return (
+          routeCoordinates[midpointIndex] ||
+          routeCoordinates[Math.floor(routeCoordinates.length / 2)]
+        );
       }
 
       function haversineDistanceMeters(pointA, pointB) {
@@ -1700,14 +1676,67 @@
         return "Surface varies";
       }
 
-      function loadRouteSurfaceSummary() {
-        const surfacePill = document.getElementById("surface-pill");
-        const surfacePillText = document.getElementById("surface-pill-text");
+      function createSurfaceTooltip(surface) {
+        const displayText = getSurfaceDisplayText(surface);
 
-        if (!surfacePill || !surfacePillText) {
+        if (!displayText) {
           return;
         }
 
+        const coordinate = getRouteMidpointCoordinate();
+
+        if (!coordinate) {
+          return;
+        }
+
+        if (!surfaceTooltipElement) {
+          surfaceTooltipElement = document.createElement("div");
+          surfaceTooltipElement.className = "surface-map-tooltip";
+
+          surfaceTooltipElement.innerHTML = `
+      <span class="surface-map-tooltip__line"></span>
+      <span>${displayText}</span>
+    `;
+        } else {
+          surfaceTooltipElement.innerHTML = `
+      <span class="surface-map-tooltip__line"></span>
+      <span>${displayText}</span>
+    `;
+        }
+
+        if (!surfaceTooltipMarker) {
+          surfaceTooltipMarker = new mapboxgl.Marker({
+            element: surfaceTooltipElement,
+            anchor: "center",
+          })
+            .setLngLat(coordinate)
+            .addTo(map);
+        } else {
+          surfaceTooltipMarker.setLngLat(coordinate);
+        }
+
+        updateSurfaceTooltipVisibility();
+      }
+
+      function updateSurfaceTooltipVisibility() {
+        if (!surfaceTooltipElement) {
+          return;
+        }
+
+        const zoom = map.getZoom();
+
+        if (zoom >= 15.2) {
+          surfaceTooltipElement.classList.add("hidden");
+        } else {
+          surfaceTooltipElement.classList.remove("hidden");
+        }
+
+        const scale = Math.max(0.86, Math.min(1, 1.08 - (zoom - 12) * 0.04));
+
+        surfaceTooltipElement.style.transform = `scale(${scale})`;
+      }
+
+      function loadRouteSurfaceSummary() {
         fetch("route-surface-summary.json")
           .then((response) => {
             if (!response.ok) {
@@ -1717,18 +1746,14 @@
             return response.json();
           })
           .then((surface) => {
-            const displayText = getSurfaceDisplayText(surface);
+            routeSurfaceSummary = surface;
 
-            if (!displayText) {
-              return;
+            if (routeCoordinates.length > 0) {
+              createSurfaceTooltip(routeSurfaceSummary);
             }
-
-            surfacePillText.textContent = displayText;
-            surfacePill.hidden = false;
           })
           .catch(() => {
-            // Quiet fail: if the file is missing, do not show anything.
-            surfacePill.hidden = true;
+            // Quiet fail. No surface file, no tooltip.
           });
       }
 
@@ -2094,6 +2119,10 @@
 
         setInitialMapView();
 
+        if (routeSurfaceSummary) {
+          createSurfaceTooltip(routeSurfaceSummary);
+        }
+
         if (routeCoordinates.length > 0) {
           new mapboxgl.Marker({ color: "#22c55e" })
             .setLngLat(routeCoordinates[0])
@@ -2374,6 +2403,14 @@
         hazardsButton.classList.toggle("on", showHazards);
         restButton.classList.toggle("on", showRest);
         setHelpPanel(false);
+      });
+
+      map.on("zoom", () => {
+        updateSurfaceTooltipVisibility();
+      });
+
+      map.on("zoomend", () => {
+        updateSurfaceTooltipVisibility();
       });
 
       navigator.geolocation.watchPosition(
