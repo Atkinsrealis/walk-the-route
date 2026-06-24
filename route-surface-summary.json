@@ -1,0 +1,1280 @@
+{
+  "summaryLabel": "Mostly paved",
+  "pavedPercent": 99,
+  "unpavedPercent": 0,
+  "unknownPercent": 1,
+  "confidence": "estimated",
+  "source": "OpenStreetMap surface/highway tags",
+  "method": "Route segments matched to nearest OSM highway ways",
+  "totalDistanceMetres": 14676.8,
+  "segmentCount": 181,
+  "matchedSegments": [
+    {
+      "lengthMetres": 273,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 182934683
+    },
+    {
+      "lengthMetres": 39.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 182934683
+    },
+    {
+      "lengthMetres": 25.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 6.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 970453155
+    },
+    {
+      "lengthMetres": 18.1,
+      "surfaceClass": "unknown",
+      "matchDistanceMetres": 6.9,
+      "reason": "no usable surface data",
+      "osmWayId": 162552826
+    },
+    {
+      "lengthMetres": 16.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 6,
+      "reason": "surface=asphalt",
+      "osmWayId": 970453156
+    },
+    {
+      "lengthMetres": 53.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 352110262
+    },
+    {
+      "lengthMetres": 63.4,
+      "surfaceClass": "unknown",
+      "matchDistanceMetres": 4.3,
+      "reason": "no usable surface data",
+      "osmWayId": 101835535
+    },
+    {
+      "lengthMetres": 104,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 153992591
+    },
+    {
+      "lengthMetres": 104.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 5.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 153992582
+    },
+    {
+      "lengthMetres": 34.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 153992582
+    },
+    {
+      "lengthMetres": 34.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 153991150
+    },
+    {
+      "lengthMetres": 153.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 153991150
+    },
+    {
+      "lengthMetres": 37.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 153991150
+    },
+    {
+      "lengthMetres": 67,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 153991150
+    },
+    {
+      "lengthMetres": 108.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 1303881402
+    },
+    {
+      "lengthMetres": 1255.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 980085712
+    },
+    {
+      "lengthMetres": 20,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 83822856
+    },
+    {
+      "lengthMetres": 20.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 83822856
+    },
+    {
+      "lengthMetres": 31.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "inferred from highway=service",
+      "osmWayId": 1200372492
+    },
+    {
+      "lengthMetres": 40.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 1422570120
+    },
+    {
+      "lengthMetres": 44.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 164140893
+    },
+    {
+      "lengthMetres": 18.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 164140892
+    },
+    {
+      "lengthMetres": 23.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 83822846
+    },
+    {
+      "lengthMetres": 42.8,
+      "surfaceClass": "unknown",
+      "matchDistanceMetres": 3.5,
+      "reason": "no usable surface data",
+      "osmWayId": 17287457
+    },
+    {
+      "lengthMetres": 153.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.8,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294358
+    },
+    {
+      "lengthMetres": 40.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.1,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294358
+    },
+    {
+      "lengthMetres": 41.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294358
+    },
+    {
+      "lengthMetres": 82.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294358
+    },
+    {
+      "lengthMetres": 48.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.9,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294358
+    },
+    {
+      "lengthMetres": 57.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294358
+    },
+    {
+      "lengthMetres": 109.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.3,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294358
+    },
+    {
+      "lengthMetres": 216.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 5.4,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 4294385
+    },
+    {
+      "lengthMetres": 435.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 157571526
+    },
+    {
+      "lengthMetres": 870.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 285237252
+    },
+    {
+      "lengthMetres": 50.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 194508821
+    },
+    {
+      "lengthMetres": 70.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 194508821
+    },
+    {
+      "lengthMetres": 253.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 1422570131
+    },
+    {
+      "lengthMetres": 52.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 51823677
+    },
+    {
+      "lengthMetres": 280.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.5,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 1422570113
+    },
+    {
+      "lengthMetres": 98.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 759752909
+    },
+    {
+      "lengthMetres": 99.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 759752909
+    },
+    {
+      "lengthMetres": 76.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 759752909
+    },
+    {
+      "lengthMetres": 79.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 157566115
+    },
+    {
+      "lengthMetres": 65.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.4,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 157566115
+    },
+    {
+      "lengthMetres": 30.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 759752909
+    },
+    {
+      "lengthMetres": 31.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 157566115
+    },
+    {
+      "lengthMetres": 112.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 157566115
+    },
+    {
+      "lengthMetres": 111.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.4,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 157566115
+    },
+    {
+      "lengthMetres": 48.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 285261122
+    },
+    {
+      "lengthMetres": 25.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 285261122
+    },
+    {
+      "lengthMetres": 21.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 43956829
+    },
+    {
+      "lengthMetres": 70.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 43956829
+    },
+    {
+      "lengthMetres": 97,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 43956829
+    },
+    {
+      "lengthMetres": 21.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 43956829
+    },
+    {
+      "lengthMetres": 8.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1,
+      "reason": "inferred from highway=unclassified",
+      "osmWayId": 1069032507
+    },
+    {
+      "lengthMetres": 18.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "inferred from highway=unclassified",
+      "osmWayId": 965356379
+    },
+    {
+      "lengthMetres": 22.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "inferred from highway=unclassified",
+      "osmWayId": 965356379
+    },
+    {
+      "lengthMetres": 37.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 43956828
+    },
+    {
+      "lengthMetres": 29.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 43956828
+    },
+    {
+      "lengthMetres": 27.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 338969868
+    },
+    {
+      "lengthMetres": 161.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 1349092693
+    },
+    {
+      "lengthMetres": 80.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 228006222
+    },
+    {
+      "lengthMetres": 78.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 228006222
+    },
+    {
+      "lengthMetres": 20.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 228006222
+    },
+    {
+      "lengthMetres": 18.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0,
+      "reason": "surface=asphalt",
+      "osmWayId": 228006222
+    },
+    {
+      "lengthMetres": 36,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 228006222
+    },
+    {
+      "lengthMetres": 39.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 187395728
+    },
+    {
+      "lengthMetres": 22.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 228006223
+    },
+    {
+      "lengthMetres": 19.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 228006223
+    },
+    {
+      "lengthMetres": 47.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 1349090069
+    },
+    {
+      "lengthMetres": 58.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.7,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 153648114
+    },
+    {
+      "lengthMetres": 28.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.3,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 153648114
+    },
+    {
+      "lengthMetres": 27.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.4,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 153648114
+    },
+    {
+      "lengthMetres": 37.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 226125568
+    },
+    {
+      "lengthMetres": 24.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "inferred from highway=tertiary",
+      "osmWayId": 226125568
+    },
+    {
+      "lengthMetres": 21.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 1039066928
+    },
+    {
+      "lengthMetres": 27.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 10.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 1039066928
+    },
+    {
+      "lengthMetres": 30.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 145625671
+    },
+    {
+      "lengthMetres": 75.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 575317753
+    },
+    {
+      "lengthMetres": 75.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436595
+    },
+    {
+      "lengthMetres": 81.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436595
+    },
+    {
+      "lengthMetres": 81.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436595
+    },
+    {
+      "lengthMetres": 359.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 50908866
+    },
+    {
+      "lengthMetres": 317,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 50908866
+    },
+    {
+      "lengthMetres": 168.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 50908866
+    },
+    {
+      "lengthMetres": 90.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436599
+    },
+    {
+      "lengthMetres": 29.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436599
+    },
+    {
+      "lengthMetres": 27.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436598
+    },
+    {
+      "lengthMetres": 118.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436598
+    },
+    {
+      "lengthMetres": 47.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436598
+    },
+    {
+      "lengthMetres": 43.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 1304436598
+    },
+    {
+      "lengthMetres": 89.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 1456285277
+    },
+    {
+      "lengthMetres": 21.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 151988655
+    },
+    {
+      "lengthMetres": 24.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 151988655
+    },
+    {
+      "lengthMetres": 82.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 151988655
+    },
+    {
+      "lengthMetres": 32,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 684053534
+    },
+    {
+      "lengthMetres": 20.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3,
+      "reason": "surface=asphalt",
+      "osmWayId": 151986365
+    },
+    {
+      "lengthMetres": 13.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 151986365
+    },
+    {
+      "lengthMetres": 20.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 151986364
+    },
+    {
+      "lengthMetres": 19.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 151986364
+    },
+    {
+      "lengthMetres": 17.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 151986364
+    },
+    {
+      "lengthMetres": 51.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 151986364
+    },
+    {
+      "lengthMetres": 70,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 151986364
+    },
+    {
+      "lengthMetres": 122.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3,
+      "reason": "surface=asphalt",
+      "osmWayId": 42432131
+    },
+    {
+      "lengthMetres": 45.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 46.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 56.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 48.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 45.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 45,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 50.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 55.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 33.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 32,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 42.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 5.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 292202472
+    },
+    {
+      "lengthMetres": 32.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 668673394
+    },
+    {
+      "lengthMetres": 25.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 2809823
+    },
+    {
+      "lengthMetres": 24.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 2809823
+    },
+    {
+      "lengthMetres": 51.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 2809823
+    },
+    {
+      "lengthMetres": 118.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 2809823
+    },
+    {
+      "lengthMetres": 62.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 2809823
+    },
+    {
+      "lengthMetres": 55.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 2809823
+    },
+    {
+      "lengthMetres": 239.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 643620716
+    },
+    {
+      "lengthMetres": 226.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 643620716
+    },
+    {
+      "lengthMetres": 278.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 643620716
+    },
+    {
+      "lengthMetres": 75.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848039
+    },
+    {
+      "lengthMetres": 85.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848039
+    },
+    {
+      "lengthMetres": 56.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848039
+    },
+    {
+      "lengthMetres": 32.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848039
+    },
+    {
+      "lengthMetres": 34.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848039
+    },
+    {
+      "lengthMetres": 66.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848039
+    },
+    {
+      "lengthMetres": 65,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848039
+    },
+    {
+      "lengthMetres": 32.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848036
+    },
+    {
+      "lengthMetres": 29.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848036
+    },
+    {
+      "lengthMetres": 57.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848036
+    },
+    {
+      "lengthMetres": 52.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848036
+    },
+    {
+      "lengthMetres": 43.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 532844534
+    },
+    {
+      "lengthMetres": 42.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 532844534
+    },
+    {
+      "lengthMetres": 527.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 532844534
+    },
+    {
+      "lengthMetres": 72.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 5.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 37933768
+    },
+    {
+      "lengthMetres": 73,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 5.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848038
+    },
+    {
+      "lengthMetres": 90.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848037
+    },
+    {
+      "lengthMetres": 35.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3,
+      "reason": "surface=asphalt",
+      "osmWayId": 546848037
+    },
+    {
+      "lengthMetres": 13.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 6.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 151632242
+    },
+    {
+      "lengthMetres": 16.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 5.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 151632242
+    },
+    {
+      "lengthMetres": 23.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 151632242
+    },
+    {
+      "lengthMetres": 22,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 2809822
+    },
+    {
+      "lengthMetres": 21.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 208501758
+    },
+    {
+      "lengthMetres": 30.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 136909551
+    },
+    {
+      "lengthMetres": 20.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 157566136
+    },
+    {
+      "lengthMetres": 17,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 169365893
+    },
+    {
+      "lengthMetres": 30.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.8,
+      "reason": "surface=asphalt",
+      "osmWayId": 208501983
+    },
+    {
+      "lengthMetres": 33.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 208501983
+    },
+    {
+      "lengthMetres": 34.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 1449722494
+    },
+    {
+      "lengthMetres": 56,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 1449722494
+    },
+    {
+      "lengthMetres": 58.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 1449722494
+    },
+    {
+      "lengthMetres": 55.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1,
+      "reason": "surface=asphalt",
+      "osmWayId": 1449722494
+    },
+    {
+      "lengthMetres": 38.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 50912934
+    },
+    {
+      "lengthMetres": 35.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 50912934
+    },
+    {
+      "lengthMetres": 72.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.5,
+      "reason": "surface=asphalt",
+      "osmWayId": 1348981831
+    },
+    {
+      "lengthMetres": 143.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 1348981831
+    },
+    {
+      "lengthMetres": 152.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 1348981794
+    },
+    {
+      "lengthMetres": 147.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 1348981794
+    },
+    {
+      "lengthMetres": 38.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2,
+      "reason": "surface=asphalt",
+      "osmWayId": 50912946
+    },
+    {
+      "lengthMetres": 33.7,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 50912946
+    },
+    {
+      "lengthMetres": 66.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 50912946
+    },
+    {
+      "lengthMetres": 134.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 50912946
+    },
+    {
+      "lengthMetres": 80.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 2.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 50912946
+    },
+    {
+      "lengthMetres": 73.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 153988666
+    },
+    {
+      "lengthMetres": 63.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 153998561
+    },
+    {
+      "lengthMetres": 69.3,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 4.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 153998561
+    },
+    {
+      "lengthMetres": 64,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 153998561
+    },
+    {
+      "lengthMetres": 55.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 8.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 159161930
+    },
+    {
+      "lengthMetres": 44.5,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.6,
+      "reason": "surface=asphalt",
+      "osmWayId": 153988096
+    },
+    {
+      "lengthMetres": 86.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.3,
+      "reason": "surface=asphalt",
+      "osmWayId": 46041208
+    },
+    {
+      "lengthMetres": 51.2,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.2,
+      "reason": "surface=asphalt",
+      "osmWayId": 46041208
+    },
+    {
+      "lengthMetres": 48.1,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 1,
+      "reason": "surface=asphalt",
+      "osmWayId": 46041208
+    },
+    {
+      "lengthMetres": 98.8,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.4,
+      "reason": "surface=asphalt",
+      "osmWayId": 46041208
+    },
+    {
+      "lengthMetres": 36.4,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.7,
+      "reason": "surface=asphalt",
+      "osmWayId": 46041208
+    },
+    {
+      "lengthMetres": 36.6,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 0.9,
+      "reason": "surface=asphalt",
+      "osmWayId": 46041208
+    },
+    {
+      "lengthMetres": 66.9,
+      "surfaceClass": "paved",
+      "matchDistanceMetres": 3.1,
+      "reason": "surface=asphalt",
+      "osmWayId": 182934683
+    }
+  ]
+}
