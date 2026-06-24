@@ -713,8 +713,8 @@
 
         z-index: 40;
 
-        width: 52px;
-        height: 52px;
+        width: var(--floating-button-size);
+        height: var(--floating-button-size);
 
         border: 0;
         border-radius: 999px;
@@ -729,6 +729,7 @@
         justify-content: center;
 
         cursor: pointer;
+        padding: 0;
       }
 
       .compass-button[hidden] {
@@ -742,8 +743,8 @@
       .compass-button__dial {
         position: relative;
 
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
 
         display: flex;
         align-items: center;
@@ -751,8 +752,8 @@
       }
 
       .compass-button__icon {
-        width: 36px;
-        height: 36px;
+        width: 38px;
+        height: 38px;
 
         display: block;
 
@@ -1211,7 +1212,7 @@
       const FINISH_APPROACH_DISTANCE = 30;
       const SURFACE_TOOLTIP_HIDE_ZOOM = 13.8;
       const COMPASS_SHOW_BEARING = 4;
-      const COMPASS_HIDE_BEARING = 1.5;
+      const COMPASS_HIDE_BEARING = 0.5;
       const WARNING_ID = "warning";
       const DISTANCE_VALUE_ID = "distance-value";
       const PROGRESS_VALUE_ID = "progress-value";
