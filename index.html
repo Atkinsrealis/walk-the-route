@@ -1776,6 +1776,14 @@
 
         const safeProgress = Math.min(100, Math.max(0, displayProgress));
 
+        if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
+          progressValue.textContent = "Off route";
+          distanceValue.textContent = "Move closer to the purple route";
+          routeBadge.textContent = "Far off route";
+          routeBadge.className = "route-card__badge alert";
+          return;
+        }
+
         // Display segment info instead of percentage
         if (segmentInfo) {
           progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
