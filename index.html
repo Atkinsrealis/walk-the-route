@@ -64,7 +64,7 @@
         left: 0;
         right: 0;
 
-        height: calc(160px + env(safe-area-inset-top));
+        height: calc(190px + env(safe-area-inset-top));
 
         background: linear-gradient(
           to bottom,
@@ -107,6 +107,22 @@
         font-size: 14px;
       }
 
+      .topbar__brand {
+        display: flex;
+        align-items: center;
+
+        margin-bottom: 8px;
+      }
+
+      .topbar__logo {
+        display: block;
+
+        width: auto;
+        height: 24px;
+
+        max-width: 132px;
+        object-fit: contain;
+      }
       .warning {
         position: fixed;
         top: calc(88px + env(safe-area-inset-top));
@@ -143,7 +159,7 @@
 
       .route-card {
         position: fixed;
-        top: calc(142px + env(safe-area-inset-top));
+        top: calc(160px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         z-index: 19;
@@ -875,6 +891,11 @@
           padding-bottom: 22px;
           padding-left: 12px;
         }
+
+        .topbar__brand {
+          margin-bottom: 6px;
+        }
+
         .topbar h1 {
           font-size: 22px;
         }
@@ -892,7 +913,7 @@
         }
 
         .route-card {
-          top: calc(132px + env(safe-area-inset-top));
+          top: calc(150px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -998,6 +1019,14 @@
 
   <body>
     <div class="topbar">
+      <div class="topbar__brand" aria-label="Heathrow">
+        <img
+          class="topbar__logo"
+          src="/assets/heathrow-logo-white.svg"
+          alt="Heathrow"
+        />
+      </div>
+
       <h1>Heathrow Perimeter Walk</h1>
       <p>Infrastructure charity route</p>
     </div>
@@ -1042,7 +1071,7 @@
             r="8.4"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.8"
+            stroke-width="2.0"
           />
           <path
             d="M12 3.8v3.4"
