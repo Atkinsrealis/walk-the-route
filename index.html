@@ -86,7 +86,7 @@
         z-index: 10;
 
         padding-top: calc(18px + env(safe-area-inset-top));
-        padding-right: 16px;
+        padding-right: 132px;
         padding-bottom: 24px;
         padding-left: 16px;
 
@@ -108,9 +108,14 @@
       }
 
       .topbar__brand {
+        position: absolute;
+        top: calc(20px + env(safe-area-inset-top));
+        right: 16px;
+
         display: flex;
         align-items: center;
-        margin-bottom: 7px;
+
+        margin-bottom: 0;
       }
 
       .topbar__logo {
@@ -122,9 +127,10 @@
         max-width: 104px;
         object-fit: contain;
       }
+
       .warning {
         position: fixed;
-        top: calc(120px + env(safe-area-inset-top));
+        top: calc(112px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         color: white;
@@ -886,17 +892,21 @@
       @media (max-width: 480px) {
         .topbar {
           padding-top: calc(16px + env(safe-area-inset-top));
-          padding-right: 12px;
+          padding-right: 116px;
           padding-bottom: 22px;
           padding-left: 12px;
         }
 
         .topbar__brand {
-          margin-bottom: 6px;
+          top: calc(18px + env(safe-area-inset-top));
+          right: 12px;
+
+          margin-bottom: 0;
         }
 
         .topbar__logo {
-          height: 18px;
+          height: 16px;
+          max-width: 96px;
         }
 
         .topbar h1 {
@@ -908,7 +918,7 @@
         }
 
         .warning {
-          top: calc(116px + env(safe-area-inset-top));
+          top: calc(108px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
