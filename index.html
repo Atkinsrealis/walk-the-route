@@ -64,7 +64,7 @@
         left: 0;
         right: 0;
 
-        height: calc(190px + env(safe-area-inset-top));
+        height: calc(230px + env(safe-area-inset-top));
 
         background: linear-gradient(
           to bottom,
@@ -107,41 +107,41 @@
         font-size: 14px;
       }
 
-      .topbar__brand {
-        position: absolute;
-        top: calc(20px + env(safe-area-inset-top));
-        right: 16px;
+.topbar__brand {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 18px;
 
-        display: flex;
-        align-items: center;
+  display: flex;
+  align-items: center;
 
-        margin-bottom: 0;
-      }
+  margin-bottom: 0;
+}
 
-      .topbar__logo {
-        display: block;
+.topbar__logo {
+  display: block;
 
-        width: auto;
-        height: 18px;
+  width: auto;
+  height: 16px;
 
-        max-width: 104px;
-        object-fit: contain;
-      }
+  max-width: 96px;
+  object-fit: contain;
+}
 
-      .warning {
-        position: fixed;
-        top: calc(112px + env(safe-area-inset-top));
-        left: 16px;
-        right: 16px;
-        color: white;
-        padding: 12px 14px;
-        border-radius: 14px;
-        z-index: 20;
-        display: none;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
-        font-size: 14px;
-        font-weight: 600;
-      }
+.warning {
+  position: fixed;
+  top: calc(96px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  color: white;
+  padding: 12px 14px;
+  border-radius: 14px;
+  z-index: 20;
+  display: none;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+  font-weight: 600;
+}
 
       .warning.safe {
         background: rgba(17, 170, 98, 0.92);
@@ -162,23 +162,23 @@
         border-left: 5px solid #14b8a6;
       }
 
-      .route-card {
-        position: fixed;
-        top: calc(160px + env(safe-area-inset-top));
-        left: 16px;
-        right: 16px;
-        z-index: 19;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        padding: 12px 14px;
-        background: rgba(10, 15, 31, 0.78);
-        color: white;
-        border-radius: 18px;
-        backdrop-filter: blur(12px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-      }
+.route-card {
+  position: fixed;
+  top: calc(178px + env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(10, 15, 31, 0.78);
+  color: white;
+  border-radius: 18px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
 
       .route-card__main {
         display: flex;
@@ -897,17 +897,17 @@
           padding-left: 12px;
         }
 
-        .topbar__brand {
-          top: calc(18px + env(safe-area-inset-top));
-          right: 12px;
+.topbar__brand {
+  top: calc(8px + env(safe-area-inset-top));
+  right: 14px;
 
-          margin-bottom: 0;
-        }
+  margin-bottom: 0;
+}
 
-        .topbar__logo {
-          height: 16px;
-          max-width: 96px;
-        }
+.topbar__logo {
+  height: 15px;
+  max-width: 90px;
+}
 
         .topbar h1 {
           font-size: 22px;
@@ -917,21 +917,21 @@
           font-size: 13px;
         }
 
-        .warning {
-          top: calc(108px + env(safe-area-inset-top));
-          left: 12px;
-          right: 12px;
-          padding: 11px 12px;
-          font-size: 13px;
-        }
+.warning {
+  top: calc(94px + env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  padding: 11px 12px;
+  font-size: 13px;
+}
 
-        .route-card {
-          top: calc(150px + env(safe-area-inset-top));
-          left: 12px;
-          right: 12px;
-          padding: 11px 12px;
-          align-items: flex-start;
-        }
+.route-card {
+  top: calc(172px + env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  padding: 11px 12px;
+  align-items: flex-start;
+}
 
         .route-card__value {
           font-size: 18px;
