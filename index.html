@@ -158,10 +158,9 @@
         color: #2a1f00;
       }
 
-      .warning.alert {      
-      background: #f76b1c;
+      .warning.alert {
+        background: #f76b1c;
         color: #1f1208;
-
       }
 
       .warning.help {
@@ -186,6 +185,53 @@
         border-radius: 18px;
         backdrop-filter: blur(12px);
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      .route-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+
+        padding: 1.5px;
+        border-radius: inherit;
+
+        background: linear-gradient(
+          120deg,
+          rgba(124, 58, 237, 0.25),
+          rgba(196, 181, 253, 0.95),
+          rgba(91, 46, 255, 0.85),
+          rgba(139, 92, 246, 0.35),
+          rgba(124, 58, 237, 0.25)
+        );
+
+        background-size: 240% 240%;
+        animation: route-card-border-flow 4.5s linear infinite;
+
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+
+        mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask-composite: exclude;
+
+        pointer-events: none;
+      }
+
+      @keyframes route-card-border-flow {
+        0% {
+          background-position: 0% 50%;
+        }
+
+        100% {
+          background-position: 240% 50%;
+        }
       }
 
       .route-card__main {
@@ -242,7 +288,7 @@
 
       .route-card__badge.warning {
         background: rgba(245, 185, 32, 0.18);
-        color:#ffe680;
+        color: #ffe680;
       }
 
       .route-card__badge.alert {
@@ -350,13 +396,15 @@
       }
 
       .help-card {
-        background: #06201f;
+        background: #060b18;
         color: white;
+        box-shadow: inset 0 3px 0 rgba(20, 184, 166, 0.65);
       }
 
       .help-card.on {
         background: #14b8a6;
         color: #06111f;
+        box-shadow: none;
       }
 
       .help-panel {
@@ -1039,6 +1087,13 @@
           text-align: center;
 
           z-index: 999;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .route-card::before {
+          animation: none;
+          background-position: 50% 50%;
         }
       }
     </style>
