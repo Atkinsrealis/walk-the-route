@@ -32,7 +32,12 @@
         left: 0;
         right: 0;
         z-index: 10;
-        padding: 18px 16px 24px;
+
+        padding-top: calc(18px + env(safe-area-inset-top));
+        padding-right: 16px;
+        padding-bottom: 24px;
+        padding-left: 16px;
+
         color: white;
         background: linear-gradient(
           to bottom,
@@ -56,7 +61,7 @@
 
       .warning {
         position: absolute;
-        top: 88px;
+        top: calc(88px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         color: white;
@@ -90,7 +95,7 @@
 
       .route-card {
         position: absolute;
-        top: 142px;
+        top: calc(142px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         z-index: 19;
@@ -678,9 +683,11 @@
 
       @media (max-width: 480px) {
         .topbar {
-          padding: 16px 12px 22px;
+          padding-top: calc(16px + env(safe-area-inset-top));
+          padding-right: 12px;
+          padding-bottom: 22px;
+          padding-left: 12px;
         }
-
         .topbar h1 {
           font-size: 22px;
         }
@@ -690,7 +697,7 @@
         }
 
         .warning {
-          top: 82px;
+          top: calc(82px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -698,7 +705,7 @@
         }
 
         .route-card {
-          top: 132px;
+          top: calc(132px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
