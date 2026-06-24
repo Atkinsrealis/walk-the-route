@@ -946,6 +946,7 @@
           <p>Move somewhere safe, away from traffic.</p>
 
           <ul class="help-steps">
+            <li>Open the route before you start in case signal is poor</li>
             <li>Use the map to find the purple route</li>
             <li>Follow it until you’re back on track</li>
             <li>If unsure, stay safe and wait for support</li>
@@ -1644,6 +1645,14 @@
         }, 2500);
       }
 
+      window.addEventListener("offline", () => {
+        showToast("Signal lost — route still available");
+      });
+
+      window.addEventListener("online", () => {
+        showToast("Back online");
+      });
+
       function formatDistance(distance) {
         if (distance >= 1000) {
           return `${(distance / 1000).toFixed(1)} km`;
@@ -2106,7 +2115,10 @@
 
       if (shareBtn) {
         shareBtn.addEventListener("click", async () => {
-          if (!lastActualPosition) return;
+          if (!lastActualPosition) {
+            showToast("Location not available yet");
+            return;
+          }
 
           const [lng, lat] = lastActualPosition;
           const url = `https://www.google.com/maps?q=${lat},${lng}`;
@@ -2328,6 +2340,16 @@
           centerMapOnRoute();
         }, 300);
       });
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/service-worker.js")
+            .catch((error) => {
+              console.error("Service worker registration failed:", error);
+            });
+        });
+      }
     </script>
   </body>
 </html>
