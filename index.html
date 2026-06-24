@@ -34,12 +34,16 @@
 
       body {
         margin: 0;
+        width: 100%;
+        height: 100%;
         font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         overflow: hidden;
         background: #0a0f1f;
       }
 
       #map {
+        position: fixed;
+        inset: 0;
         width: 100vw;
         height: 100vh;
       }
@@ -66,7 +70,7 @@
       }
 
       .topbar {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
@@ -95,7 +99,7 @@
       }
 
       .warning {
-        position: absolute;
+        position: fixed;
         top: calc(88px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
@@ -129,7 +133,7 @@
       }
 
       .route-card {
-        position: absolute;
+        position: fixed;
         top: calc(142px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
@@ -209,7 +213,7 @@
       }
 
       .bottom-panel {
-        position: absolute;
+        position: fixed;
         bottom: calc(18px + env(safe-area-inset-bottom));
         left: 16px;
         right: 16px;
@@ -224,7 +228,7 @@
       .route-center-button,
       .follow-toggle-button,
       .share-location-button {
-        position: absolute;
+        position: fixed;
         z-index: 12;
         width: var(--floating-button-size);
         height: var(--floating-button-size);
@@ -318,7 +322,7 @@
       }
 
       .help-panel {
-        position: absolute;
+        position: fixed;
         left: 12px;
         right: 12px;
         bottom: 92px;
@@ -550,7 +554,7 @@
       }
 
       .help-backdrop {
-        position: absolute;
+        position: fixed;
         inset: 0;
         z-index: 25;
 
@@ -609,7 +613,7 @@
       }
 
       .share-location-button {
-        position: absolute;
+        position: fixed;
         right: var(--floating-button-right);
         bottom: calc(
           var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
@@ -2339,6 +2343,34 @@
         setTimeout(() => {
           centerMapOnRoute();
         }, 300);
+      });
+
+      function refreshLayoutAfterSafariRestore() {
+        window.scrollTo(0, 0);
+
+        if (map) {
+          map.resize();
+        }
+
+        if (routeCoordinates.length > 0 && !lastActualPosition) {
+          centerMapOnRoute();
+        }
+      }
+
+      window.addEventListener("pageshow", () => {
+        setTimeout(refreshLayoutAfterSafariRestore, 150);
+        setTimeout(refreshLayoutAfterSafariRestore, 500);
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          setTimeout(refreshLayoutAfterSafariRestore, 150);
+          setTimeout(refreshLayoutAfterSafariRestore, 500);
+        }
+      });
+
+      window.addEventListener("focus", () => {
+        setTimeout(refreshLayoutAfterSafariRestore, 150);
       });
 
       if ("serviceWorker" in navigator) {

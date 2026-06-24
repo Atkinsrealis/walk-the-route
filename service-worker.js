@@ -1,6 +1,6 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v5";
+const CACHE_NAME = "heathrow-perimeter-walk-v6";
 
-const APP_SHELL = [
+const APP_ASSETS = [
   "/",
   "/index.html",
   "/manifest.json",
@@ -10,18 +10,16 @@ const APP_SHELL = [
   "/icons/icon-512-maskable.png"
 ];
 
-// Install: cache the app shell
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_SHELL);
+      return cache.addAll(APP_ASSETS);
     })
   );
 
   self.skipWaiting();
 });
 
-// Activate: remove old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -36,45 +34,52 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Fetch: serve cached app files first, then network fallback
 self.addEventListener("fetch", (event) => {
   const request = event.request;
 
-  // Only handle GET requests
   if (request.method !== "GET") {
     return;
   }
 
   const requestUrl = new URL(request.url);
 
-  // App shell and local files: cache-first
-  if (requestUrl.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(request).then((cachedResponse) => {
-        return (
-          cachedResponse ||
-          fetch(request).then((networkResponse) => {
-            return caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, networkResponse.clone());
-              return networkResponse;
-            });
-          })
-        );
-      })
-    );
-
+  /*
+    IMPORTANT:
+    Only handle requests from our own site.
+    Let Mapbox and all external resources go straight to the network.
+  */
+  if (requestUrl.origin !== self.location.origin) {
     return;
   }
 
-  // External resources: network-first, fallback to cache if already stored
+  /*
+    For page navigation, try network first.
+    If offline, fall back to cached index.html.
+    This avoids Safari repeatedly serving a stale/broken page.
+  */
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request).catch(() => caches.match("/index.html"))
+    );
+    return;
+  }
+
+  /*
+    For local app files, use cache first.
+    If not cached, fetch and cache.
+  */
   event.respondWith(
-    fetch(request)
-      .then((networkResponse) => {
+    caches.match(request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(request).then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
           cache.put(request, networkResponse.clone());
           return networkResponse;
         });
-      })
-      .catch(() => caches.match(request))
+      });
+    })
   );
 });
