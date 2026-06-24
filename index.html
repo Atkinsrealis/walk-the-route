@@ -810,6 +810,25 @@
         }
       }
 
+      /* PWA / installed app only */
+      @media (display-mode: standalone) {
+        :root {
+          --floating-button-bottom: calc(82px + env(safe-area-inset-bottom));
+        }
+
+        .bottom-panel {
+          bottom: calc(8px + env(safe-area-inset-bottom));
+        }
+
+        .help-panel {
+          bottom: calc(82px + env(safe-area-inset-bottom));
+        }
+
+        .toast {
+          bottom: calc(100px + env(safe-area-inset-bottom));
+        }
+      }
+
       @media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
         .topbar,
         .warning,
