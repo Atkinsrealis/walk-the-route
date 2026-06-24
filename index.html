@@ -810,23 +810,6 @@
         }
       }
 
-      /* Installed PWA only */
-      html.is-standalone {
-        --floating-button-bottom: 74px;
-      }
-
-      html.is-standalone .bottom-panel {
-        bottom: 0;
-      }
-
-      html.is-standalone .help-panel {
-        bottom: 76px;
-      }
-
-      html.is-standalone .toast {
-        bottom: 88px;
-      }
-
       @media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
         .topbar,
         .warning,
@@ -2357,13 +2340,6 @@
           centerMapOnRoute();
         }, 300);
       });
-
-      if (
-        window.navigator.standalone === true ||
-        window.matchMedia("(display-mode: standalone)").matches
-      ) {
-        document.documentElement.classList.add("is-standalone");
-      }
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
