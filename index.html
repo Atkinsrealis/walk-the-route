@@ -201,15 +201,15 @@
 
         background: linear-gradient(
           120deg,
-          rgba(124, 58, 237, 0.25),
-          rgba(196, 181, 253, 0.95),
-          rgba(91, 46, 255, 0.85),
-          rgba(139, 92, 246, 0.35),
-          rgba(124, 58, 237, 0.25)
+          rgba(124, 58, 237, 0.35),
+          rgba(196, 181, 253, 0.85),
+          rgba(91, 46, 255, 0.75),
+          rgba(139, 92, 246, 0.4),
+          rgba(124, 58, 237, 0.35)
         );
 
         background-size: 240% 240%;
-        animation: route-card-border-flow 4.5s linear infinite;
+        background-position: 50% 50%;
 
         -webkit-mask:
           linear-gradient(#000 0 0) content-box,
@@ -222,6 +222,10 @@
         mask-composite: exclude;
 
         pointer-events: none;
+      }
+
+      .route-card.is-locating::before {
+        animation: route-card-border-flow 9s linear infinite;
       }
 
       @keyframes route-card-border-flow {
@@ -1091,7 +1095,7 @@
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .route-card::before {
+        .route-card.is-locating::before {
           animation: none;
           background-position: 50% 50%;
         }
@@ -1115,7 +1119,7 @@
 
     <div class="warning" id="warning">You may be off the official route</div>
 
-    <div class="route-card" id="route-card">
+    <div class="route-card is-locating" id="route-card">
       <div class="route-card__main">
         <div class="route-card__text">
           <span class="route-card__label">Route progress</span>
@@ -2364,7 +2368,12 @@
         const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
+        const routeCard = document.getElementById("route-card");
+
         const hasValidDistance = Number.isFinite(distance);
+        if (routeCard) {
+          routeCard.classList.toggle("is-locating", !hasValidDistance);
+        }
         const normalizedDistance = hasValidDistance
           ? Math.max(0, distance)
           : null;
