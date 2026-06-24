@@ -644,6 +644,47 @@
         fill: currentColor;
       }
 
+      .surface-map-tooltip {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+
+        padding: 8px 12px;
+        border-radius: 8px;
+
+        background: rgba(10, 15, 31, 0.92);
+        color: rgba(255, 255, 255, 0.94);
+
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1;
+
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(10px);
+
+        pointer-events: none;
+        white-space: nowrap;
+
+        transform-origin: center;
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease;
+
+        z-index: 40;
+      }
+
+      .surface-map-tooltip.hidden {
+        opacity: 0;
+        transform: scale(0.92);
+      }
+
+      .surface-map-tooltip__line {
+        width: 26px;
+        height: 5px;
+        border-radius: 999px;
+        background: #7c3aed;
+      }
+
       @media (max-width: 480px) {
         :root {
           --floating-button-gap: 12px;
@@ -1677,6 +1718,9 @@
       }
 
       function createSurfaceTooltip(surface) {
+        console.log("Creating surface tooltip", surface);
+        console.log("Route coordinates", routeCoordinates.length);
+
         const displayText = getSurfaceDisplayText(surface);
 
         if (!displayText) {
@@ -1725,15 +1769,19 @@
 
         const zoom = map.getZoom();
 
-        if (zoom >= 15.2) {
-          surfaceTooltipElement.classList.add("hidden");
-        } else {
-          surfaceTooltipElement.classList.remove("hidden");
-        }
+        const shouldHide = zoom >= 18;
+
+        surfaceTooltipElement.classList.toggle("hidden", shouldHide);
 
         const scale = Math.max(0.86, Math.min(1, 1.08 - (zoom - 12) * 0.04));
 
-        surfaceTooltipElement.style.transform = `scale(${scale})`;
+        if (shouldHide) {
+          surfaceTooltipElement.style.opacity = "0";
+          surfaceTooltipElement.style.transform = `scale(${scale * 0.92})`;
+        } else {
+          surfaceTooltipElement.style.opacity = "1";
+          surfaceTooltipElement.style.transform = `scale(${scale})`;
+        }
       }
 
       function loadRouteSurfaceSummary() {
@@ -1752,8 +1800,8 @@
               createSurfaceTooltip(routeSurfaceSummary);
             }
           })
-          .catch(() => {
-            // Quiet fail. No surface file, no tooltip.
+          .catch((error) => {
+            console.warn("Surface summary not loaded:", error);
           });
       }
 
