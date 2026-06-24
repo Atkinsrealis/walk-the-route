@@ -711,10 +711,10 @@
             (var(--floating-button-gap) * 3)
         );
 
-        z-index: 12;
+        z-index: 40;
 
-        width: 46px;
-        height: 46px;
+        width: 52px;
+        height: 52px;
 
         border: 0;
         border-radius: 999px;
@@ -742,8 +742,8 @@
       .compass-button__dial {
         position: relative;
 
-        width: 30px;
-        height: 30px;
+        width: 36px;
+        height: 36px;
 
         display: flex;
         align-items: center;
@@ -751,8 +751,8 @@
       }
 
       .compass-button__icon {
-        width: 30px;
-        height: 30px;
+        width: 36px;
+        height: 36px;
 
         display: block;
 
@@ -763,6 +763,7 @@
 
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.24));
       }
+
       .compass-button__label {
         position: absolute;
         top: 50%;
@@ -772,7 +773,7 @@
 
         color: white;
 
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 900;
         line-height: 1;
         letter-spacing: 0.03em;
@@ -1209,6 +1210,8 @@
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
       const SURFACE_TOOLTIP_HIDE_ZOOM = 13.8;
+      const COMPASS_SHOW_BEARING = 4;
+      const COMPASS_HIDE_BEARING = 1.5;
       const WARNING_ID = "warning";
       const DISTANCE_VALUE_ID = "distance-value";
       const PROGRESS_VALUE_ID = "progress-value";
@@ -1283,6 +1286,7 @@
       let surfaceTooltipMoveTimer = null;
       let surfaceTooltipHideTimer = null;
       let isMapInteracting = false;
+      let isCompassVisible = false;
 
       const hazards = [
         {
@@ -1554,11 +1558,19 @@
         }
 
         const bearing = normalizeBearing(map.getBearing());
-        const shouldShow = Math.abs(bearing) > 5;
+        const absoluteBearing = Math.abs(bearing);
 
-        compassButton.hidden = !shouldShow;
+        if (!isCompassVisible && absoluteBearing > COMPASS_SHOW_BEARING) {
+          isCompassVisible = true;
+        }
 
-        if (!shouldShow) {
+        if (isCompassVisible && absoluteBearing < COMPASS_HIDE_BEARING) {
+          isCompassVisible = false;
+        }
+
+        compassButton.hidden = !isCompassVisible;
+
+        if (!isCompassVisible) {
           compassLabel.textContent = "N";
 
           const resetIcon = compassButton.querySelector(
