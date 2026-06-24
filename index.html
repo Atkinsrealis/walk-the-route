@@ -190,53 +190,56 @@
         isolation: isolate;
       }
 
-      .route-card::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: -1;
+      @property --route-border-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
 
-        padding: 1.5px;
-        border-radius: inherit;
+.route-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
 
-        background: linear-gradient(
-          120deg,
-          rgba(124, 58, 237, 0.35),
-          rgba(196, 181, 253, 0.85),
-          rgba(91, 46, 255, 0.75),
-          rgba(139, 92, 246, 0.4),
-          rgba(124, 58, 237, 0.35)
-        );
+  padding: 1.5px;
+  border-radius: inherit;
 
-        background-size: 240% 240%;
-        background-position: 50% 50%;
+  background: conic-gradient(
+    from var(--route-border-angle),
+    rgba(124, 58, 237, 0.2) 0deg,
+    rgba(124, 58, 237, 0.2) 245deg,
+    rgba(196, 181, 253, 0.95) 285deg,
+    rgba(91, 46, 255, 0.95) 315deg,
+    rgba(124, 58, 237, 0.2) 360deg
+  );
 
-        -webkit-mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-        -webkit-mask-composite: xor;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
 
-        mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-        mask-composite: exclude;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
 
-        pointer-events: none;
-      }
+  pointer-events: none;
+}
 
-      .route-card.is-locating::before {
-        animation: route-card-border-flow 4.5s linear infinite;
-      }
+.route-card.is-locating::before {
+  animation: route-card-border-spin 4.5s linear infinite;
+}
 
-      @keyframes route-card-border-flow {
-        0% {
-          background-position: 0% 50%;
-        }
+@keyframes route-card-border-spin {
+  from {
+    --route-border-angle: 0deg;
+  }
 
-        100% {
-          background-position: 240% 50%;
-        }
-      }
+  to {
+    --route-border-angle: 360deg;
+  }
+}
 
       .route-card__main {
         display: flex;
@@ -1097,7 +1100,6 @@
       @media (prefers-reduced-motion: reduce) {
         .route-card.is-locating::before {
           animation: none;
-          background-position: 50% 50%;
         }
       }
     </style>
