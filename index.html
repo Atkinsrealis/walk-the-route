@@ -14,6 +14,13 @@
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
 
     <style>
+      :root {
+        --floating-button-size: 56px;
+        --floating-button-gap: 14px;
+        --floating-button-right: 16px;
+        --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
+      }
+
       body {
         margin: 0;
         font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -191,8 +198,8 @@
       .share-location-button {
         position: absolute;
         z-index: 12;
-        width: 56px;
-        height: 56px;
+        width: var(--floating-button-size);
+        height: var(--floating-button-size);
         border: 0;
         border-radius: 999px;
         background: rgba(10, 15, 31, 0.88);
@@ -208,15 +215,18 @@
       }
 
       .route-center-button {
-        right: 16px;
-        bottom: calc(96px + env(safe-area-inset-bottom));
+        right: var(--floating-button-right);
+        bottom: var(--floating-button-bottom);
         color: #c4b5fd;
       }
 
       .follow-toggle-button {
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom) + var(--floating-button-size) +
+            var(--floating-button-gap)
+        );
         color: #c4b5fd;
-        right: 16px;
-        bottom: calc(154px + env(safe-area-inset-bottom));
         font-size: 20px;
         line-height: 1;
       }
@@ -231,7 +241,8 @@
       }
 
       .route-center-button:active,
-      .follow-toggle-button:active {
+      .follow-toggle-button:active,
+      .share-location-button:active {
         transform: scale(0.96);
       }
 
@@ -571,8 +582,11 @@
 
       .share-location-button {
         position: absolute;
-        right: 16px;
-        bottom: calc(212px + env(safe-area-inset-bottom));
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
+            (var(--floating-button-gap) * 2)
+        );
         width: 56px;
         height: 56px;
         border-radius: 999px;
@@ -599,6 +613,11 @@
       }
 
       @media (max-width: 480px) {
+        :root {
+          --floating-button-gap: 12px;
+          --floating-button-right: 14px;
+        }
+
         .help-panel {
           bottom: 86px;
           left: 10px;
@@ -723,7 +742,7 @@
         .bottom-panel {
           left: 12px;
           right: 12px;
-          bottom: 12px;
+          bottom: calc(12px + env(safe-area-inset-bottom));
           gap: 8px;
         }
 
@@ -738,6 +757,10 @@
       }
 
       @media (max-width: 360px) {
+        :root {
+          --floating-button-gap: 10px;
+          --floating-button-right: 12px;
+        }
         .route-card {
           flex-direction: column;
           align-items: flex-start;
@@ -2061,7 +2084,7 @@
                 url: url,
               });
 
-              showToast("Location shared ✅");
+              showToast("Location shared");
             } else {
               window.open(url, "_blank");
               showToast("Map opened to share your location");
