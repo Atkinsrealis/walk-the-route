@@ -1,4 +1,4 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v8";
+const CACHE_NAME = "heathrow-perimeter-walk-v9";
 
 const APP_ASSETS = [
   "/",
@@ -6,10 +6,10 @@ const APP_ASSETS = [
   "/manifest.json",
   "/heathrow-perimeter-route.geojson",
   "/route-surface-summary.json",
-  "/assets/heathrow-logo-white.sv
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/icon-512-maskable.png"
+  "/heathrow-logo-white.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/icon-512-maskable.png"
 ];
 
 self.addEventListener("install", (event) => {
