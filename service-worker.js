@@ -1,10 +1,11 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v6";
+const CACHE_NAME = "heathrow-perimeter-walk-v7";
 
 const APP_ASSETS = [
   "/",
   "/index.html",
   "/manifest.json",
   "/heathrow-perimeter-route.geojson",
+  "/route-surface-summary.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
   "/icons/icon-512-maskable.png"

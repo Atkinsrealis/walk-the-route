@@ -284,6 +284,41 @@
         display: none !important;
       }
 
+      .surface-pill {
+        position: fixed;
+        left: 50%;
+        bottom: calc(96px + env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        z-index: 11;
+
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+
+        padding: 9px 13px;
+        border-radius: 12px;
+
+        background: rgba(10, 15, 31, 0.88);
+        color: rgba(255, 255, 255, 0.92);
+
+        font-size: 13px;
+        font-weight: 800;
+
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(10px);
+      }
+
+      .surface-pill[hidden] {
+        display: none;
+      }
+
+      .surface-pill__line {
+        width: 26px;
+        height: 5px;
+        border-radius: 999px;
+        background: #7c3aed;
+      }
+
       .card {
         background: #060b18;
         color: white;
@@ -872,6 +907,11 @@
         <div class="route-card__text">
           <span class="route-card__label">Route progress</span>
           <span class="route-card__value" id="progress-value">0%</span>
+        </div>
+
+        <div class="surface-pill" id="surface-pill" hidden>
+          <span class="surface-pill__line"></span>
+          <span id="surface-pill-text">Surface data loading…</span>
         </div>
 
         <div class="route-card__meta">
@@ -1637,6 +1677,61 @@
         warning.style.display = message ? "block" : "none";
       }
 
+      function getSurfaceDisplayText(surface) {
+        if (!surface) {
+          return null;
+        }
+
+        const paved = Number(surface.pavedPercent);
+        const unknown = Number(surface.unknownPercent);
+
+        if (!Number.isFinite(paved) || !Number.isFinite(unknown)) {
+          return surface.summaryLabel || "Surface varies";
+        }
+
+        if (unknown <= 15) {
+          return `${paved}% paved`;
+        }
+
+        if (surface.summaryLabel) {
+          return surface.summaryLabel;
+        }
+
+        return "Surface varies";
+      }
+
+      function loadRouteSurfaceSummary() {
+        const surfacePill = document.getElementById("surface-pill");
+        const surfacePillText = document.getElementById("surface-pill-text");
+
+        if (!surfacePill || !surfacePillText) {
+          return;
+        }
+
+        fetch("route-surface-summary.json")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Surface summary not available");
+            }
+
+            return response.json();
+          })
+          .then((surface) => {
+            const displayText = getSurfaceDisplayText(surface);
+
+            if (!displayText) {
+              return;
+            }
+
+            surfacePillText.textContent = displayText;
+            surfacePill.hidden = false;
+          })
+          .catch(() => {
+            // Quiet fail: if the file is missing, do not show anything.
+            surfacePill.hidden = true;
+          });
+      }
+
       function showToast(message) {
         const toast = document.getElementById("toast");
         if (!toast) return;
@@ -2274,6 +2369,7 @@
 
       map.on("load", () => {
         loadRouteGeoJson();
+        loadRouteSurfaceSummary();
 
         hazardsButton.classList.toggle("on", showHazards);
         restButton.classList.toggle("on", showRest);
