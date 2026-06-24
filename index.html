@@ -774,8 +774,8 @@
 
         color: white;
 
-        font-size: 12px;
-        font-weight: 900;
+        font-size: 13px;
+        font-weight: 800;
         line-height: 1;
         letter-spacing: 0.03em;
       }
@@ -1546,11 +1546,19 @@
       function getCompassDirectionLabel(bearing) {
         const normalized = ((bearing % 360) + 360) % 360;
 
-        const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+        if (normalized >= 315 || normalized < 45) {
+          return "N";
+        }
 
-        const index = Math.round(normalized / 45) % 8;
+        if (normalized >= 45 && normalized < 135) {
+          return "E";
+        }
 
-        return directions[index];
+        if (normalized >= 135 && normalized < 225) {
+          return "S";
+        }
+
+        return "W";
       }
 
       function updateCompassButton() {
