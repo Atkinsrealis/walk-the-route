@@ -32,6 +32,13 @@
         --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
       }
 
+      html {
+        width: 100%;
+        height: 100%;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
       body {
         margin: 0;
         width: 100%;
@@ -39,6 +46,8 @@
         font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         overflow: hidden;
         background: #0a0f1f;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
       }
 
       #map {
@@ -666,12 +675,11 @@
         white-space: nowrap;
 
         transform-origin: center;
-
       }
 
-.surface-map-tooltip.is-hidden {
-  display: none !important;
-}
+      .surface-map-tooltip.is-hidden {
+        display: none !important;
+      }
       .surface-map-tooltip__line {
         width: 26px;
         height: 5px;
@@ -1817,75 +1825,74 @@
         updateSurfaceTooltipVisibility();
       }
 
-function hideSurfaceTooltip() {
-  if (!surfaceTooltipElement) {
-    return;
-  }
+      function hideSurfaceTooltip() {
+        if (!surfaceTooltipElement) {
+          return;
+        }
 
-  surfaceTooltipElement.classList.add("is-hidden");
-}
+        surfaceTooltipElement.classList.add("is-hidden");
+      }
 
-function showSurfaceTooltip() {
-  if (!surfaceTooltipElement) return;
+      function showSurfaceTooltip() {
+        if (!surfaceTooltipElement) return;
 
-  // BLOCK: never show while user is interacting
-  if (isMapInteracting) return;
+        // BLOCK: never show while user is interacting
+        if (isMapInteracting) return;
 
-  if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-    hideSurfaceTooltip();
-    return;
-  }
+        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+          hideSurfaceTooltip();
+          return;
+        }
 
-  surfaceTooltipElement.classList.remove("is-hidden");
-}
+        surfaceTooltipElement.classList.remove("is-hidden");
+      }
 
-function updateSurfaceTooltipVisibility() {
-  if (!surfaceTooltipElement) {
-    return;
-  }
+      function updateSurfaceTooltipVisibility() {
+        if (!surfaceTooltipElement) {
+          return;
+        }
 
-  if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-    hideSurfaceTooltip();
-  } else {
-    showSurfaceTooltip();
-  }
-}
+        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+          hideSurfaceTooltip();
+        } else {
+          showSurfaceTooltip();
+        }
+      }
 
-function repositionSurfaceTooltip() {
-  if (
-    !surfaceTooltipMarker ||
-    !surfaceTooltipElement ||
-    !routeSurfaceSummary ||
-    routeCoordinates.length === 0
-  ) {
-    return;
-  }
+      function repositionSurfaceTooltip() {
+        if (
+          !surfaceTooltipMarker ||
+          !surfaceTooltipElement ||
+          !routeSurfaceSummary ||
+          routeCoordinates.length === 0
+        ) {
+          return;
+        }
 
-  clearTimeout(surfaceTooltipMoveTimer);
+        clearTimeout(surfaceTooltipMoveTimer);
 
-  // STILL interacting? do nothing
-  if (isMapInteracting) return;
+        // STILL interacting? do nothing
+        if (isMapInteracting) return;
 
-  hideSurfaceTooltip();
+        hideSurfaceTooltip();
 
-  surfaceTooltipMoveTimer = setTimeout(() => {
-    if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
-      hideSurfaceTooltip();
-      return;
-    }
+        surfaceTooltipMoveTimer = setTimeout(() => {
+          if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+            hideSurfaceTooltip();
+            return;
+          }
 
-    const coordinate = getBestVisibleRouteTooltipCoordinate();
-    if (!coordinate) return;
+          const coordinate = getBestVisibleRouteTooltipCoordinate();
+          if (!coordinate) return;
 
-    surfaceTooltipMarker.setLngLat(coordinate);
+          surfaceTooltipMarker.setLngLat(coordinate);
 
-    // Only show if interaction has finished
-    if (!isMapInteracting) {
-      showSurfaceTooltip();
-    }
-  }, 350);
-}
-
+          // Only show if interaction has finished
+          if (!isMapInteracting) {
+            showSurfaceTooltip();
+          }
+        }, 280);
+      }
 
       function loadRouteSurfaceSummary() {
         fetch("route-surface-summary.json")
@@ -2556,27 +2563,27 @@ function repositionSurfaceTooltip() {
         setHelpPanel(false);
       });
 
-map.on("movestart", () => {
-  isMapInteracting = true;
-  hideSurfaceTooltip();
-});
+      map.on("movestart", () => {
+        isMapInteracting = true;
+        hideSurfaceTooltip();
+      });
 
-map.on("zoomstart", () => {
-  isMapInteracting = true;
-  hideSurfaceTooltip();
-});
+      map.on("zoomstart", () => {
+        isMapInteracting = true;
+        hideSurfaceTooltip();
+      });
 
-map.on("moveend", () => {
-  isMapInteracting = false;
+      map.on("moveend", () => {
+        isMapInteracting = false;
 
-  repositionSurfaceTooltip();
-});
+        repositionSurfaceTooltip();
+      });
 
-map.on("zoomend", () => {
-  isMapInteracting = false;
+      map.on("zoomend", () => {
+        isMapInteracting = false;
 
-  repositionSurfaceTooltip();
-});
+        repositionSurfaceTooltip();
+      });
 
       navigator.geolocation.watchPosition(
         (position) => {
@@ -2636,19 +2643,28 @@ map.on("zoomend", () => {
         },
       );
 
-      window.addEventListener("resize", () => {
-        clearTimeout(resizeTimer);
-
-        resizeTimer = setTimeout(() => {
-          centerMapOnRoute();
-        }, 200);
-      });
-
-      //Handle device rotation (mobile)
       window.addEventListener("orientationchange", () => {
         setTimeout(() => {
+          window.scrollTo(0, 0);
+
+          if (map) {
+            map.resize();
+          }
+
           centerMapOnRoute();
-        }, 300);
+          repositionSurfaceTooltip();
+        }, 350);
+
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+
+          if (map) {
+            map.resize();
+          }
+
+          centerMapOnRoute();
+          repositionSurfaceTooltip();
+        }, 800);
       });
 
       function refreshLayoutAfterSafariRestore() {
