@@ -129,6 +129,10 @@
         object-fit: contain;
       }
 
+      .topbar h1,
+      .topbar p {
+        transform: translateY(8px);
+      }
       .warning {
         position: fixed;
         top: calc(96px + env(safe-area-inset-top));
@@ -917,6 +921,11 @@
         .topbar p {
           font-size: 13px;
           line-height: 1.15;
+        }
+
+        .topbar h1,
+        .topbar p {
+          transform: translateY(6px);
         }
 
         .warning {
