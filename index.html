@@ -30,13 +30,6 @@
         --floating-button-gap: 14px;
         --floating-button-right: 16px;
         --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
-        
-      /* Browser defaults */
-      --bottom-panel-bottom: calc(18px + env(safe-area-inset-bottom));
-      --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
-      --help-panel-bottom: 92px;
-      --toast-bottom: 110px;
-
       }
 
       body {
@@ -217,7 +210,7 @@
 
       .bottom-panel {
         position: absolute;
-        bottom: var(--bottom-panel-bottom);
+        bottom: calc(18px + env(safe-area-inset-bottom));
         left: 16px;
         right: 16px;
         display: grid;
@@ -328,7 +321,7 @@
         position: absolute;
         left: 12px;
         right: 12px;
-        bottom: var(--help-panel-bottom);
+        bottom: 92px;
         z-index: 30;
 
         background: rgba(6, 17, 31, 0.96);
@@ -708,7 +701,7 @@
 
       .toast {
         position: fixed;
-        bottom: var(--toast-bottom);
+        bottom: 110px; /* sits above your bottom buttons */
         left: 50%;
         transform: translateX(-50%);
 
@@ -736,11 +729,6 @@
       }
 
       @media (max-width: 480px) {
-      :root {
-        --floating-button-gap: 12px;
-        --floating-button-right: 14px;
-        --bottom-panel-bottom: calc(12px + env(safe-area-inset-bottom));
-      }
         .topbar {
           padding-top: calc(16px + env(safe-area-inset-top));
           padding-right: 12px;
@@ -782,6 +770,7 @@
         .bottom-panel {
           left: 12px;
           right: 12px;
+          bottom: calc(12px + env(safe-area-inset-bottom));
           gap: 8px;
         }
 
@@ -819,14 +808,6 @@
         .help-panel__actions {
           grid-template-columns: 1fr 1fr 1fr;
         }
-      }
-
-      /* Installed PWA only */
-      html.pwa-mode {
-        --bottom-panel-bottom: 2px;
-        --floating-button-bottom: 66px;
-        --help-panel-bottom: 74px;
-        --toast-bottom: 86px;
       }
 
       @media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
@@ -2359,14 +2340,6 @@
           centerMapOnRoute();
         }, 300);
       });
-
-      const isPwaMode =
-        window.navigator.standalone === true ||
-        window.matchMedia("(display-mode: standalone)").matches;
-
-      if (isPwaMode) {
-        document.documentElement.classList.add("pwa-mode");
-      }
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {

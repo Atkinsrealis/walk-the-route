@@ -1,4 +1,4 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v4";
+const CACHE_NAME = "heathrow-perimeter-walk-v5";
 
 const APP_SHELL = [
   "/",
