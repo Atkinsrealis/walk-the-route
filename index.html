@@ -191,55 +191,55 @@
       }
 
       @property --route-border-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
+        syntax: "<angle>";
+        initial-value: 0deg;
+        inherits: false;
+      }
 
-.route-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+      .route-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
 
-  padding: 1.5px;
-  border-radius: inherit;
+        padding: 1.5px;
+        border-radius: inherit;
 
-  background: conic-gradient(
-    from var(--route-border-angle),
-    rgba(124, 58, 237, 0.2) 0deg,
-    rgba(124, 58, 237, 0.2) 245deg,
-    rgba(196, 181, 253, 0.95) 285deg,
-    rgba(91, 46, 255, 0.95) 315deg,
-    rgba(124, 58, 237, 0.2) 360deg
-  );
+        background: conic-gradient(
+          from var(--route-border-angle),
+          rgba(124, 58, 237, 0.2) 0deg,
+          rgba(124, 58, 237, 0.2) 245deg,
+          rgba(196, 181, 253, 0.95) 285deg,
+          rgba(91, 46, 255, 0.95) 315deg,
+          rgba(124, 58, 237, 0.2) 360deg
+        );
 
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
 
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
+        mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask-composite: exclude;
 
-  pointer-events: none;
-}
+        pointer-events: none;
+      }
 
-.route-card.is-locating::before {
-  animation: route-card-border-spin 4.5s linear infinite;
-}
+      .route-card.is-locating::before {
+        animation: route-card-border-spin 4.5s linear infinite;
+      }
 
-@keyframes route-card-border-spin {
-  from {
-    --route-border-angle: 0deg;
-  }
+      @keyframes route-card-border-spin {
+        from {
+          --route-border-angle: 0deg;
+        }
 
-  to {
-    --route-border-angle: 360deg;
-  }
-}
+        to {
+          --route-border-angle: 360deg;
+        }
+      }
 
       .route-card__main {
         display: flex;
@@ -405,7 +405,7 @@
       .help-card {
         background: #060b18;
         color: white;
-        box-shadow: inset 0 3px 0 rgba(20, 184, 166, 0.65);
+        box-shadow: none;
       }
 
       .help-card.on {
@@ -1125,19 +1125,19 @@
       <div class="route-card__main">
         <div class="route-card__text">
           <span class="route-card__label">Route progress</span>
-          <span class="route-card__value" id="progress-value">0%</span>
+          <span class="route-card__value" id="progress-value">Locating…</span>
         </div>
 
         <div class="route-card__meta">
-          <span id="distance-value">0 m from route</span>
-          <span id="next-thing-value">Next: checking route...</span>
+          <span id="distance-value">Finding your position</span>
+          <span id="next-thing-value">Next: checking route…</span>
           <span class="route-card__source"
             >Route source: Heathrow perimeter</span
           >
         </div>
       </div>
 
-      <span class="route-card__badge" id="route-badge">On route</span>
+      <span class="route-card__badge" id="route-badge">Preparing</span>
     </div>
 
     <button
