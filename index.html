@@ -1391,6 +1391,7 @@
       let lastProcessedPosition = null;
       let lastProcessedPositionTime = 0;
       let followMode = true;
+      let routeCenterMode = "route";
       let hasShownReadyState = false;
       let showHazards = false;
       let hazardMarkers = [];
@@ -1654,6 +1655,45 @@
             },
           );
         }
+      }
+
+      function updateRouteCenterButtonLabel() {
+        const button = document.getElementById(ROUTE_CENTER_BUTTON_ID);
+
+        if (!button) {
+          return;
+        }
+
+        if (routeCenterMode === "route") {
+          button.setAttribute("aria-label", "Show full route");
+          button.setAttribute("title", "Show full route");
+        } else {
+          button.setAttribute("aria-label", "Return to my position");
+          button.setAttribute("title", "Return to my position");
+        }
+      }
+
+      function centerMapOnCurrentPosition() {
+        const target = lastSnappedPosition || lastActualPosition;
+
+        if (!target) {
+          showToast("Location not available yet");
+          return;
+        }
+
+        followMode = true;
+
+        const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
+
+        if (followButton) {
+          followButton.style.opacity = "1";
+        }
+
+        map.easeTo({
+          center: target,
+          zoom: 16,
+          duration: 700,
+        });
       }
 
       function normalizeBearing(bearing) {
@@ -2716,7 +2756,17 @@
       // Route button
       document
         .getElementById(ROUTE_CENTER_BUTTON_ID)
-        .addEventListener("click", centerMapOnRoute);
+        .addEventListener("click", () => {
+          if (routeCenterMode === "route") {
+            centerMapOnRoute();
+            routeCenterMode = "position";
+          } else {
+            centerMapOnCurrentPosition();
+            routeCenterMode = "route";
+          }
+
+          updateRouteCenterButtonLabel();
+        });
 
       // Follow button
       const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
@@ -2918,6 +2968,7 @@
         restButton.classList.toggle("on", showRest);
         setHelpPanel(false);
         updateCompassButton();
+        updateRouteCenterButtonLabel();
       });
 
       map.on("movestart", () => {
