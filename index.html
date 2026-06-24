@@ -644,40 +644,40 @@
         fill: currentColor;
       }
 
-      .surface-map-tooltip {
-        display: inline-flex;
-        align-items: center;
-        gap: 9px;
+.surface-map-tooltip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
 
-        padding: 8px 12px;
-        border-radius: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
 
-        background: rgba(10, 15, 31, 0.92);
-        color: rgba(255, 255, 255, 0.94);
+  background: rgba(10, 15, 31, 0.92);
+  color: rgba(255, 255, 255, 0.94);
 
-        font-size: 13px;
-        font-weight: 800;
-        line-height: 1;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
 
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
-        backdrop-filter: blur(10px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
 
-        pointer-events: none;
-        white-space: nowrap;
+  pointer-events: none;
+  white-space: nowrap;
 
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        transform-origin: center;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transform-origin: center;
 
-        transition:
-          opacity 0.24s ease,
-          transform 0.24s cubic-bezier(0.2, 0.8, 0.2, 1);
-      }
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 
-      .surface-map-tooltip.hidden {
-        opacity: 0;
-        transform: translateY(4px) scale(0.96);
-      }
+.surface-map-tooltip.hidden {
+  opacity: 0;
+  transform: translateY(6px) scale(0.94);
+}
 
       .surface-map-tooltip__line {
         width: 26px;
@@ -1057,6 +1057,7 @@
       const POSITION_UPDATE_MIN_MS = 8000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
+      const SURFACE_TOOLTIP_HIDE_ZOOM = 14.5;
       const WARNING_ID = "warning";
       const DISTANCE_VALUE_ID = "distance-value";
       const PROGRESS_VALUE_ID = "progress-value";
@@ -1126,6 +1127,7 @@
       let surfaceTooltipMarker = null;
       let surfaceTooltipElement = null;
       let routeSurfaceSummary = null;
+      let surfaceTooltipMoveTimer = null;
 
       const hazards = [
         {
@@ -1378,57 +1380,77 @@
       }
 
       function getBestVisibleRouteTooltipCoordinate() {
-        if (!routeCoordinates || routeCoordinates.length === 0) {
-          return null;
-        }
+  if (!routeCoordinates || routeCoordinates.length === 0) {
+    return null;
+  }
 
-        const canvas = map.getCanvas();
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
+  const canvas = map.getCanvas();
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
 
-        // Avoid placing tooltip under top route card or bottom controls
-        const safeTop = 190;
-        const safeBottom = height - 150;
-        const safeLeft = 24;
-        const safeRight = width - 24;
+  const safeTop = 210;
+  const safeBottom = height - 170;
+  const safeLeft = 32;
+  const safeRight = width - 32;
 
-        const targetScreenPoint = {
-          x: width * 0.5,
-          y: height * 0.56,
-        };
+  const targetScreenPoint = {
+    x: width * 0.5,
+    y: height * 0.56,
+  };
 
-        let bestCoordinate = null;
-        let bestScore = Number.POSITIVE_INFINITY;
+  let bestCoordinate = null;
+  let bestPoint = null;
+  let bestScore = Number.POSITIVE_INFINITY;
 
-        routeCoordinates.forEach((coordinate) => {
-          const point = map.project(coordinate);
+  routeCoordinates.forEach((coordinate) => {
+    const point = map.project(coordinate);
 
-          const isVisible =
-            point.x >= safeLeft &&
-            point.x <= safeRight &&
-            point.y >= safeTop &&
-            point.y <= safeBottom;
+    const isVisible =
+      point.x >= safeLeft &&
+      point.x <= safeRight &&
+      point.y >= safeTop &&
+      point.y <= safeBottom;
 
-          if (!isVisible) {
-            return;
-          }
+    if (!isVisible) {
+      return;
+    }
 
-          const dx = point.x - targetScreenPoint.x;
-          const dy = point.y - targetScreenPoint.y;
-          const score = dx * dx + dy * dy;
+    const dx = point.x - targetScreenPoint.x;
+    const dy = point.y - targetScreenPoint.y;
+    const score = dx * dx + dy * dy;
 
-          if (score < bestScore) {
-            bestScore = score;
-            bestCoordinate = coordinate;
-          }
-        });
+    if (score < bestScore) {
+      bestScore = score;
+      bestCoordinate = coordinate;
+      bestPoint = point;
+    }
+  });
 
-        // Fallback if no route point is currently in the safe visible area
-        return (
-          bestCoordinate ||
-          routeCoordinates[Math.floor(routeCoordinates.length / 2)]
-        );
-      }
+  if (!bestCoordinate || !bestPoint) {
+    return routeCoordinates[Math.floor(routeCoordinates.length / 2)];
+  }
+
+  /*
+    Offset the label away from the route in screen space.
+    This makes it feel more like a map annotation, not a pin stuck to the line.
+  */
+  const mapCenter = {
+    x: width / 2,
+    y: height / 2,
+  };
+
+  const directionX = bestPoint.x < mapCenter.x ? -1 : 1;
+  const directionY = bestPoint.y < mapCenter.y ? -1 : 1;
+
+  const offsetPoint = {
+    x: bestPoint.x + directionX * 34,
+    y: bestPoint.y + directionY * 22,
+  };
+
+  const offsetLngLat = map.unproject(offsetPoint);
+
+  return [offsetLngLat.lng, offsetLngLat.lat];
+}
 
       function haversineDistanceMeters(pointA, pointB) {
         const [lng1, lat1] = pointA;
@@ -1800,48 +1822,56 @@
         updateSurfaceTooltipVisibility();
       }
 
-      function updateSurfaceTooltipVisibility() {
-        if (!surfaceTooltipElement) {
-          return;
-        }
+function updateSurfaceTooltipVisibility() {
+  if (!surfaceTooltipElement) {
+    return;
+  }
 
-        const zoom = map.getZoom();
-        const shouldHide = zoom >= 15.8;
+  const shouldHide = map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM;
 
-        surfaceTooltipElement.classList.toggle("hidden", shouldHide);
+  surfaceTooltipElement.classList.toggle("hidden", shouldHide);
+}
 
-        if (shouldHide) {
-          surfaceTooltipElement.style.opacity = "0";
-          surfaceTooltipElement.style.transform = "translateY(4px) scale(0.96)";
-        } else {
-          surfaceTooltipElement.style.opacity = "1";
-          surfaceTooltipElement.style.transform = "translateY(0) scale(1)";
-        }
+function repositionSurfaceTooltip() {
+  if (
+    !surfaceTooltipMarker ||
+    !surfaceTooltipElement ||
+    !routeSurfaceSummary ||
+    routeCoordinates.length === 0
+  ) {
+    return;
+  }
+
+  clearTimeout(surfaceTooltipMoveTimer);
+
+  const zoom = map.getZoom();
+
+  // If zoomed in, keep it fully hidden.
+  if (zoom >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+    surfaceTooltipElement.classList.add("hidden");
+    return;
+  }
+
+  const coordinate = getBestVisibleRouteTooltipCoordinate();
+
+  if (!coordinate) {
+    return;
+  }
+
+  // Fade out first.
+  surfaceTooltipElement.classList.add("hidden");
+
+  // Move while hidden, then fade back in.
+  surfaceTooltipMoveTimer = setTimeout(() => {
+    surfaceTooltipMarker.setLngLat(coordinate);
+
+    requestAnimationFrame(() => {
+      if (map.getZoom() < SURFACE_TOOLTIP_HIDE_ZOOM) {
+        surfaceTooltipElement.classList.remove("hidden");
       }
-
-      function repositionSurfaceTooltip() {
-        if (
-          !surfaceTooltipMarker ||
-          !surfaceTooltipElement ||
-          !routeSurfaceSummary ||
-          routeCoordinates.length === 0
-        ) {
-          return;
-        }
-
-        const coordinate = getBestVisibleRouteTooltipCoordinate();
-
-        if (!coordinate) {
-          return;
-        }
-
-        surfaceTooltipElement.classList.add("hidden");
-
-        setTimeout(() => {
-          surfaceTooltipMarker.setLngLat(coordinate);
-          updateSurfaceTooltipVisibility();
-        }, 120);
-      }
+    });
+  }, 420);
+}
 
       function loadRouteSurfaceSummary() {
         fetch("route-surface-summary.json")
@@ -2512,13 +2542,25 @@
         setHelpPanel(false);
       });
 
-      map.on("moveend", () => {
-        repositionSurfaceTooltip();
-      });
+      map.on("movestart", () => {
+  if (surfaceTooltipElement) {
+    surfaceTooltipElement.classList.add("hidden");
+  }
+});
 
-      map.on("zoom", () => {
-        updateSurfaceTooltipVisibility();
-      });
+map.on("zoomstart", () => {
+  if (surfaceTooltipElement) {
+    surfaceTooltipElement.classList.add("hidden");
+  }
+});
+
+map.on("moveend", () => {
+  repositionSurfaceTooltip();
+});
+
+map.on("zoom", () => {
+  updateSurfaceTooltipVisibility();
+});
 
       navigator.geolocation.watchPosition(
         (position) => {
