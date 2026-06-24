@@ -214,6 +214,8 @@
           rgba(124, 58, 237, 0.2) 360deg
         );
 
+        opacity: 0;
+
         -webkit-mask:
           linear-gradient(#000 0 0) content-box,
           linear-gradient(#000 0 0);
@@ -228,6 +230,7 @@
       }
 
       .route-card.is-locating::before {
+        opacity: 1;
         animation: route-card-border-spin 4.5s linear infinite;
       }
 
@@ -1340,6 +1343,24 @@
       const COMPASS_BUTTON_ID = "compass-button";
       const COMPASS_LABEL_ID = "compass-label";
 
+      const ROUTE_VIEW_ICON = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M6 4.5a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5S7.4 4.5 6 4.5Zm0 3.6A1.1 1.1 0 1 1 6 5.9a1.1 1.1 0 0 1 0 2.2Zm12 6.4a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5Zm0 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2ZM8.7 8.4l1.1-1.1 6.4 6.4-1.1 1.1-6.4-6.4Zm7.1-1.8h-4.2V5.1h4.2c2.1 0 3.8 1.7 3.8 3.8v1.9h-1.5V8.9c0-1.3-1-2.3-2.3-2.3ZM4.4 13.2h1.5v1.9c0 1.3 1 2.3 2.3 2.3h4.2v1.5H8.2c-2.1 0-3.8-1.7-3.8-3.8v-1.9Z"
+      fill="currentColor"
+    />
+  </svg>
+`;
+
+      const CURRENT_POSITION_ICON = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 2a1 1 0 0 1 1 1v1.08A8.01 8.01 0 0 1 19.92 11H21a1 1 0 1 1 0 2h-1.08A8.01 8.01 0 0 1 13 19.92V21a1 1 0 1 1-2 0v-1.08A8.01 8.01 0 0 1 4.08 13H3a1 1 0 1 1 0-2h1.08A8.01 8.01 0 0 1 11 4.08V3a1 1 0 0 1 1-1Zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3.2a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z"
+      fill="currentColor"
+    />
+  </svg>
+`;
+
       // Route segments - divide 182 waypoints into 4 sections
       const SEGMENTS = [
         {
@@ -1667,9 +1688,11 @@
         if (routeCenterMode === "route") {
           button.setAttribute("aria-label", "Show full route");
           button.setAttribute("title", "Show full route");
+          button.innerHTML = ROUTE_VIEW_ICON;
         } else {
           button.setAttribute("aria-label", "Return to my position");
           button.setAttribute("title", "Return to my position");
+          button.innerHTML = CURRENT_POSITION_ICON;
         }
       }
 
