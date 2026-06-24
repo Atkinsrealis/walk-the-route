@@ -170,7 +170,7 @@
 
       .bottom-panel {
         position: absolute;
-        bottom: 18px;
+        bottom: calc(18px + env(safe-area-inset-bottom));
         left: 16px;
         right: 16px;
         display: grid;
@@ -204,14 +204,14 @@
 
       .route-center-button {
         right: 16px;
-        bottom: 96px;
+        bottom: calc(96px + env(safe-area-inset-bottom));
         color: #c4b5fd;
       }
 
       .follow-toggle-button {
         color: #c4b5fd;
         right: 16px;
-        bottom: 154px;
+        bottom: calc(154px + env(safe-area-inset-bottom));
         font-size: 20px;
         line-height: 1;
       }
@@ -567,23 +567,18 @@
       .share-location-button {
         position: absolute;
         right: 16px;
-        bottom: 212px; /* sits above follow button */
-
+        bottom: calc(212px + env(safe-area-inset-bottom));
         width: 56px;
         height: 56px;
         border-radius: 999px;
-
         background: rgba(10, 15, 31, 0.88);
         color: #34d399; /* subtle green = positive action */
-
         display: flex;
         align-items: center;
         justify-content: center;
-
         font-size: 22px;
         border: none;
         cursor: pointer;
-
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
       }
 
