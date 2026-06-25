@@ -59,6 +59,8 @@ const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter"
 ];
 
+const ANALYSER_VERSION = "v3-foot-strict";
+
 const TIMEOUT_MS = 12000;
 const SEARCH_BUFFER = 35;
 const MIN_SEGMENT_LENGTH = 10;
@@ -79,9 +81,12 @@ const UNPAVED = new Set(["gravel","dirt","grass","earth"]);
 const WALKABLE_HIGHWAYS = new Set([
   "footway",
   "path",
+  "pedestrian",
+  "steps",
+]);
+const CONDITIONALLY_WALKABLE_HIGHWAYS = new Set([
   "cycleway",
   "bridleway",
-  "pedestrian",
   "track",
   "service",
   "residential",
@@ -106,7 +111,7 @@ function log(m){
 
 // ---------- CACHE ----------
 function getCacheKey(b){
-  return "osm_" + [
+  return `osm_${ANALYSER_VERSION}_` + [
     b.w.toFixed(3),
     b.s.toFixed(3),
     b.e.toFixed(3),
@@ -115,7 +120,7 @@ function getCacheKey(b){
 }
 
 function getDebugKey(lines){
-  return "debug_" + lines.flat().slice(0,50)
+  return `debug_${ANALYSER_VERSION}_` + lines.flat().slice(0,50)
     .map(c=>c.join(",")).join("|");
 }
 
@@ -344,15 +349,18 @@ function isWayWalkable(tags) {
     return false;
   }
 
-  if (!WALKABLE_HIGHWAYS.has(highway)) {
+  if (WALKABLE_HIGHWAYS.has(highway)) {
+    return true;
+  }
+
+  if (CONDITIONALLY_WALKABLE_HIGHWAYS.has(highway)) {
     if (foot === "yes" || foot === "designated" || foot === "permissive") {
       return true;
     }
-
     return false;
   }
 
-  return true;
+  return false;
 }
 
 function scoreWayForSegment(seg, way, previousWayId){
