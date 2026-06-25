@@ -1752,6 +1752,7 @@
       let isColdStartBadgeActive = true;
       let coldStartBadgePhase = "preparing";
       let coldStartBadgePhaseStartMs = Date.now();
+      let locatingShownAtMs = 0;
       let highAccuracyStreak = 0;
       let highAccuracyFirstSeenMs = 0;
       let lastGpsAccuracyMeters = Number.NaN;
@@ -2718,6 +2719,12 @@
           if (coldStartBadgePhase !== phase) {
             coldStartBadgePhase = phase;
             coldStartBadgePhaseStartMs = now;
+
+            if (phase === "locating") {
+              locatingShownAtMs = now;
+            } else {
+              locatingShownAtMs = 0;
+            }
           }
         };
 
@@ -2763,7 +2770,11 @@
         if (coldStartBadgePhase === "locating") {
           setBadge("Locating", "warning");
 
-          if (now - coldStartBadgePhaseStartMs < GPS_LOCATING_MIN_MS) {
+          if (!locatingShownAtMs) {
+            locatingShownAtMs = now;
+          }
+
+          if (now - locatingShownAtMs < GPS_LOCATING_MIN_MS) {
             return;
           }
 
@@ -2868,6 +2879,7 @@
         isColdStartBadgeActive = true;
         coldStartBadgePhase = "preparing";
         coldStartBadgePhaseStartMs = Date.now();
+        locatingShownAtMs = 0;
         highAccuracyStreak = 0;
         highAccuracyFirstSeenMs = 0;
         lastGpsAccuracyMeters = Number.NaN;
