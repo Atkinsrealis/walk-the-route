@@ -7,10 +7,10 @@ const APP_ASSETS = [
   "/manifest.json",
   "/heathrow-perimeter-route.geojson",
   "/route-surface-summary.json",
-  "/heathrow-logo-white.svg",
-  "/icon-192.png",
-  "/icon-512.png",
-  "/icon-512-maskable.png"
+  "/assets/heathrow-logo-white.svg",
+  "/Icons/icon-192.png",
+  "/Icons/icon-512.png",
+  "/Icons/icon-512-maskable.png"
 ];
 
 const MAPBOX_ASSETS = [
