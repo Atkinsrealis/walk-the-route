@@ -60,8 +60,8 @@ const TIMEOUT_MS = 12000;
 const SEARCH_BUFFER = 50;
 const BBOX_PAD = 0.0015;
 
-// ✅ NEW: min segment filter (kills flicker)
-const MIN_SEGMENT_LENGTH = 10; // metres
+// ✅ smoothing threshold
+const MIN_SEGMENT_LENGTH = 10;
 
 const COLORS = {
   paved:"#22c55e",
@@ -98,13 +98,11 @@ function getCached(key){
   } catch { return null }
 }
 
-function setCached(key, data){
-  try{
-    localStorage.setItem(key, JSON.stringify({
-      timestamp: Date.now(),
-      data
-    }));
-  } catch {}
+function setCached(key,data){
+  localStorage.setItem(key, JSON.stringify({
+    timestamp: Date.now(),
+    data
+  }));
 }
 
 function clearCache(){
@@ -127,19 +125,16 @@ function dist(a,b){
   const R=6371000;
   const dLat=rad(b[1]-a[1]);
   const dLng=rad(b[0]-a[0]);
-
-  const x=
-    Math.sin(dLat/2)**2 +
+  const x=Math.sin(dLat/2)**2 +
     Math.cos(rad(a[1]))*
     Math.cos(rad(b[1]))*
     Math.sin(dLng/2)**2;
-
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
 function segDist(p,a,b){
   const t=Math.max(0,Math.min(1,
-    ((p[0]-a[0])*(b[0]-a[0])+(p[1]-a[1])*(b[1]-a[1])) /
+    ((p[0]-a[0])*(b[0]-a[0])+(p[1]-a[1])*(b[1]-a[1]))/
     ((b[0]-a[0])**2+(b[1]-a[1])**2)
   ));
   return dist(p,[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
@@ -150,31 +145,25 @@ function wayDist(seg,coords){
     (seg[0][0]+seg[1][0])/2,
     (seg[0][1]+seg[1][1])/2
   ];
-
   let best=Infinity;
-
   for(let i=0;i<coords.length-1;i++){
     const d=segDist(mid,coords[i],coords[i+1]);
     if(d<best) best=d;
   }
-
   return best;
 }
 
 // ---------- ROUTE ----------
 function extractLines(g){
   const lines=[];
-
-  const add = x=>{
+  const add=x=>{
     if(!x) return;
     if(x.type==="LineString") lines.push(x.coordinates);
     if(x.type==="MultiLineString") x.coordinates.forEach(l=>lines.push(l));
   };
-
   if(g.type==="FeatureCollection") g.features.forEach(f=>add(f.geometry));
   if(g.type==="Feature") add(g.geometry);
   add(g);
-
   return lines;
 }
 
@@ -200,42 +189,34 @@ function bbox(lines){
 
 // ---------- OSM ----------
 async function fetchOSM(b){
-  const key = getCacheKey(b);
-
-  const cached = getCached(key);
+  const key=getCacheKey(b);
+  const cached=getCached(key);
   if(cached){
     log("⚡ Using cached OSM");
     return cached.data;
   }
 
-  const query=`
-[out:json][timeout:45];
+  const query=`[out:json][timeout:45];
 (way(${b.south},${b.west},${b.north},${b.east}););
-out tags geom;
-`;
+out tags geom;`;
 
   for(const url of OVERPASS_ENDPOINTS){
     try{
-      log("🌐 Trying: "+url);
-
-      const res = await fetchWithTimeout(url,{
+      log("🌐 "+url);
+      const res=await fetchWithTimeout(url,{
         method:"POST",
-        body:"data="+encodeURIComponent(query),
-        headers:{ "Content-Type":"application/x-www-form-urlencoded" }
+        body:"data="+encodeURIComponent(query)
       });
-
       if(!res.ok) continue;
 
       const data=await res.json();
 
-      const ways=data.elements
-        .filter(e=>e.geometry)
-        .map(e=>({
-          tags:e.tags||{},
-          coords:e.geometry.map(p=>[p.lon,p.lat])
-        }));
+      const ways=data.elements.filter(e=>e.geometry).map(e=>({
+        tags:e.tags||{},
+        coords:e.geometry.map(p=>[p.lon,p.lat])
+      }));
 
-      setCached(key, ways);
+      setCached(key,ways);
       return ways;
 
     }catch(e){
@@ -243,7 +224,7 @@ out tags geom;
     }
   }
 
-  throw new Error("All endpoints failed");
+  throw new Error("OSM failed");
 }
 
 // ---------- CLASSIFY ----------
@@ -254,6 +235,25 @@ function classify(tags){
     if(UNPAVED.has(s)) return "unpaved";
   }
   return "unknown";
+}
+
+// ---------- ✅ SMART SMOOTH ----------
+function smoothSegments(segments){
+  const smoothed=[];
+
+  for(let i=0;i<segments.length;i++){
+    const seg=segments[i];
+
+    if(seg.length < MIN_SEGMENT_LENGTH && smoothed.length){
+      // absorb into previous
+      smoothed[smoothed.length-1].coords[1]=seg.coords[1];
+      continue;
+    }
+
+    smoothed.push({...seg});
+  }
+
+  return smoothed;
 }
 
 // ---------- MERGE ----------
@@ -269,142 +269,111 @@ function mergeSegmentsByType(segments){
 
     if(current.type===seg.type){
       current.coords.push(seg.coords[1]);
-    } else {
+    }else{
       merged.push(current);
       current={type:seg.type,coords:[...seg.coords]};
     }
   }
 
   if(current) merged.push(current);
-
   return merged;
 }
 
 // ---------- DOWNLOAD ----------
 function download(name,data){
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const blob=new Blob([JSON.stringify(data,null,2)]);
   const url=URL.createObjectURL(blob);
   const a=document.createElement("a");
   a.href=url;
   a.download=name;
   a.click();
-  URL.revokeObjectURL(url);
 }
 
 // ---------- MAIN ----------
 document.getElementById("run").onclick=async()=>{
   out.textContent="";
 
-  try{
-    const file=document.getElementById("file").files[0];
-    if(!file){
-      log("Pick file first");
-      return;
-    }
+  const file=document.getElementById("file").files[0];
+  if(!file) return;
 
-    const geo=JSON.parse(await file.text());
-    const lines=extractLines(geo);
+  const geo=JSON.parse(await file.text());
+  const lines=extractLines(geo);
 
-    const debugKey=getDebugKey(lines);
-    const cachedDebug=getCached(debugKey);
+  const debugKey=getDebugKey(lines);
+  const cachedDebug=getCached(debugKey);
 
-    if(cachedDebug){
-      log("⚡ Using cached result");
-
-      download("surface-debug.geojson",cachedDebug.data.geojson);
-      log(JSON.stringify(cachedDebug.data.summary,null,2));
-      return;
-    }
-
-    const segs=split(lines);
-    const ways=await fetchOSM(bbox(lines));
-
-    let totals={paved:0,unpaved:0,unknown:0};
-    const classified=[];
-
-    segs.forEach(seg=>{
-
-      const len = dist(seg[0],seg[1]);
-
-      // ✅ NEW: remove tiny segments
-      if(len < MIN_SEGMENT_LENGTH) return;
-
-      let best=Infinity,nearest=null;
-
-      ways.forEach(w=>{
-        const d=wayDist(seg,w.coords);
-        if(d<best){
-          best=d;
-          nearest=w;
-        }
-      });
-
-      let type="unknown";
-      if(nearest && best<=SEARCH_BUFFER){
-        type=classify(nearest.tags);
-      }
-
-      totals[type]+=len;
-
-      classified.push({type,coords:seg});
-    });
-
-    const merged = mergeSegmentsByType(classified);
-
-    const features=[];
-
-    // route layer
-    lines.forEach(line=>{
-      features.push({
-        type:"Feature",
-        properties:{stroke:COLORS.route,"stroke-width":4},
-        geometry:{type:"LineString",coordinates:line}
-      });
-    });
-
-    // merged segments
-    merged.forEach(seg=>{
-      const color =
-        seg.type==="paved" ? COLORS.paved :
-        seg.type==="unpaved" ? COLORS.unpaved :
-        COLORS.unknown;
-
-      features.push({
-        type:"Feature",
-        properties:{
-          stroke:color,
-          "stroke-width":5,
-          surface:seg.type
-        },
-        geometry:{
-          type:"LineString",
-          coordinates:seg.coords
-        }
-      });
-    });
-
-    const total=totals.paved+totals.unpaved+totals.unknown;
-
-    const summary={
-      pavedPercent:Math.round((totals.paved/total)*100),
-      unpavedPercent:Math.round((totals.unpaved/total)*100),
-      unknownPercent:Math.round((totals.unknown/total)*100)
-    };
-
-    log(JSON.stringify(summary,null,2));
-
-    const debugData={
-      summary,
-      geojson:{type:"FeatureCollection",features}
-    };
-
-    setCached(debugKey, debugData);
-
-    download("surface-debug.geojson",debugData.geojson);
-
-  }catch(e){
-    log("❌ "+e.message);
+  if(cachedDebug){
+    log("⚡ cached result");
+    download("surface.geojson",cachedDebug.data.geojson);
+    return;
   }
+
+  const segs=split(lines);
+  const ways=await fetchOSM(bbox(lines));
+
+  let totals={paved:0,unpaved:0,unknown:0};
+
+  const classified=[];
+
+  segs.forEach(seg=>{
+
+    const len=dist(seg[0],seg[1]);
+
+    let best=Infinity,nearest=null;
+
+    ways.forEach(w=>{
+      const d=wayDist(seg,w.coords);
+      if(d<best){
+        best=d;
+        nearest=w;
+      }
+    });
+
+    let type="unknown";
+    if(nearest && best<=SEARCH_BUFFER){
+      type=classify(nearest.tags);
+    }
+
+    totals[type]+=len;
+
+    classified.push({type,coords:seg,length:len});
+  });
+
+  // ✅ FIXED SMOOTHING
+  const smoothed=smoothSegments(classified);
+  const merged=mergeSegmentsByType(smoothed);
+
+  const features=[];
+
+  lines.forEach(line=>{
+    features.push({
+      type:"Feature",
+      properties:{stroke:COLORS.route,"stroke-width":4},
+      geometry:{type:"LineString",coordinates:line}
+    });
+  });
+
+  merged.forEach(seg=>{
+    features.push({
+      type:"Feature",
+      properties:{
+        stroke:COLORS[seg.type],
+        "stroke-width":5
+      },
+      geometry:{
+        type:"LineString",
+        coordinates:seg.coords
+      }
+    });
+  });
+
+  const result={
+    geojson:{type:"FeatureCollection",features}
+  };
+
+  setCached(debugKey,result);
+  download("surface.geojson",result.geojson);
+
 };
 
 </script>
