@@ -1002,6 +1002,36 @@
         }
       }
 
+      @keyframes shimmer {
+        0% {
+          background-position: -1000px 0;
+        }
+        100% {
+          background-position: 1000px 0;
+        }
+      }
+
+      #shimmer-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        pointer-events: none;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.15),
+          transparent
+        );
+        background-size: 1000px 100%;
+        animation: shimmer 2s infinite;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      #shimmer-overlay.loading {
+        opacity: 1;
+      }
+
       .fallback-container {
         position: fixed;
         inset: 0;
@@ -1396,6 +1426,7 @@
     </button>
 
     <div id="map"></div>
+    <div id="shimmer-overlay"></div>
     <div id="fallback-container" class="fallback-container" hidden>
       <div class="fallback-content">
         <div class="fallback-header">
@@ -3364,12 +3395,18 @@
           updateCompassButton();
           updateRouteCenterButtonLabel();
 
+          // Show shimmer overlay while waiting for GPS (during intro)
+          const shimmerOverlay = document.getElementById('shimmer-overlay');
+          if (shimmerOverlay && !lastActualPosition) {
+            shimmerOverlay.classList.add('loading');
+          }
+
           // Wait for route to exist (important)
           setTimeout(() => {
             if (!routeCoordinates.length) return;
 
             // Intro sequence: ultra-smooth, slow zoom from UK view to route overview
-            centerMapOnRoute({ duration: 2200 }); // luxurious 2.2s zoom to route bounds
+            centerMapOnRoute({ duration: 3200 }); // luxurious 3.2s zoom to route bounds
 
             setTimeout(() => {
               if (!lastActualPosition) {
@@ -3386,7 +3423,7 @@
               setTimeout(() => {
                 isIntro = false;
               }, 2600);
-            }, 2300);  // wait for fitBounds to finish, then start ease to start
+            }, 3300);  // wait for fitBounds to finish, then start ease to start
 
           }, 100); // small delay for route load
         });
@@ -3446,6 +3483,12 @@
           (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
+
+            // Hide shimmer once GPS acquired
+            const shimmerOverlay = document.getElementById('shimmer-overlay');
+            if (shimmerOverlay) {
+              shimmerOverlay.classList.remove('loading');
+            }
 
             // Clear waiting state on first location
             if (isWaitingForFirstLocation) {
