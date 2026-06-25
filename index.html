@@ -1002,36 +1002,6 @@
         }
       }
 
-      @keyframes shimmer {
-        0% {
-          background-position: -1000px 0;
-        }
-        100% {
-          background-position: 1000px 0;
-        }
-      }
-
-      #shimmer-overlay {
-        position: fixed;
-        inset: 0;
-        z-index: 999;
-        pointer-events: none;
-        background: linear-gradient(
-          45deg,
-          transparent,
-          rgba(255, 255, 255, 0.08),
-          transparent
-        );
-        background-size: 1000px 100%;
-        animation: shimmer 3.5s infinite;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-      }
-
-      #shimmer-overlay.loading {
-        opacity: 1;
-      }
-
       .fallback-container {
         position: fixed;
         inset: 0;
@@ -1426,7 +1396,6 @@
     </button>
 
     <div id="map"></div>
-    <div id="shimmer-overlay"></div>
     <div id="fallback-container" class="fallback-container" hidden>
       <div class="fallback-content">
         <div class="fallback-header">
@@ -3413,15 +3382,9 @@
                 lastViewCenter = routeCoordinates[0];
               }
 
-              // End intro after animation completes and show shimmer while waiting for GPS
+              // End intro after animation completes
               setTimeout(() => {
                 isIntro = false;
-                
-                // Show shimmer after intro animation finishes
-                const shimmerOverlay = document.getElementById('shimmer-overlay');
-                if (shimmerOverlay) {
-                  shimmerOverlay.classList.add('loading');
-                }
               }, 2600);
             }, 3300);  // wait for fitBounds to finish, then start ease to start
 
@@ -3483,12 +3446,6 @@
           (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
-
-            // Hide shimmer once GPS acquired
-            const shimmerOverlay = document.getElementById('shimmer-overlay');
-            if (shimmerOverlay) {
-              shimmerOverlay.classList.remove('loading');
-            }
 
             // Clear waiting state on first location
             if (isWaitingForFirstLocation) {
