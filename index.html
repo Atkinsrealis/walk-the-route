@@ -1545,6 +1545,7 @@
       const GPS_LOCK_STABLE_MIN_MS = 2000;
       const GPS_LOCK_MIN_CONSECUTIVE_READS = 2;
       const GPS_BADGE_HANDOFF_MS = 4500;
+      const GPS_BADGE_TICK_MS = 250;
       const WARNING_UPDATE_INTERVAL = 4000; // Increased from 3000ms for battery efficiency
       const VIEW_UPDATE_DISTANCE = 30; // Increased from 25m to reduce map pans
       const MIN_SPEED_FOR_FOLLOW = 0.4;
@@ -1753,6 +1754,8 @@
       let coldStartBadgePhaseStartMs = Date.now();
       let highAccuracyStreak = 0;
       let highAccuracyFirstSeenMs = 0;
+      let lastGpsAccuracyMeters = Number.NaN;
+      let coldStartBadgeTimerId = null;
 
       const hazards = [
         {
@@ -2844,6 +2847,29 @@
         setBadge("Locating", "warning");
       }
 
+      function startColdStartBadgeTicker() {
+        if (coldStartBadgeTimerId) {
+          return;
+        }
+
+        coldStartBadgeTimerId = window.setInterval(() => {
+          updateColdStartBadge(lastGpsAccuracyMeters);
+
+          if (hasGpsLock && !isColdStartBadgeActive) {
+            stopColdStartBadgeTicker();
+          }
+        }, GPS_BADGE_TICK_MS);
+      }
+
+      function stopColdStartBadgeTicker() {
+        if (!coldStartBadgeTimerId) {
+          return;
+        }
+
+        window.clearInterval(coldStartBadgeTimerId);
+        coldStartBadgeTimerId = null;
+      }
+
       function getRouteProgress(userPoint) {
         if (routeCoordinates.length < 2) {
           return 0;
@@ -2943,6 +2969,7 @@
           Date.now() - gpsLockTimeMs >= GPS_BADGE_HANDOFF_MS
         ) {
           isColdStartBadgeActive = false;
+          stopColdStartBadgeTicker();
         }
 
         const hasValidDistance = Number.isFinite(distance);
@@ -3617,6 +3644,7 @@
 
       if ("geolocation" in navigator) {
         updateColdStartBadge(Number.NaN);
+        startColdStartBadgeTicker();
 
         // Show waiting message if first location takes too long
         firstLocationTimeout = setTimeout(() => {
@@ -3633,6 +3661,8 @@
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
             const accuracy = position.coords.accuracy;
+
+            lastGpsAccuracyMeters = accuracy;
 
             updateColdStartBadge(accuracy);
 
