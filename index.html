@@ -1539,7 +1539,7 @@
       const GPS_ACCURACY_HIGH_METERS = 15;
       const GPS_ACCURACY_MEDIUM_METERS = 40;
       const GPS_PREPARING_MIN_MS = 800;
-      const GPS_LOCATING_MIN_MS = 1500;
+      const GPS_LOCATING_MIN_MS = 2200;
       const GPS_LOW_ACCURACY_MIN_MS = 1200;
       const GPS_IMPROVING_MIN_MS = 1200;
       const GPS_LOCK_STABLE_MIN_MS = 2000;
@@ -2701,6 +2701,19 @@
           return;
         }
 
+        if (
+          hasGpsLock &&
+          isColdStartBadgeActive &&
+          now - gpsLockTimeMs >= GPS_BADGE_HANDOFF_MS
+        ) {
+          isColdStartBadgeActive = false;
+          stopColdStartBadgeTicker();
+        }
+
+        if (!isColdStartBadgeActive && hasGpsLock) {
+          return;
+        }
+
         const setPhase = (phase) => {
           if (coldStartBadgePhase !== phase) {
             coldStartBadgePhase = phase;
@@ -2854,10 +2867,6 @@
 
         coldStartBadgeTimerId = window.setInterval(() => {
           updateColdStartBadge(lastGpsAccuracyMeters);
-
-          if (hasGpsLock && !isColdStartBadgeActive) {
-            stopColdStartBadgeTicker();
-          }
         }, GPS_BADGE_TICK_MS);
       }
 
