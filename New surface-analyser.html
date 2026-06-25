@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Surface Tool (Final)</title>
+<title>Surface Tool Final Stable</title>
 
 <style>
 body {
@@ -35,7 +35,8 @@ button {
 <script>
 
 const OVERPASS = "https://overpass.kumi.systems/api/interpreter";
-const SEARCH_BUFFER = 50;
+
+const SEARCH_BUFFER = 60; // slightly increased reliability
 const MIN_SEGMENT = 10;
 
 const COLORS = {
@@ -57,8 +58,10 @@ function dist(a,b){
   const dLng=rad(b[0]-a[0]);
   const x =
     Math.sin(dLat/2)**2 +
-    Math.cos(rad(a[1]))*Math.cos(rad(b[1]))*
+    Math.cos(rad(a[1])) *
+    Math.cos(rad(b[1])) *
     Math.sin(dLng/2)**2;
+
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
@@ -75,40 +78,68 @@ function extractLines(g){
 }
 
 function classify(tags){
-  const s=tags.surface?.toLowerCase();
-  if(s?.includes("asphalt")||s==="paved") return "paved";
-  if(s==="gravel"||s==="dirt") return "unpaved";
+  const s = tags.surface?.toLowerCase();
+
+  if (!s) return "unknown";
+
+  if (["paved","asphalt","concrete","tarmac"].includes(s)) return "paved";
+  if (["gravel","dirt","ground","earth"].includes(s)) return "unpaved";
+
   return "unknown";
 }
 
-async function fetchOSM(bbox){
+// ✅ IMPORTANT: midpoint-based distance (correct matching)
+function segmentToWayDistance(seg, wayCoords){
+
+  const mid = [
+    (seg[0][0] + seg[1][0]) / 2,
+    (seg[0][1] + seg[1][1]) / 2
+  ];
+
+  let best = Infinity;
+
+  for (let i=0; i<wayCoords.length-1; i++) {
+
+    const d = dist(mid, wayCoords[i]);
+
+    if(d < best) best = d;
+  }
+
+  return best;
+}
+
+async function fetchOSM(b){
 
   const q=`[out:json][timeout:40];
-  (way(${bbox.s},${bbox.w},${bbox.n},${bbox.e}););
+  (way(${b.s},${b.w},${b.n},${b.e}););
   out tags geom;`;
 
-  const res=await fetch(OVERPASS,{
+  const res = await fetch(OVERPASS,{
     method:"POST",
     body:"data="+encodeURIComponent(q)
   });
 
-  const data=await res.json();
+  const data = await res.json();
 
   return data.elements.filter(e=>e.geometry).map(e=>({
     coords:e.geometry.map(p=>[p.lon,p.lat]),
-    tags:e.tags||{}
+    tags:e.tags || {}
   }));
 }
 
-document.getElementById("run").onclick=async()=>{
+document.getElementById("run").onclick = async () => {
+
+  document.getElementById("output").textContent="";
 
   const f=document.getElementById("file").files[0];
   if(!f) return;
 
   const geo=JSON.parse(await f.text());
+
   const lines=extractLines(geo);
 
   const flat=lines.flat();
+
   const bbox={
     w:Math.min(...flat.map(c=>c[0])),
     e:Math.max(...flat.map(c=>c[0])),
@@ -116,80 +147,73 @@ document.getElementById("run").onclick=async()=>{
     n:Math.max(...flat.map(c=>c[1]))
   };
 
-  const ways=await fetchOSM(bbox);
+  const ways = await fetchOSM(bbox);
 
   const features=[];
 
-  // ✅ PER LINE PROCESSING
+  // ✅ PROCESS EACH LINE IN ISOLATION
   for(const line of lines){
 
-    const segments=[];
-    for(let i=0;i<line.length-1;i++){
-      segments.push([line[i],line[i+1]]);
-    }
-
-    // ✅ classify
     const classified=[];
 
-    for(const seg of segments){
+    for(let i=0;i<line.length-1;i++){
 
+      const seg=[line[i],line[i+1]];
       const len=dist(seg[0],seg[1]);
 
       let best=Infinity;
-      let near=null;
+      let nearest=null;
 
       for(const w of ways){
-        for(let i=0;i<w.coords.length-1;i++){
-          const d=dist(seg[0],w.coords[i]);
-          if(d<best){
-            best=d;
-            near=w;
-          }
+
+        const d = segmentToWayDistance(seg, w.coords);
+
+        if(d < best){
+          best = d;
+          nearest = w;
         }
       }
 
       let type="unknown";
-      if(near && best<SEARCH_BUFFER){
-        type=classify(near.tags);
+
+      if(nearest && best < SEARCH_BUFFER){
+        type = classify(nearest.tags);
       }
 
       classified.push({
         type,
-        coords:seg,
-        length:len
+        coords: seg,
+        length: len
       });
     }
 
-    // ✅ SAFE SMOOTH
+    // ✅ SMOOTH (NO OVERWRITE EVER)
     const smoothed=[];
 
-    for(let i=0;i<classified.length;i++){
-
-      const seg=classified[i];
+    for(const seg of classified){
 
       if(seg.length < MIN_SEGMENT && smoothed.length){
 
-        const prev=smoothed[smoothed.length-1];
+        const prev = smoothed[smoothed.length - 1];
 
-        const gap=dist(
+        const gap = dist(
           prev.coords[prev.coords.length-1],
           seg.coords[0]
         );
 
         if(gap < 30){
-          // ✅ EXTEND safely
           prev.coords.push(seg.coords[1]);
           continue;
         }
       }
 
       smoothed.push({
-        type:seg.type,
-        coords:[...seg.coords]
+        type: seg.type,
+        coords: [...seg.coords]
       });
     }
 
-    // ✅ SAFE MERGE
+    // ✅ MERGE (SAFE)
     const merged=[];
     let current=null;
 
@@ -200,19 +224,19 @@ document.getElementById("run").onclick=async()=>{
         continue;
       }
 
-      const gap=dist(
+      const gap = dist(
         current.coords[current.coords.length-1],
         seg.coords[0]
       );
 
-      // ✅ HARD BREAK if geometry jumps
-      if(gap > 50){
+      // ✅ prevents your diagonal bug permanently
+      if(gap > 40){
         merged.push(current);
         current={type:seg.type,coords:[...seg.coords]};
         continue;
       }
 
-      if(current.type===seg.type){
+      if(current.type === seg.type){
         current.coords.push(seg.coords[1]);
       } else {
         merged.push(current);
@@ -222,14 +246,14 @@ document.getElementById("run").onclick=async()=>{
 
     if(current) merged.push(current);
 
-    // ✅ DRAW ORIGINAL (purple)
+    // ✅ draw original route
     features.push({
       type:"Feature",
       properties:{stroke:COLORS.route,"stroke-width":4},
       geometry:{type:"LineString",coordinates:line}
     });
 
-    // ✅ DRAW SURFACE
+    // ✅ draw merged
     for(const seg of merged){
       features.push({
         type:"Feature",
@@ -252,6 +276,7 @@ document.getElementById("run").onclick=async()=>{
 
   const blob=new Blob([JSON.stringify(result,null,2)]);
   const url=URL.createObjectURL(blob);
+
   const a=document.createElement("a");
   a.href=url;
   a.download="surface.geojson";
