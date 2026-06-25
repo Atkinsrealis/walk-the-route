@@ -2,66 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Surface Debug Tool</title>
+<title>Surface Tool (Final)</title>
 
 <style>
 body {
-  font-family: system-ui, sans-serif;
-  background: #0a0f1f;
-  color: white;
-  padding: 24px;
-  max-width: 760px;
-  margin: auto;
+  font-family: system-ui;
+  background:#0a0f1f;
+  color:white;
+  padding:24px;
+  max-width:760px;
+  margin:auto;
 }
-
 button {
-  background: #7c3aed;
-  color: white;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 0;
-  font-weight: 700;
-}
-
-button.secondary {
-  background: #374151;
-}
-
-pre {
-  background: #060b18;
-  padding: 14px;
-  border-radius: 10px;
+  background:#7c3aed;
+  color:white;
+  padding:10px;
+  border-radius:8px;
+  border:0;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Surface Debug Tool</h1>
+<h1>Surface Tool</h1>
 
-<input type="file" id="file">
-<br><br>
-
+<input type="file" id="file"><br><br>
 <button id="run">Analyse</button>
-<button class="secondary" onclick="clearCache()">Clear cache</button>
 
-<pre id="output">Waiting…</pre>
+<pre id="output"></pre>
 
 <script>
 
-// ---------- CONFIG ----------
-const OVERPASS_ENDPOINTS = [
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.openstreetmap.fr/api/interpreter",
-  "https://overpass-api.de/api/interpreter"
-];
-
-const TIMEOUT_MS = 12000;
+const OVERPASS = "https://overpass.kumi.systems/api/interpreter";
 const SEARCH_BUFFER = 50;
-const BBOX_PAD = 0.0015;
-
-// ✅ smoothing threshold
-const MIN_SEGMENT_LENGTH = 10;
+const MIN_SEGMENT = 10;
 
 const COLORS = {
   paved:"#22c55e",
@@ -70,90 +45,23 @@ const COLORS = {
   route:"#7c3aed"
 };
 
-const PAVED = new Set(["asphalt","paved","concrete","tarmac"]);
-const UNPAVED = new Set(["gravel","dirt","grass","earth"]);
-
-const out = document.getElementById("output");
-
-function log(m){ out.textContent += "\n" + m }
-
-// ---------- CACHE ----------
-function getCacheKey(b){
-  return "osm_" + [
-    b.west.toFixed(3),
-    b.south.toFixed(3),
-    b.east.toFixed(3),
-    b.north.toFixed(3)
-  ].join("_");
+function log(m){
+  document.getElementById("output").textContent+=m+"\n";
 }
 
-function getDebugKey(lines){
-  return "debug_" + lines.flat().slice(0,50).map(c=>c.join(",")).join("|");
-}
-
-function getCached(key){
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null }
-}
-
-function setCached(key,data){
-  localStorage.setItem(key, JSON.stringify({
-    timestamp: Date.now(),
-    data
-  }));
-}
-
-function clearCache(){
-  localStorage.clear();
-  location.reload();
-}
-
-// ---------- FETCH ----------
-function fetchWithTimeout(url, options){
-  return Promise.race([
-    fetch(url, options),
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error("timeout")), TIMEOUT_MS))
-  ]);
-}
-
-// ---------- GEO ----------
 function rad(v){ return v*Math.PI/180 }
 
 function dist(a,b){
   const R=6371000;
   const dLat=rad(b[1]-a[1]);
   const dLng=rad(b[0]-a[0]);
-  const x=Math.sin(dLat/2)**2 +
-    Math.cos(rad(a[1]))*
-    Math.cos(rad(b[1]))*
+  const x =
+    Math.sin(dLat/2)**2 +
+    Math.cos(rad(a[1]))*Math.cos(rad(b[1]))*
     Math.sin(dLng/2)**2;
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
-function segDist(p,a,b){
-  const t=Math.max(0,Math.min(1,
-    ((p[0]-a[0])*(b[0]-a[0])+(p[1]-a[1])*(b[1]-a[1]))/
-    ((b[0]-a[0])**2+(b[1]-a[1])**2)
-  ));
-  return dist(p,[a[0]+t*(b[0]-a[0]),a[1]+t*(b[1]-a[1])]);
-}
-
-function wayDist(seg,coords){
-  const mid=[
-    (seg[0][0]+seg[1][0])/2,
-    (seg[0][1]+seg[1][1])/2
-  ];
-  let best=Infinity;
-  for(let i=0;i<coords.length-1;i++){
-    const d=segDist(mid,coords[i],coords[i+1]);
-    if(d<best) best=d;
-  }
-  return best;
-}
-
-// ---------- ROUTE ----------
 function extractLines(g){
   const lines=[];
   const add=x=>{
@@ -162,218 +70,192 @@ function extractLines(g){
     if(x.type==="MultiLineString") x.coordinates.forEach(l=>lines.push(l));
   };
   if(g.type==="FeatureCollection") g.features.forEach(f=>add(f.geometry));
-  if(g.type==="Feature") add(g.geometry);
   add(g);
   return lines;
 }
 
-function split(lines){
-  return lines.flatMap(line=>{
-    const segs=[];
-    for(let i=0;i<line.length-1;i++){
-      segs.push([line[i],line[i+1]]);
-    }
-    return segs;
-  });
-}
-
-function bbox(lines){
-  const c=lines.flat();
-  return {
-    west: Math.min(...c.map(x=>x[0]))-BBOX_PAD,
-    east: Math.max(...c.map(x=>x[0]))+BBOX_PAD,
-    south: Math.min(...c.map(x=>x[1]))-BBOX_PAD,
-    north: Math.max(...c.map(x=>x[1]))+BBOX_PAD
-  };
-}
-
-// ---------- OSM ----------
-async function fetchOSM(b){
-  const key=getCacheKey(b);
-  const cached=getCached(key);
-  if(cached){
-    log("⚡ Using cached OSM");
-    return cached.data;
-  }
-
-  const query=`[out:json][timeout:45];
-(way(${b.south},${b.west},${b.north},${b.east}););
-out tags geom;`;
-
-  for(const url of OVERPASS_ENDPOINTS){
-    try{
-      log("🌐 "+url);
-      const res=await fetchWithTimeout(url,{
-        method:"POST",
-        body:"data="+encodeURIComponent(query)
-      });
-      if(!res.ok) continue;
-
-      const data=await res.json();
-
-      const ways=data.elements.filter(e=>e.geometry).map(e=>({
-        tags:e.tags||{},
-        coords:e.geometry.map(p=>[p.lon,p.lat])
-      }));
-
-      setCached(key,ways);
-      return ways;
-
-    }catch(e){
-      log("❌ "+e.message);
-    }
-  }
-
-  throw new Error("OSM failed");
-}
-
-// ---------- CLASSIFY ----------
 function classify(tags){
   const s=tags.surface?.toLowerCase();
-  if(s){
-    if(PAVED.has(s)) return "paved";
-    if(UNPAVED.has(s)) return "unpaved";
-  }
+  if(s?.includes("asphalt")||s==="paved") return "paved";
+  if(s==="gravel"||s==="dirt") return "unpaved";
   return "unknown";
 }
 
-// ---------- ✅ SMART SMOOTH ----------
-function smoothSegments(segments){
-  const smoothed=[];
+async function fetchOSM(bbox){
 
-  for(let i=0;i<segments.length;i++){
-    const seg=segments[i];
+  const q=`[out:json][timeout:40];
+  (way(${bbox.s},${bbox.w},${bbox.n},${bbox.e}););
+  out tags geom;`;
 
-    if(seg.length < MIN_SEGMENT_LENGTH && smoothed.length){
-      // absorb into previous
-      smoothed[smoothed.length-1].coords[1]=seg.coords[1];
-      continue;
-    }
-
-    smoothed.push({...seg});
-  }
-
-  return smoothed;
-}
-
-// ---------- MERGE ----------
-function mergeSegmentsByType(segments){
-  const merged=[];
-  let current=null;
-
-  for(const seg of segments){
-    if(!current){
-      current={type:seg.type,coords:[...seg.coords]};
-      continue;
-    }
-
-    if(current.type===seg.type){
-      current.coords.push(seg.coords[1]);
-    }else{
-      merged.push(current);
-      current={type:seg.type,coords:[...seg.coords]};
-    }
-  }
-
-  if(current) merged.push(current);
-  return merged;
-}
-
-// ---------- DOWNLOAD ----------
-function download(name,data){
-  const blob=new Blob([JSON.stringify(data,null,2)]);
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download=name;
-  a.click();
-}
-
-// ---------- MAIN ----------
-document.getElementById("run").onclick=async()=>{
-  out.textContent="";
-
-  const file=document.getElementById("file").files[0];
-  if(!file) return;
-
-  const geo=JSON.parse(await file.text());
-  const lines=extractLines(geo);
-
-  const debugKey=getDebugKey(lines);
-  const cachedDebug=getCached(debugKey);
-
-  if(cachedDebug){
-    log("⚡ cached result");
-    download("surface.geojson",cachedDebug.data.geojson);
-    return;
-  }
-
-  const segs=split(lines);
-  const ways=await fetchOSM(bbox(lines));
-
-  let totals={paved:0,unpaved:0,unknown:0};
-
-  const classified=[];
-
-  segs.forEach(seg=>{
-
-    const len=dist(seg[0],seg[1]);
-
-    let best=Infinity,nearest=null;
-
-    ways.forEach(w=>{
-      const d=wayDist(seg,w.coords);
-      if(d<best){
-        best=d;
-        nearest=w;
-      }
-    });
-
-    let type="unknown";
-    if(nearest && best<=SEARCH_BUFFER){
-      type=classify(nearest.tags);
-    }
-
-    totals[type]+=len;
-
-    classified.push({type,coords:seg,length:len});
+  const res=await fetch(OVERPASS,{
+    method:"POST",
+    body:"data="+encodeURIComponent(q)
   });
 
-  // ✅ FIXED SMOOTHING
-  const smoothed=smoothSegments(classified);
-  const merged=mergeSegmentsByType(smoothed);
+  const data=await res.json();
+
+  return data.elements.filter(e=>e.geometry).map(e=>({
+    coords:e.geometry.map(p=>[p.lon,p.lat]),
+    tags:e.tags||{}
+  }));
+}
+
+document.getElementById("run").onclick=async()=>{
+
+  const f=document.getElementById("file").files[0];
+  if(!f) return;
+
+  const geo=JSON.parse(await f.text());
+  const lines=extractLines(geo);
+
+  const flat=lines.flat();
+  const bbox={
+    w:Math.min(...flat.map(c=>c[0])),
+    e:Math.max(...flat.map(c=>c[0])),
+    s:Math.min(...flat.map(c=>c[1])),
+    n:Math.max(...flat.map(c=>c[1]))
+  };
+
+  const ways=await fetchOSM(bbox);
 
   const features=[];
 
-  lines.forEach(line=>{
+  // ✅ PER LINE PROCESSING
+  for(const line of lines){
+
+    const segments=[];
+    for(let i=0;i<line.length-1;i++){
+      segments.push([line[i],line[i+1]]);
+    }
+
+    // ✅ classify
+    const classified=[];
+
+    for(const seg of segments){
+
+      const len=dist(seg[0],seg[1]);
+
+      let best=Infinity;
+      let near=null;
+
+      for(const w of ways){
+        for(let i=0;i<w.coords.length-1;i++){
+          const d=dist(seg[0],w.coords[i]);
+          if(d<best){
+            best=d;
+            near=w;
+          }
+        }
+      }
+
+      let type="unknown";
+      if(near && best<SEARCH_BUFFER){
+        type=classify(near.tags);
+      }
+
+      classified.push({
+        type,
+        coords:seg,
+        length:len
+      });
+    }
+
+    // ✅ SAFE SMOOTH
+    const smoothed=[];
+
+    for(let i=0;i<classified.length;i++){
+
+      const seg=classified[i];
+
+      if(seg.length < MIN_SEGMENT && smoothed.length){
+
+        const prev=smoothed[smoothed.length-1];
+
+        const gap=dist(
+          prev.coords[prev.coords.length-1],
+          seg.coords[0]
+        );
+
+        if(gap < 30){
+          // ✅ EXTEND safely
+          prev.coords.push(seg.coords[1]);
+          continue;
+        }
+      }
+
+      smoothed.push({
+        type:seg.type,
+        coords:[...seg.coords]
+      });
+    }
+
+    // ✅ SAFE MERGE
+    const merged=[];
+    let current=null;
+
+    for(const seg of smoothed){
+
+      if(!current){
+        current={type:seg.type,coords:[...seg.coords]};
+        continue;
+      }
+
+      const gap=dist(
+        current.coords[current.coords.length-1],
+        seg.coords[0]
+      );
+
+      // ✅ HARD BREAK if geometry jumps
+      if(gap > 50){
+        merged.push(current);
+        current={type:seg.type,coords:[...seg.coords]};
+        continue;
+      }
+
+      if(current.type===seg.type){
+        current.coords.push(seg.coords[1]);
+      } else {
+        merged.push(current);
+        current={type:seg.type,coords:[...seg.coords]};
+      }
+    }
+
+    if(current) merged.push(current);
+
+    // ✅ DRAW ORIGINAL (purple)
     features.push({
       type:"Feature",
       properties:{stroke:COLORS.route,"stroke-width":4},
       geometry:{type:"LineString",coordinates:line}
     });
-  });
 
-  merged.forEach(seg=>{
-    features.push({
-      type:"Feature",
-      properties:{
-        stroke:COLORS[seg.type],
-        "stroke-width":5
-      },
-      geometry:{
-        type:"LineString",
-        coordinates:seg.coords
-      }
-    });
-  });
+    // ✅ DRAW SURFACE
+    for(const seg of merged){
+      features.push({
+        type:"Feature",
+        properties:{
+          stroke:COLORS[seg.type],
+          "stroke-width":5
+        },
+        geometry:{
+          type:"LineString",
+          coordinates:seg.coords
+        }
+      });
+    }
+  }
 
   const result={
-    geojson:{type:"FeatureCollection",features}
+    type:"FeatureCollection",
+    features
   };
 
-  setCached(debugKey,result);
-  download("surface.geojson",result.geojson);
-
+  const blob=new Blob([JSON.stringify(result,null,2)]);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="surface.geojson";
+  a.click();
 };
 
 </script>
