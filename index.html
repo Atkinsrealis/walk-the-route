@@ -2749,11 +2749,13 @@
         const isLockStable = lockStableByStreak || lockStableByTime;
 
         if (coldStartBadgePhase === "preparing") {
-          setBadge("Preparing");
-
           if (now - coldStartBadgePhaseStartMs >= GPS_PREPARING_MIN_MS) {
             setPhase("locating");
+            setBadge("Locating", "warning");
+            return;
           }
+
+          setBadge("Preparing");
 
           return;
         }
@@ -2858,6 +2860,17 @@
         }
 
         setBadge("Locating", "warning");
+      }
+
+      function resetColdStartBadgeFlow() {
+        hasGpsLock = false;
+        gpsLockTimeMs = 0;
+        isColdStartBadgeActive = true;
+        coldStartBadgePhase = "preparing";
+        coldStartBadgePhaseStartMs = Date.now();
+        highAccuracyStreak = 0;
+        highAccuracyFirstSeenMs = 0;
+        lastGpsAccuracyMeters = Number.NaN;
       }
 
       function startColdStartBadgeTicker() {
@@ -3652,6 +3665,7 @@
       // (removed - now handled in map.on('load'))
 
       if ("geolocation" in navigator) {
+        resetColdStartBadgeFlow();
         updateColdStartBadge(Number.NaN);
         startColdStartBadgeTicker();
 
