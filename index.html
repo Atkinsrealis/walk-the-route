@@ -3324,13 +3324,38 @@
         if (!map || !routeCoordinates.length) return;
         
         const startPoint = routeCoordinates[0];
-        map.flyTo({
-          center: startPoint,
-          zoom: 16.5,
-          speed: 1.2,
-          duration: 1500,
+        
+        // Calculate route bounds for full view
+        let minLng = routeCoordinates[0][0];
+        let maxLng = routeCoordinates[0][0];
+        let minLat = routeCoordinates[0][1];
+        let maxLat = routeCoordinates[0][1];
+        
+        routeCoordinates.forEach(([lng, lat]) => {
+          minLng = Math.min(minLng, lng);
+          maxLng = Math.max(maxLng, lng);
+          minLat = Math.min(minLat, lat);
+          maxLat = Math.max(maxLat, lat);
         });
-        lastViewCenter = startPoint;
+        
+        // Show full route first with padding
+        const bounds = [[minLng, minLat], [maxLng, maxLat]];
+        map.fitBounds(bounds, {
+          padding: 40,
+          duration: 1200,
+          maxZoom: 15,
+        });
+        
+        // Then animate to start point after a brief pause
+        setTimeout(() => {
+          map.flyTo({
+            center: startPoint,
+            zoom: 16.5,
+            speed: 1.2,
+            duration: 1500,
+          });
+          lastViewCenter = startPoint;
+        }, 1300);
       }
 
       // Initialize with cached position if available, otherwise route start
