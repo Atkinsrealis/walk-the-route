@@ -1538,6 +1538,7 @@
       const ROUTE_ALERT_DISTANCE = 600;
       const GPS_ACCURACY_HIGH_METERS = 15;
       const GPS_ACCURACY_MEDIUM_METERS = 40;
+      const GPS_BADGE_HANDOFF_MS = 4500;
       const WARNING_UPDATE_INTERVAL = 4000; // Increased from 3000ms for battery efficiency
       const VIEW_UPDATE_DISTANCE = 30; // Increased from 25m to reduce map pans
       const MIN_SPEED_FOR_FOLLOW = 0.4;
@@ -1740,6 +1741,8 @@
       let isMapInteracting = false;
       let isCompassVisible = false;
       let hasGpsLock = false;
+      let gpsLockTimeMs = 0;
+      let isColdStartBadgeActive = true;
 
       const hazards = [
         {
@@ -2706,6 +2709,9 @@
 
         routeBadge.textContent = `GPS locked (±${roundedAccuracy}m)`;
         routeBadge.className = "route-card__badge";
+        if (!hasGpsLock) {
+          gpsLockTimeMs = Date.now();
+        }
         hasGpsLock = true;
       }
 
@@ -2802,6 +2808,14 @@
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
         const routeCard = document.getElementById("route-card");
 
+        if (
+          hasGpsLock &&
+          isColdStartBadgeActive &&
+          Date.now() - gpsLockTimeMs >= GPS_BADGE_HANDOFF_MS
+        ) {
+          isColdStartBadgeActive = false;
+        }
+
         const hasValidDistance = Number.isFinite(distance);
         if (routeCard) {
           routeCard.classList.toggle("is-locating", !hasValidDistance);
@@ -2819,14 +2833,14 @@
         if (!hasValidDistance || normalizedDistance === null) {
           progressValue.textContent = `Section 1/${TOTAL_SEGMENTS}`;
           distanceValue.textContent = "Waiting for start";
-          if (hasGpsLock) {
+          if (hasGpsLock && !isColdStartBadgeActive) {
             routeBadge.textContent = "On route";
             routeBadge.className = "route-card__badge";
           }
           return;
         }
 
-        if (!hasGpsLock) {
+        if (!hasGpsLock || isColdStartBadgeActive) {
           return;
         }
 
