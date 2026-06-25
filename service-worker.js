@@ -1,4 +1,5 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v9";
+const CACHE_NAME = "heathrow-perimeter-walk-v10";
+const MAPBOX_CACHE_NAME = "heathrow-mapbox-v1";
 
 const APP_ASSETS = [
   "/",
@@ -12,11 +13,23 @@ const APP_ASSETS = [
   "/icon-512-maskable.png"
 ];
 
+const MAPBOX_ASSETS = [
+  "https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js",
+  "https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
+];
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(APP_ASSETS);
-    })
+    Promise.all([
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.addAll(APP_ASSETS);
+      }),
+      caches.open(MAPBOX_CACHE_NAME).then((cache) => {
+        return cache.addAll(MAPBOX_ASSETS).catch(() => {
+          // Mapbox CDN may not be available during install - that's okay
+        });
+      })
+    ])
   );
 
   self.skipWaiting();
@@ -46,9 +59,35 @@ self.addEventListener("fetch", (event) => {
   const requestUrl = new URL(request.url);
 
   /*
-    IMPORTANT:
+    Handle Mapbox CDN library files (JS/CSS) with network-first strategy.
+    This ensures offline users still have the library code if previously loaded.
+  */
+  if (requestUrl.origin === "https://api.mapbox.com") {
+    const isLibraryAsset = request.url.includes("mapbox-gl.js") || 
+                          request.url.includes("mapbox-gl.css");
+    
+    if (isLibraryAsset) {
+      event.respondWith(
+        fetch(request)
+          .then((networkResponse) => {
+            return caches.open(MAPBOX_CACHE_NAME).then((cache) => {
+              cache.put(request, networkResponse.clone());
+              return networkResponse;
+            });
+          })
+          .catch(() => caches.match(request))
+      );
+      return;
+    }
+    
+    // For map tiles and other Mapbox API calls, let them go to network
+    // (tiles can't be meaningfully cached without massive storage)
+    return;
+  }
+
+  /*
     Only handle requests from our own site.
-    Let Mapbox and all external resources go straight to the network.
+    Let other external resources go straight to the network.
   */
   if (requestUrl.origin !== self.location.origin) {
     return;

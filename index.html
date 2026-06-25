@@ -20,9 +20,23 @@
     <link
       href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
       rel="stylesheet"
+      onerror="window.MAPBOX_LOAD_FAILED = true; initFallbackUI();"
     />
 
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+    <script 
+      src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"
+      onerror="window.MAPBOX_LOAD_FAILED = true; initFallbackUI();"
+    ></script>
+    <script>
+      // Detect if Mapbox fails to load within a timeout
+      window.MAPBOX_LOAD_FAILED = false;
+      setTimeout(() => {
+        if (typeof mapboxgl === 'undefined') {
+          window.MAPBOX_LOAD_FAILED = true;
+          initFallbackUI();
+        }
+      }, 3000);
+    </script>
 
     <style>
       :root {
@@ -955,6 +969,147 @@
         transform: translate(-50%, -4px);
       }
 
+      .offline-notice {
+        position: fixed;
+        top: calc(6px + env(safe-area-inset-top));
+        left: 16px;
+        right: 16px;
+        z-index: 100;
+
+        background: rgba(107, 114, 128, 0.92);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        backdrop-filter: blur(8px);
+
+        animation: slideDown 0.3s ease;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fallback-container {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #0a0f1f;
+        overflow-y: auto;
+        z-index: 1;
+      }
+
+      .fallback-content {
+        padding-top: calc(80px + env(safe-area-inset-top));
+        padding-bottom: calc(140px + env(safe-area-inset-bottom));
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      .fallback-header {
+        margin-bottom: 20px;
+      }
+
+      .fallback-header h2 {
+        margin: 0 0 6px;
+        color: white;
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .fallback-header p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 13px;
+      }
+
+      .fallback-route-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .fallback-stat {
+        background: rgba(10, 15, 31, 0.6);
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .fallback-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #c4b5fd;
+        opacity: 0.8;
+      }
+
+      .fallback-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: white;
+      }
+
+      .fallback-segments {
+        margin-bottom: 16px;
+      }
+
+      .fallback-segment-item {
+        background: rgba(124, 58, 237, 0.12);
+        border-left: 4px solid #7c3aed;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+        color: white;
+      }
+
+      .fallback-segment-name {
+        font-weight: 700;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .fallback-segment-milestone {
+        font-size: 12px;
+        opacity: 0.75;
+      }
+
+      .fallback-segment-item.active {
+        background: rgba(124, 58, 237, 0.25);
+        border-left-color: #a78bfa;
+      }
+
+      .fallback-info {
+        background: rgba(94, 234, 212, 0.1);
+        border: 1px solid rgba(94, 234, 212, 0.22);
+        border-radius: 12px;
+        padding: 12px;
+        color: #5eead4;
+        font-size: 12px;
+      }
+
+      .fallback-info p {
+        margin: 0;
+      }
+
       @media (max-width: 480px) {
         .topbar {
           padding-top: calc(16px + env(safe-area-inset-top));
@@ -1241,6 +1396,32 @@
     </button>
 
     <div id="map"></div>
+    <div id="fallback-container" class="fallback-container" hidden>
+      <div class="fallback-content">
+        <div class="fallback-header">
+          <h2>📋 Route Guide</h2>
+          <p>Map unavailable – using text-based navigation</p>
+        </div>
+        <div id="fallback-route-info" class="fallback-route-info">
+          <div class="fallback-stat">
+            <span class="fallback-label">Distance to Route</span>
+            <span class="fallback-value" id="fallback-distance">—</span>
+          </div>
+          <div class="fallback-stat">
+            <span class="fallback-label">Route Progress</span>
+            <span class="fallback-value" id="fallback-progress">—</span>
+          </div>
+          <div class="fallback-stat">
+            <span class="fallback-label">Current Segment</span>
+            <span class="fallback-value" id="fallback-segment">—</span>
+          </div>
+        </div>
+        <div id="fallback-segments" class="fallback-segments"></div>
+        <div class="fallback-info">
+          <p>🚨 Hazards and rest stops still tracked. Check "Need help" for locations.</p>
+        </div>
+      </div>
+    </div>
 
     <div class="help-backdrop" id="help-backdrop"></div>
 
@@ -1299,9 +1480,15 @@
       </div>
     </div>
     <div id="toast" class="toast"></div>
+    <div id="offline-notice" class="offline-notice" hidden>
+      <span>🌐 Offline – Map tiles unavailable, route data cached</span>
+    </div>
     <script>
-      mapboxgl.accessToken =
-        "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
+      // Only set token if Mapbox is loaded
+      if (typeof mapboxgl !== 'undefined') {
+        mapboxgl.accessToken =
+          "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
+      }
 
       const routeGeoJsonUrl = "heathrow-perimeter-route.geojson";
       const fallbackRouteCoordinates = [
@@ -1320,14 +1507,16 @@
         [-0.47, 51.475],
       ];
       let routeCoordinates = [];
+      let isAppVisible = true;
+      let geolocationWatchId = null;
 
       const ROUTE_WARNING_DISTANCE = 300;
       const ROUTE_ALERT_DISTANCE = 600;
-      const WARNING_UPDATE_INTERVAL = 3000;
-      const VIEW_UPDATE_DISTANCE = 25;
+      const WARNING_UPDATE_INTERVAL = 4000; // Increased from 3000ms for battery efficiency
+      const VIEW_UPDATE_DISTANCE = 30; // Increased from 25m to reduce map pans
       const MIN_SPEED_FOR_FOLLOW = 0.4;
-      const POSITION_UPDATE_MIN_METERS = 12;
-      const POSITION_UPDATE_MIN_MS = 8000;
+      const POSITION_UPDATE_MIN_METERS = 15; // Increased from 12m for battery efficiency
+      const POSITION_UPDATE_MIN_MS = 10000; // Increased from 8000ms for battery efficiency
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
       const SURFACE_TOOLTIP_HIDE_ZOOM = 13.8;
@@ -1408,15 +1597,94 @@
         });
       }
 
-      const map = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/dark-v11",
-        center: [-0.4543, 51.47],
-        zoom: 13.5,
-        pitch: 0,
-        bearing: 0,
-        attributionControl: false,
-      });
+      // Initialize fallback UI if Mapbox is unavailable
+      let map = null;
+
+      function initFallbackUI() {
+        const mapContainer = document.getElementById("map");
+        const fallbackContainer = document.getElementById("fallback-container");
+        
+        if (mapContainer) {
+          mapContainer.style.display = "none";
+        }
+        
+        if (fallbackContainer) {
+          fallbackContainer.removeAttribute("hidden");
+        }
+
+        // Update fallback segments display
+        const segmentsContainer = document.getElementById("fallback-segments");
+        if (segmentsContainer) {
+          const segments = getRouteSegments();
+          segmentsContainer.innerHTML = segments.map(seg => `
+            <div class="fallback-segment-item">
+              <div class="fallback-segment-name">${seg.name}</div>
+              <div class="fallback-segment-milestone">Next: ${seg.milestone}</div>
+            </div>
+          `).join("");
+        }
+
+        showWarning(
+          "Map service unavailable – using text-based navigation",
+          "warning"
+        );
+      }
+
+      function updateFallbackDisplay(distanceToRoute, routeProgress, segmentInfo) {
+        const distanceEl = document.getElementById("fallback-distance");
+        const progressEl = document.getElementById("fallback-progress");
+        const segmentEl = document.getElementById("fallback-segment");
+
+        if (distanceEl) {
+          distanceEl.textContent = distanceToRoute !== null 
+            ? `${Math.round(distanceToRoute)}m` 
+            : "—";
+        }
+
+        if (progressEl) {
+          const percent = (routeProgress * 100).toFixed(0);
+          progressEl.textContent = `${percent}%`;
+        }
+
+        if (segmentEl) {
+          segmentEl.textContent = segmentInfo.segment.name || "—";
+        }
+
+        // Highlight active segment
+        const segments = document.querySelectorAll(".fallback-segment-item");
+        segments.forEach((el, idx) => {
+          if (idx === segmentInfo.currentSegmentNumber - 1) {
+            el.classList.add("active");
+          } else {
+            el.classList.remove("active");
+          }
+        });
+      }
+
+      // Only initialize map if Mapbox is available
+      if (typeof mapboxgl !== 'undefined' && !window.MAPBOX_LOAD_FAILED) {
+        try {
+          mapboxgl.accessToken =
+            "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
+
+          map = new mapboxgl.Map({
+            container: "map",
+            style: "mapbox://styles/mapbox/dark-v11",
+            center: [-0.4543, 51.47],
+            zoom: 13.5,
+            pitch: 0,
+            bearing: 0,
+            attributionControl: false,
+          });
+        } catch (error) {
+          console.error("Map initialization failed:", error);
+          window.MAPBOX_LOAD_FAILED = true;
+          initFallbackUI();
+          map = null;
+        }
+      } else {
+        initFallbackUI();
+      }
 
       let userMarker;
       let lastActualPosition = null;
@@ -1655,7 +1923,7 @@
       }
 
       function centerMapOnRoute() {
-        if (routeCoordinates.length === 0) {
+        if (!map || routeCoordinates.length === 0) {
           return;
         }
 
@@ -2348,12 +2616,28 @@
       }
 
       window.addEventListener("offline", () => {
+        const offlineNotice = document.getElementById("offline-notice");
+        if (offlineNotice) {
+          offlineNotice.removeAttribute("hidden");
+        }
         showToast("Signal lost — route still available");
       });
 
       window.addEventListener("online", () => {
+        const offlineNotice = document.getElementById("offline-notice");
+        if (offlineNotice) {
+          offlineNotice.setAttribute("hidden", "");
+        }
         showToast("Back online");
       });
+
+      // Check initial online status
+      if (!navigator.onLine) {
+        const offlineNotice = document.getElementById("offline-notice");
+        if (offlineNotice) {
+          offlineNotice.removeAttribute("hidden");
+        }
+      }
 
       function formatDistance(distance) {
         if (distance >= 1000) {
@@ -2542,18 +2826,22 @@
 
         lastSnappedPosition = routeSnapshot.point;
 
-        if (!userMarker) {
-          userMarker = new mapboxgl.Marker({ color: "#00AEEF" })
-            .setLngLat(routeSnapshot.point)
-            .addTo(map);
-        } else {
-          userMarker.setLngLat(routeSnapshot.point);
+        if (map) {
+          if (!userMarker) {
+            userMarker = new mapboxgl.Marker({ color: "#00AEEF" })
+              .setLngLat(routeSnapshot.point)
+              .addTo(map);
+          } else {
+            userMarker.setLngLat(routeSnapshot.point);
+          }
         }
 
         return routeSnapshot;
       }
 
       function updateMapView(lng, lat) {
+        if (!map) return; // Map unavailable in fallback mode
+
         // Use snapped position to keep route centered
         const displayPosition = lastSnappedPosition || [lng, lat];
         const newCenter = displayPosition;
@@ -2653,6 +2941,11 @@
 
       function addRouteToMap(routeFeature) {
         routeCoordinates = routeFeature.geometry.coordinates;
+
+        if (!map) {
+          // Even without map, we have the route coordinates for fallback display
+          return;
+        }
 
         if (!map.getSource("route")) {
           map.addSource("route", {
@@ -3000,51 +3293,58 @@
       restButton.classList.toggle("on", showRest);
       setHelpPanel(false);
 
-      map.on("load", () => {
+      // Only set up map events if map is available
+      if (map) {
+        map.on("load", () => {
+          loadRouteGeoJson();
+          loadRouteSurfaceSummary();
+
+          hazardsButton.classList.toggle("on", showHazards);
+          restButton.classList.toggle("on", showRest);
+          setHelpPanel(false);
+          updateCompassButton();
+          updateRouteCenterButtonLabel();
+        });
+
+        map.on("movestart", () => {
+          isMapInteracting = true;
+          hideSurfaceTooltip();
+        });
+
+        map.on("zoomstart", () => {
+          isMapInteracting = true;
+          hideSurfaceTooltip();
+        });
+
+        map.on("moveend", () => {
+          isMapInteracting = false;
+
+          repositionSurfaceTooltip();
+          updateCompassButton();
+        });
+
+        map.on("zoomend", () => {
+          isMapInteracting = false;
+
+          repositionSurfaceTooltip();
+          updateCompassButton();
+        });
+
+        map.on("rotate", () => {
+          updateCompassButton();
+        });
+
+        map.on("rotateend", () => {
+          updateCompassButton();
+        });
+      } else {
+        // Load route data even without map
         loadRouteGeoJson();
         loadRouteSurfaceSummary();
-
-        hazardsButton.classList.toggle("on", showHazards);
-        restButton.classList.toggle("on", showRest);
-        setHelpPanel(false);
-        updateCompassButton();
-        updateRouteCenterButtonLabel();
-      });
-
-      map.on("movestart", () => {
-        isMapInteracting = true;
-        hideSurfaceTooltip();
-      });
-
-      map.on("zoomstart", () => {
-        isMapInteracting = true;
-        hideSurfaceTooltip();
-      });
-
-      map.on("moveend", () => {
-        isMapInteracting = false;
-
-        repositionSurfaceTooltip();
-        updateCompassButton();
-      });
-
-      map.on("zoomend", () => {
-        isMapInteracting = false;
-
-        repositionSurfaceTooltip();
-        updateCompassButton();
-      });
-
-      map.on("rotate", () => {
-        updateCompassButton();
-      });
-
-      map.on("rotateend", () => {
-        updateCompassButton();
-      });
+      }
 
       if ("geolocation" in navigator) {
-        navigator.geolocation.watchPosition(
+        geolocationWatchId = navigator.geolocation.watchPosition(
           (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
@@ -3058,7 +3358,7 @@
 
             const userPoint = [lng, lat];
 
-            if (showHelp) {
+            if (showHelp && isAppVisible) {
               updateHelpLocationPanel();
             }
 
@@ -3082,6 +3382,7 @@
               hazardWarningShown = true;
             }
             updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo);
+            updateFallbackDisplay(distanceToRoute, routeProgress, segmentInfo);
 
             if (!hazardWarningShown) {
               updateWarningState(distanceToRoute);
@@ -3092,13 +3393,21 @@
           },
           {
             enableHighAccuracy: false,
-            maximumAge: 20000,
+            maximumAge: 30000, // Increased from 20000ms - reuse cached positions for 30 seconds
             timeout: 30000,
           },
         );
       } else {
         showWarning("Geolocation is not supported on this device", "alert");
       }
+
+      // Battery optimization: pause heavy updates when app is backgrounded
+      document.addEventListener("visibilitychange", () => {
+        isAppVisible = !document.hidden;
+        if (isAppVisible) {
+          showToast("App resumed");
+        }
+      });
 
       window.addEventListener("orientationchange", () => {
         setTimeout(() => {
