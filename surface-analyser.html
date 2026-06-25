@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Route Surface Analyser</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0a0f1f;
+      color: white;
+      padding: 24px;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    button,
+    input {
+      font: inherit;
+      margin: 8px 0;
+    }
+
+    button {
+      background: #7c3aed;
+      color: white;
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    pre {
+      background: #060b18;
+      padding: 16px;
+      border-radius: 12px;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .note {
+      color: rgba(255,255,255,0.72);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Route Surface Analyser</h1>
+
+  <p class="note">
+    Select your Heathrow route GeoJSON, then run the analysis.
+    This creates a local <strong>route-surface-summary.json</strong> file for the app.
+  </p>
+
+  <input type="file" id="route-file" accept=".geojson,.json">
+  <br>
+  <button id="analyse-button">Analyse surface</button>
+
+  <pre id="output">Waiting for route file…</pre>
+
+  <script>
+    const PAVED_SURFACES = new Set([
+      "paved",
+      "asphalt",
+      "concrete",
+      "concrete:plates",
+      "concrete:lanes",
+      "paving_stones",
+      "sett",
+      "chipseal",
+      "tarmac"
+    ]);
+
+    const UNPAVED_SURFACES = new Set([
+      "unpaved",
+      "gravel",
+      "fine_gravel",
+      "compacted",
+      "dirt",
+      "earth",
+      "grass",
+      "ground",
+      "mud",
+      "sand",
+      "woodchips",
+      "pebblestone"
+    ]);
+
+    const LIKELY_PAVED_HIGHWAYS = new Set([
+      "motorway",
+      "trunk",
+      "primary",
+      "secondary",
+      "tertiary",
+      "residential",
+      "service",
+      "unclassified"
+    ]);
+
+    const LIKELY_UNKNOWN_HIGHWAYS = new Set([
+      "path",
+      "footway",
+      "cycleway",
+      "track",
+      "bridleway"
+    ]);
+
+    const SEARCH_BUFFER_METRES = 35;
+
+    const output = document.getElementById("output");
+    const routeFileInput = document.getElementById("route-file");
+    const analyseButton = document.getElementById("analyse-button");
+
+    function log(message) {
+      output.textContent = message;
+    }
+
+    function toRadians(value) {
+      return value * Math.PI / 180;
+    }
+
+    function haversineDistanceMeters(a, b) {
+      const [lng1, lat1] = a;
+      const [lng2, lat2] = b;
+
+      const earthRadius = 6371000;
+      const dLat = toRadians(lat2 - lat1);
+      const dLng = toRadians(lng2 - lng1);
+
+      const x =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRadians(lat1)) *
+          Math.cos(toRadians(lat2)) *
+          Math.sin(dLng / 2) ** 2;
+
+      const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+      return earthRadius * c;
+    }
+
+    function pointToSegmentDistance(point, start, end) {
+      const [lng, lat] = point;
+      const [lng1, lat1] = start;
+      const [lng2, lat2] = end;
+
+      const x = lng;
+      const y = lat;
+      const x1 = lng1;
+      const y1 = lat1;
+      const x2 = lng2;
+      const y2 = lat2;
+
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+
+      if (dx === 0 && dy === 0) {
+        return haversineDistanceMeters(point, start);
+      }
+
+      const t = Math.max(
+        0,
+        Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy))
+      );
+
+      const projected = [x1 + t * dx, y1 + t * dy];
+
+      return haversineDistanceMeters(point, projected);
+    }
+
+    function segmentToWayDistance(segment, wayCoords) {
+      let best = Infinity;
+
+      const segmentMidpoint = [
+        (segment[0][0] + segment[1][0]) / 2,
+        (segment[0][1] + segment[1][1]) / 2
+      ];
+
+      for (let i = 0; i < wayCoords.length - 1; i += 1) {
+        const distance = pointToSegmentDistance(
+          segmentMidpoint,
+          wayCoords[i],
+          wayCoords[i + 1]
+        );
+
+        if (distance < best) {
+          best = distance;
+        }
+      }
+
+      return best;
+    }
+
+    function extractRouteCoordinates(geojson) {
+      if (geojson.type === "FeatureCollection") {
+        const feature = geojson.features.find(
+          f => f.geometry && f.geometry.type === "LineString"
+        );
+
+        if (!feature) {
+          throw new Error("No LineString found in FeatureCollection.");
+        }
+
+        return feature.geometry.coordinates;
+      }
+
+      if (geojson.type === "Feature") {
+        if (!geojson.geometry || geojson.geometry.type !== "LineString") {
+          throw new Error("Feature must contain a LineString geometry.");
+        }
+
+        return geojson.geometry.coordinates;
+      }
+
+      if (geojson.type === "LineString") {
+        return geojson.coordinates;
+      }
+
+      throw new Error("GeoJSON must be a LineString or contain a LineString.");
+    }
+
+    function getBBox(coords) {
+      const lngs = coords.map(c => c[0]);
+      const lats = coords.map(c => c[1]);
+
+      const pad = 0.005;
+
+      return {
+        west: Math.min(...lngs) - pad,
+        south: Math.min(...lats) - pad,
+        east: Math.max(...lngs) + pad,
+        north: Math.max(...lats) + pad
+      };
+    }
+
+    async function fetchOsmWays(bbox) {
+      const query = `
+[out:json][timeout:60];
+(
+  way["highway"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});
+);
+out tags geom;
+      `;
+
+      const response = await fetch("https://overpass-api.de/api/interpreter", {
+        method: "POST",
+        body: "data=" + encodeURIComponent(query),
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error("Overpass request failed: " + response.status);
+      }
+
+      const data = await response.json();
+
+      return data.elements
+        .filter(el => el.type === "way" && el.geometry && el.geometry.length > 1)
+        .map(el => ({
+          id: el.id,
+          tags: el.tags || {},
+          coords: el.geometry.map(p => [p.lon, p.lat])
+        }));
+    }
+
+    function classifyWay(tags) {
+      const surface = tags.surface ? tags.surface.toLowerCase().trim() : null;
+      const highway = tags.highway;
+      const tracktype = tags.tracktype;
+      const smoothness = tags.smoothness;
+
+      if (surface) {
+        if (PAVED_SURFACES.has(surface)) {
+          return {
+            surfaceClass: "paved",
+            reason: `surface=${surface}`
+          };
+        }
+
+        if (UNPAVED_SURFACES.has(surface)) {
+          return {
+            surfaceClass: "unpaved",
+            reason: `surface=${surface}`
+          };
+        }
+
+        return {
+          surfaceClass: "unknown",
+          reason: `surface=${surface}`
+        };
+      }
+
+      if (LIKELY_PAVED_HIGHWAYS.has(highway)) {
+        return {
+          surfaceClass: "paved",
+          reason: `inferred from highway=${highway}`
+        };
+      }
+
+      if (LIKELY_UNKNOWN_HIGHWAYS.has(highway)) {
+        if (tracktype === "grade1") {
+          return {
+            surfaceClass: "paved",
+            reason: `inferred from tracktype=${tracktype}`
+          };
+        }
+
+        if (["grade2", "grade3", "grade4", "grade5"].includes(tracktype)) {
+          return {
+            surfaceClass: "unpaved",
+            reason: `inferred from tracktype=${tracktype}`
+          };
+        }
+
+        if (["bad", "very_bad", "horrible", "very_horrible"].includes(smoothness)) {
+          return {
+            surfaceClass: "unpaved",
+            reason: `inferred from smoothness=${smoothness}`
+          };
+        }
+
+        return {
+          surfaceClass: "unknown",
+          reason: `highway=${highway}, no surface`
+        };
+      }
+
+      return {
+        surfaceClass: "unknown",
+        reason: "no usable surface data"
+      };
+    }
+
+    function splitRoute(coords) {
+      const segments = [];
+
+      for (let i = 0; i < coords.length - 1; i += 1) {
+        segments.push([coords[i], coords[i + 1]]);
+      }
+
+      return segments;
+    }
+
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = filename;
+      link.click();
+
+      URL.revokeObjectURL(url);
+    }
+
+    analyseButton.addEventListener("click", async () => {
+      try {
+        const file = routeFileInput.files[0];
+
+        if (!file) {
+          log("Choose your heathrow-perimeter-route.geojson file first.");
+          return;
+        }
+
+        log("Reading route file…");
+
+        const text = await file.text();
+        const geojson = JSON.parse(text);
+        const coords = extractRouteCoordinates(geojson);
+
+        log("Fetching nearby OpenStreetMap ways…");
+
+        const bbox = getBBox(coords);
+        const osmWays = await fetchOsmWays(bbox);
+
+        log(`Fetched ${osmWays.length} OSM ways. Analysing route…`);
+
+        const routeSegments = splitRoute(coords);
+
+        const totals = {
+          paved: 0,
+          unpaved: 0,
+          unknown: 0
+        };
+
+        const matchedSegments = [];
+
+        for (const segment of routeSegments) {
+          const length = haversineDistanceMeters(segment[0], segment[1]);
+
+          let nearestWay = null;
+          let nearestDistance = Infinity;
+
+          for (const way of osmWays) {
+            const distance = segmentToWayDistance(segment, way.coords);
+
+            if (distance < nearestDistance) {
+              nearestDistance = distance;
+              nearestWay = way;
+            }
+          }
+
+          let classification;
+
+          if (nearestWay && nearestDistance <= SEARCH_BUFFER_METRES) {
+            classification = classifyWay(nearestWay.tags);
+          } else {
+            classification = {
+              surfaceClass: "unknown",
+              reason: "no nearby OSM way matched"
+            };
+          }
+
+          totals[classification.surfaceClass] += length;
+
+          matchedSegments.push({
+            lengthMetres: Math.round(length * 10) / 10,
+            surfaceClass: classification.surfaceClass,
+            matchDistanceMetres:
+              Number.isFinite(nearestDistance)
+                ? Math.round(nearestDistance * 10) / 10
+                : null,
+            reason: classification.reason,
+            osmWayId: nearestWay ? nearestWay.id : null
+          });
+        }
+
+        const totalDistance =
+          totals.paved + totals.unpaved + totals.unknown;
+
+        const pavedPercent = Math.round((totals.paved / totalDistance) * 100);
+        const unpavedPercent = Math.round((totals.unpaved / totalDistance) * 100);
+        const unknownPercent = 100 - pavedPercent - unpavedPercent;
+
+        let summaryLabel = "Mixed surface";
+        let confidence = "estimated";
+
+        if (unknownPercent > 35) {
+          summaryLabel = "Surface varies";
+          confidence = "low";
+        } else if (pavedPercent >= 75) {
+          summaryLabel = "Mostly paved";
+        } else if (unpavedPercent >= 40) {
+          summaryLabel = "Mixed surface";
+        }
+
+        const result = {
+          summaryLabel,
+          pavedPercent,
+          unpavedPercent,
+          unknownPercent,
+          confidence,
+          source: "OpenStreetMap surface/highway tags",
+          method: "Route segments matched to nearest OSM highway ways",
+          totalDistanceMetres: Math.round(totalDistance * 10) / 10,
+          segmentCount: routeSegments.length,
+          matchedSegments
+        };
+
+        log(JSON.stringify(result, null, 2));
+
+        downloadJson("route-surface-summary.json", result);
+      } catch (error) {
+        console.error(error);
+        log("Error: " + error.message);
+      }
+    });
+  </script>
+</body>
+</html>

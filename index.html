@@ -1,0 +1,3168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0a0f1f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="Heathrow Perimeter Walk" />
+
+    <title>Heathrow Perimeter Walk</title>
+
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
+      rel="stylesheet"
+    />
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+
+    <style>
+      :root {
+        --floating-button-size: 56px;
+        --floating-button-gap: 14px;
+        --floating-button-right: 16px;
+        --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
+      }
+
+      html {
+        width: 100%;
+        height: 100%;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        overflow: hidden;
+        background: #0a0f1f;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+      }
+
+      #map {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+
+        height: calc(230px + env(safe-area-inset-top));
+
+        background: linear-gradient(
+          to bottom,
+          rgba(5, 10, 22, 0.96) 0%,
+          rgba(5, 10, 22, 0.82) 38%,
+          rgba(5, 10, 22, 0.46) 68%,
+          rgba(5, 10, 22, 0) 100%
+        );
+
+        z-index: 8;
+        pointer-events: none;
+      }
+
+      .topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+
+        padding-top: calc(18px + env(safe-area-inset-top));
+        padding-right: 132px;
+        padding-bottom: 24px;
+        padding-left: 16px;
+
+        color: white;
+        background: transparent;
+      }
+
+      .topbar h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .topbar p {
+        margin: 0;
+        opacity: 0.72;
+        font-size: 14px;
+        line-height: 1.15;
+      }
+
+      .topbar__brand {
+        position: absolute;
+        top: calc(10px + env(safe-area-inset-top));
+        right: 18px;
+
+        display: flex;
+        align-items: center;
+
+        margin-bottom: 0;
+      }
+
+      .topbar__logo {
+        display: block;
+
+        width: auto;
+        height: 16px;
+
+        max-width: 96px;
+        object-fit: contain;
+      }
+
+      .topbar h1,
+      .topbar p {
+        transform: translateY(15px);
+      }
+      .warning {
+        position: fixed;
+        top: calc(96px + env(safe-area-inset-top));
+        left: 16px;
+        right: 16px;
+        color: white;
+        padding: 12px 14px;
+        border-radius: 8px;
+        z-index: 20;
+        display: none;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .warning.safe {
+        background: rgba(17, 170, 98, 0.92);
+        color: white;
+      }
+
+      .warning.warning {
+        background: #ffd000;
+        color: #2a1f00;
+      }
+
+      .warning.alert {
+        background: #f76b1c;
+        color: #1f1208;
+      }
+
+      .warning.help {
+        background: rgba(6, 17, 31, 0.96);
+        color: white;
+        border-left: 5px solid #14b8a6;
+      }
+
+      .route-card {
+        position: fixed;
+        top: calc(154px + env(safe-area-inset-top));
+        left: 16px;
+        right: 16px;
+        z-index: 19;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        background: rgba(10, 15, 31, 0.78);
+        color: white;
+        border-radius: 18px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      @property --route-border-angle {
+        syntax: "<angle>";
+        initial-value: 0deg;
+        inherits: false;
+      }
+
+      .route-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+
+        padding: 1.5px;
+        border-radius: inherit;
+
+        background: conic-gradient(
+          from var(--route-border-angle),
+          rgba(124, 58, 237, 0.2) 0deg,
+          rgba(124, 58, 237, 0.2) 245deg,
+          rgba(196, 181, 253, 0.95) 285deg,
+          rgba(91, 46, 255, 0.95) 315deg,
+          rgba(124, 58, 237, 0.2) 360deg
+        );
+
+        opacity: 0;
+
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+
+        mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask-composite: exclude;
+
+        pointer-events: none;
+      }
+
+      .route-card.is-locating::before {
+        opacity: 1;
+        animation: route-card-border-spin 4.5s linear infinite;
+      }
+
+      @keyframes route-card-border-spin {
+        from {
+          --route-border-angle: 0deg;
+        }
+
+        to {
+          --route-border-angle: 360deg;
+        }
+      }
+
+      .route-card__main {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .route-card__text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .route-card__label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.68;
+      }
+
+      .route-card__value {
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .route-card__meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.78);
+      }
+
+      .route-card__source {
+        font-size: 11px;
+        opacity: 0.58;
+      }
+
+      .route-card__badge {
+        flex-shrink: 0;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(17, 170, 98, 0.18);
+        color: #7ef0b3;
+        white-space: nowrap;
+      }
+
+      .route-card__badge.warning {
+        background: rgba(245, 185, 32, 0.18);
+        color: #ffe680;
+      }
+
+      .route-card__badge.alert {
+        background: rgba(232, 70, 70, 0.18);
+        color: #ffb088;
+      }
+
+      .bottom-panel {
+        position: fixed;
+        bottom: calc(18px + env(safe-area-inset-bottom));
+        left: 16px;
+        right: 16px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        z-index: 10;
+        max-width: 640px;
+        margin: 0 auto;
+      }
+
+      .route-center-button,
+      .follow-toggle-button,
+      .share-location-button {
+        position: fixed;
+        z-index: 12;
+        width: var(--floating-button-size);
+        height: var(--floating-button-size);
+        border: 0;
+        border-radius: 999px;
+        background: rgba(10, 15, 31, 0.88);
+        color: #fff;
+        font-size: 22px;
+        font-weight: 700;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .route-center-button {
+        right: var(--floating-button-right);
+        bottom: var(--floating-button-bottom);
+        color: #c4b5fd;
+      }
+
+      .follow-toggle-button {
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom) + var(--floating-button-size) +
+            var(--floating-button-gap)
+        );
+        color: #c4b5fd;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .route-center-button svg,
+      .follow-toggle-button svg,
+      .share-location-button svg {
+        width: 26px;
+        height: 26px;
+        display: block;
+        fill: currentColor;
+      }
+
+      .route-center-button:active,
+      .follow-toggle-button:active,
+      .share-location-button:active {
+        transform: scale(0.96);
+      }
+
+      .mapboxgl-ctrl-logo,
+      .mapboxgl-ctrl-group,
+      .mapboxgl-ctrl {
+        display: none !important;
+      }
+
+      .card {
+        background: #060b18;
+        color: white;
+        padding: 14px 10px;
+        border-radius: 16px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        box-shadow: none;
+        transition: background 0.2s ease;
+      }
+
+      .card.on {
+        background: #7c3aed;
+      }
+
+      .card:active {
+        transform: scale(0.98);
+      }
+
+      .card strong {
+        display: block;
+        font-size: 16px;
+      }
+
+      .help-card {
+        background: #060b18;
+        color: white;
+        box-shadow: none;
+      }
+
+      .help-card.on {
+        background: #14b8a6;
+        color: #06111f;
+        box-shadow: none;
+      }
+
+      .help-panel {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: 92px;
+        z-index: 30;
+
+        background: rgba(6, 17, 31, 0.96);
+        color: white;
+
+        border-radius: 20px;
+        padding: 10px 12px 12px;
+
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+        border: 1px solid rgba(94, 234, 212, 0.18);
+        backdrop-filter: blur(14px);
+
+        max-height: none;
+        overflow: visible;
+
+        transform: translateY(140%);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          transform 0.24s ease,
+          opacity 0.24s ease;
+
+        max-width: 640px;
+        margin: 0 auto;
+      }
+
+      .help-panel.open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .help-panel__handle {
+        width: 44px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+        margin: 0 auto 10px;
+      }
+
+      .help-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .help-panel__label {
+        display: block;
+        color: #5eead4;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .help-panel h2 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1;
+      }
+
+      .help-intro {
+        margin: 5px 0 6px;
+        font-size: 13px;
+        opacity: 0.7;
+      }
+
+      .help-panel__close {
+        width: 34px;
+        height: 34px;
+        border: none;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
+        font-size: 24px;
+        line-height: 1;
+        cursor: pointer;
+      }
+
+      .compact-help {
+        display: grid;
+        gap: 16px;
+        padding-top: 8px;
+      }
+
+      .help-summary {
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .help-summary p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.35;
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .help-summary__urgent {
+        margin-top: 8px !important;
+        color: #fecaca !important;
+        font-weight: 800;
+      }
+
+      .help-location {
+        margin-top: 0;
+        padding: 10px 12px;
+        border-radius: 16px;
+        background: rgba(94, 234, 212, 0.1);
+        border: 1px solid rgba(94, 234, 212, 0.22);
+        display: grid;
+        gap: 4px;
+      }
+
+      .help-location__label {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #5eead4;
+      }
+
+      .help-location strong {
+        font-size: 15px;
+        line-height: 1.2;
+        word-break: break-word;
+      }
+
+      .help-location span:last-child {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .help-panel__actions {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .help-panel__actions--emergency {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+      }
+
+      .help-action {
+        border: none;
+        border-radius: 14px;
+        padding: 11px 10px;
+        background: #14b8a6;
+        color: #06111f;
+        font-weight: 800;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        font-size: 13px;
+        all: unset;
+      }
+
+      .help-action--danger {
+        background: #ef4444;
+        color: white;
+      }
+
+      .help-guidance {
+        background: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 8px;
+        margin-top: 6px;
+      }
+
+      .help-guidance summary {
+        padding: 6px 0;
+        font-size: 13px;
+        opacity: 0.75;
+      }
+
+      .help-action--emergency {
+        width: 100%;
+        margin-top: 14px;
+        padding: 14px;
+        border-radius: 16px;
+        background: #ef4444;
+        color: white;
+        font-weight: 900;
+      }
+
+      .help-guidance summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .help-guidance summary::after {
+        content: "＋";
+        float: right;
+        opacity: 0.75;
+      }
+
+      .help-guidance[open] summary::after {
+        content: "−";
+      }
+
+      .help-guidance__steps {
+        display: grid;
+        gap: 8px;
+        padding: 0 10px 10px;
+      }
+
+      .help-step {
+        padding: 9px 10px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.06);
+        display: grid;
+        gap: 3px;
+      }
+
+      .help-step strong {
+        font-size: 13px;
+      }
+
+      .help-step span {
+        font-size: 12px;
+        line-height: 1.3;
+        color: rgba(255, 255, 255, 0.74);
+      }
+
+      .help-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 25;
+
+        background: rgba(3, 7, 18, 0.38);
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+
+        opacity: 0;
+        pointer-events: none;
+
+        transition: opacity 0.24s ease;
+      }
+
+      .help-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      #next-thing-value {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 700;
+      }
+
+      .help-primary {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+
+        background: #14b8a6;
+        color: #06111f;
+
+        border: 2px solid #0f766e;
+        border-radius: 16px;
+
+        font-weight: 800;
+        padding: 14px;
+        text-align: center;
+      }
+
+      .help-link {
+        display: block;
+        text-align: center;
+
+        font-size: 13px;
+        opacity: 0.7;
+      }
+
+      .help-emergency {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        text-align: center;
+        font-size: 13px;
+        opacity: 0.7;
+      }
+
+      .help-emergency a {
+        color: #f87171;
+        font-weight: 700;
+        text-decoration: underline;
+      }
+
+      .help-primary:focus,
+      .help-primary:focus-visible {
+        outline: none;
+        border-color: #0f766e;
+        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22);
+      }
+
+      .help-primary:active {
+        border-color: #115e59;
+      }
+
+      .share-location-button {
+        position: fixed;
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
+            (var(--floating-button-gap) * 2)
+        );
+        width: 56px;
+        height: 56px;
+        border-radius: 999px;
+        background: rgba(10, 15, 31, 0.88);
+        color: #34d399; /* subtle green = positive action */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+      }
+
+      .share-location-button:active {
+        transform: scale(0.96);
+      }
+
+      .share-location-button svg {
+        width: 26px;
+        height: 26px;
+        display: block;
+        fill: currentColor;
+      }
+
+      .surface-map-tooltip {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+
+        padding: 8px 12px;
+        border-radius: 8px;
+
+        background: rgba(10, 15, 31, 0.92);
+        color: rgba(255, 255, 255, 0.94);
+
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1;
+
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+        backdrop-filter: blur(10px);
+
+        pointer-events: none;
+        white-space: nowrap;
+
+        transform-origin: center;
+      }
+
+      .surface-map-tooltip.is-hidden {
+        display: none !important;
+      }
+      .surface-map-tooltip__line {
+        width: 26px;
+        height: 5px;
+        border-radius: 999px;
+        background: #7c3aed;
+      }
+
+      .compass-button {
+        position: fixed;
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom) + (var(--floating-button-size) * 3) +
+            (var(--floating-button-gap) * 3)
+        );
+
+        z-index: 40;
+
+        width: var(--floating-button-size);
+        height: var(--floating-button-size);
+
+        border: 0;
+        border-radius: 999px;
+
+        background: rgba(10, 15, 31, 0.88);
+        color: #14b8a6;
+
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .compass-button[hidden] {
+        display: none;
+      }
+
+      .compass-button:active {
+        transform: scale(0.96);
+      }
+
+      .compass-button__dial {
+        position: relative;
+
+        width: 48px;
+        height: 48px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .compass-button__icon {
+        width: 42px;
+        height: 42px;
+
+        display: block;
+
+        color: #14b8a6;
+
+        transform-origin: center;
+        transition: transform 0.12s linear;
+
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.24));
+      }
+
+      .compass-button__label {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+
+        transform: translate(-50%, -50%);
+
+        color: white;
+
+        font-size: 13px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: 0.03em;
+      }
+
+      @media (max-width: 480px) {
+        :root {
+          --floating-button-gap: 12px;
+          --floating-button-right: 14px;
+        }
+
+        .help-panel {
+          bottom: 86px;
+          left: 10px;
+          right: 10px;
+          padding: 9px 10px 10px;
+        }
+
+        .help-panel h2 {
+          font-size: 19px;
+        }
+
+        .help-summary {
+          padding: 0;
+          background: none;
+        }
+
+        .help-summary p {
+          font-size: 12px;
+        }
+
+        .help-location {
+          margin-top: 12px;
+          padding: 0;
+          border: none;
+          background: none;
+        }
+
+        .help-location strong {
+          font-size: 13px;
+        }
+
+        .help-action {
+          padding: 10px 8px;
+        }
+      }
+
+      .help-steps {
+        margin: 8px 0 6px;
+        padding-left: 16px;
+        font-size: 13px;
+        line-height: 1.4;
+        opacity: 0.85;
+      }
+
+      .help-steps li {
+        margin-bottom: 4px;
+      }
+
+      .help-primary::after {
+        content: " →";
+        opacity: 0.7;
+      }
+
+      .toast {
+        position: fixed;
+        bottom: 110px; /* sits above your bottom buttons */
+        left: 50%;
+        transform: translateX(-50%);
+
+        background: rgba(10, 15, 31, 0.95);
+        color: white;
+
+        padding: 10px 14px;
+        border-radius: 999px;
+
+        font-size: 13px;
+        white-space: nowrap;
+
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+
+        z-index: 50;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, -4px);
+      }
+
+      @media (max-width: 480px) {
+        .topbar {
+          padding-top: calc(16px + env(safe-area-inset-top));
+          padding-right: 116px;
+          padding-bottom: 22px;
+          padding-left: 12px;
+        }
+
+        .topbar__brand {
+          top: calc(8px + env(safe-area-inset-top));
+          right: 14px;
+
+          margin-bottom: 0;
+        }
+
+        .topbar__logo {
+          height: 15px;
+          max-width: 90px;
+        }
+
+        .topbar h1 {
+          font-size: 22px;
+        }
+
+        .topbar p {
+          font-size: 13px;
+          line-height: 1.15;
+        }
+
+        .topbar h1,
+        .topbar p {
+          transform: translateY(15px);
+        }
+
+        .warning {
+          top: calc(94px + env(safe-area-inset-top));
+          left: 12px;
+          right: 12px;
+          padding: 11px 12px;
+          font-size: 13px;
+        }
+
+        .route-card {
+          top: calc(148px + env(safe-area-inset-top));
+          left: 12px;
+          right: 12px;
+          padding: 11px 12px;
+          align-items: flex-start;
+        }
+
+        .route-card__value {
+          font-size: 18px;
+        }
+
+        .route-card__meta {
+          font-size: 11px;
+        }
+
+        .bottom-panel {
+          left: 12px;
+          right: 12px;
+          bottom: calc(12px + env(safe-area-inset-bottom));
+          gap: 8px;
+        }
+
+        .card {
+          padding: 12px 8px;
+          font-size: 12px;
+        }
+
+        .card strong {
+          font-size: 14px;
+        }
+      }
+
+      @media (max-width: 360px) {
+        :root {
+          --floating-button-gap: 10px;
+          --floating-button-right: 12px;
+        }
+        .route-card {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .route-card__badge {
+          width: 100%;
+          text-align: center;
+        }
+
+        .bottom-panel {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (min-width: 520px) {
+        .help-panel__actions {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      }
+
+      @media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
+        .topbar,
+        .warning,
+        .route-card,
+        .bottom-panel,
+        .route-center-button,
+        .follow-toggle-button,
+        .share-location-button,
+        .compass-button,
+        .help-panel,
+        .help-backdrop,
+        .toast,
+        #map {
+          display: none !important;
+        }
+
+        body {
+          margin: 0;
+          background: #0a0f1f;
+          overflow: hidden;
+        }
+
+        body::after {
+          content: "Rotate your device for the best experience";
+
+          position: fixed;
+          left: 50%;
+          top: 44%;
+          transform: translate(-50%, -50%);
+
+          width: min(82vw, 360px);
+          box-sizing: border-box;
+          padding: 0 24px;
+
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 24px;
+          font-weight: 800;
+          line-height: 1.25;
+          text-align: center;
+
+          z-index: 999;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .route-card.is-locating::before {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="topbar">
+      <div class="topbar__brand" aria-label="Heathrow">
+        <img
+          class="topbar__logo"
+          src="heathrow-logo-white.svg"
+          alt="Heathrow"
+        />
+      </div>
+
+      <h1>Perimeter Walk</h1>
+      <p>Infrastructure Charity Event</p>
+    </div>
+
+    <div class="warning" id="warning">You may be off the official route</div>
+
+    <div class="route-card is-locating" id="route-card">
+      <div class="route-card__main">
+        <div class="route-card__text">
+          <span class="route-card__label">Route progress</span>
+          <span class="route-card__value" id="progress-value">Locating…</span>
+        </div>
+
+        <div class="route-card__meta">
+          <span id="distance-value">Finding your position</span>
+          <span id="next-thing-value">Next: checking route…</span>
+          <span class="route-card__source"
+            >Route source: Heathrow perimeter</span
+          >
+        </div>
+      </div>
+
+      <span class="route-card__badge" id="route-badge">Preparing</span>
+    </div>
+
+    <button
+      class="compass-button"
+      id="compass-button"
+      aria-label="Point map north"
+      title="Point north"
+      hidden
+    >
+      <span class="compass-button__dial">
+        <svg
+          class="compass-button__icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="8.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.0"
+          />
+          <path
+            d="M12 3.8v3.4"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="2.2"
+          />
+          <path
+            d="M12 20.2v-2.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="1.8"
+            opacity="0.55"
+          />
+          <path
+            d="M3.8 12h2.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="1.8"
+            opacity="0.55"
+          />
+          <path
+            d="M20.2 12h-2.8"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-width="1.8"
+            opacity="0.55"
+          />
+        </svg>
+
+        <span class="compass-button__label" id="compass-label">N</span>
+      </span>
+    </button>
+
+    <button
+      class="share-location-button"
+      id="share-location-button"
+      aria-label="Share my location"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 2C8.7 2 6 4.7 6 8c0 4.2 6 12 6 12s6-7.8 6-12c0-3.3-2.7-6-6-6Zm0 8.5A2.5 2.5 0 1 1 12 5.5a2.5 2.5 0 0 1 0 5ZM20 9h-2v2h2v2l3-3-3-3v2ZM4 9l-3 3 3 3v-2h2v-2H4V9Z"
+          fill="currentColor"
+        />
+      </svg>
+    </button>
+
+    <button
+      class="follow-toggle-button"
+      id="follow-toggle-button"
+      aria-label="Toggle follow mode"
+      title="Follow me"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 18.4A8.4 8.4 0 1 1 20.4 12 8.41 8.41 0 0 1 12 20.4Zm0-13.2a4.8 4.8 0 1 0 4.8 4.8A4.805 4.805 0 0 0 12 7.2Zm0 7.2a2.4 2.4 0 1 1 2.4-2.4A2.403 2.403 0 0 1 12 14.4Z"
+        />
+      </svg>
+    </button>
+
+    <button
+      class="route-center-button"
+      id="route-center-button"
+      aria-label="Show full route"
+      title="Show full route"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M6 4.5a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5S7.4 4.5 6 4.5Zm0 3.6A1.1 1.1 0 1 1 6 5.9a1.1 1.1 0 0 1 0 2.2Zm12 6.4a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5Zm0 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2ZM8.7 8.4l1.1-1.1 6.4 6.4-1.1 1.1-6.4-6.4Zm7.1-1.8h-4.2V5.1h4.2c2.1 0 3.8 1.7 3.8 3.8v1.9h-1.5V8.9c0-1.3-1-2.3-2.3-2.3ZM4.4 13.2h1.5v1.9c0 1.3 1 2.3 2.3 2.3h4.2v1.5H8.2c-2.1 0-3.8-1.7-3.8-3.8v-1.9Z"
+        />
+      </svg>
+    </button>
+
+    <div id="map"></div>
+
+    <div class="help-backdrop" id="help-backdrop"></div>
+
+    <div class="help-panel" id="help-panel">
+      <div class="help-panel__handle"></div>
+
+      <div class="help-panel__header">
+        <div>
+          <span class="help-panel__label">Route help</span>
+          <h2>Need help?</h2>
+
+          <p class="help-intro">We’ll help you get back on track.</p>
+        </div>
+
+        <button class="help-panel__close" id="help-close-button">
+          &times;
+        </button>
+      </div>
+
+      <div class="help-panel__body compact-help">
+        <div class="help-summary">
+          <p>Move somewhere safe, away from traffic.</p>
+
+          <ul class="help-steps">
+            <li>Open the route before you start in case signal is poor</li>
+            <li>Use the map to find the purple route</li>
+            <li>Follow it until you’re back on track</li>
+            <li>If unsure, stay safe and wait for support</li>
+          </ul>
+        </div>
+
+        <div class="help-location">
+          <span class="help-location__label">Your location</span>
+          <strong id="help-coordinates">Waiting for location…</strong>
+          <span id="help-route-distance">Distance from route unavailable</span>
+        </div>
+
+        <button class="help-primary" id="show-location-button">
+          Show my position
+        </button>
+
+        <a class="help-link" id="event-support-link"> Contact event team </a>
+
+        <p class="help-emergency">
+          If you feel unsafe,
+          <a href="tel:999">call 999</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="bottom-panel">
+      <div class="card" id="hazards-button"><strong>Hazards</strong></div>
+      <div class="card" id="rest-button"><strong>Rest</strong></div>
+      <div class="card help-card" id="help-button">
+        <strong>Need help</strong>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+    <script>
+      mapboxgl.accessToken =
+        "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
+
+      const routeGeoJsonUrl = "heathrow-perimeter-route.geojson";
+      const fallbackRouteCoordinates = [
+        [-0.4543, 51.47],
+        [-0.4552, 51.4706],
+        [-0.4561, 51.4712],
+        [-0.4573, 51.4719],
+        [-0.4588, 51.4724],
+        [-0.46, 51.4729],
+        [-0.4614, 51.4736],
+        [-0.4629, 51.4742],
+        [-0.4645, 51.4748],
+        [-0.4661, 51.4751],
+        [-0.4676, 51.4754],
+        [-0.469, 51.4753],
+        [-0.47, 51.475],
+      ];
+      let routeCoordinates = [];
+
+      const ROUTE_WARNING_DISTANCE = 300;
+      const ROUTE_ALERT_DISTANCE = 600;
+      const WARNING_UPDATE_INTERVAL = 3000;
+      const VIEW_UPDATE_DISTANCE = 25;
+      const MIN_SPEED_FOR_FOLLOW = 0.4;
+      const POSITION_UPDATE_MIN_METERS = 12;
+      const POSITION_UPDATE_MIN_MS = 8000;
+      const START_APPROACH_DISTANCE = 30;
+      const FINISH_APPROACH_DISTANCE = 30;
+      const SURFACE_TOOLTIP_HIDE_ZOOM = 13.8;
+      const COMPASS_SHOW_BEARING = 4;
+      const COMPASS_HIDE_BEARING = 0.5;
+      const WARNING_ID = "warning";
+      const DISTANCE_VALUE_ID = "distance-value";
+      const PROGRESS_VALUE_ID = "progress-value";
+      const ROUTE_BADGE_ID = "route-badge";
+      const NEXT_THING_VALUE_ID = "next-thing-value";
+      const ROUTE_CENTER_BUTTON_ID = "route-center-button";
+      const FOLLOW_TOGGLE_BUTTON_ID = "follow-toggle-button";
+      const COMPASS_BUTTON_ID = "compass-button";
+      const COMPASS_LABEL_ID = "compass-label";
+
+      const ROUTE_VIEW_ICON = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M6 4.5a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5S7.4 4.5 6 4.5Zm0 3.6A1.1 1.1 0 1 1 6 5.9a1.1 1.1 0 0 1 0 2.2Zm12 6.4a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5Zm0 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2ZM8.7 8.4l1.1-1.1 6.4 6.4-1.1 1.1-6.4-6.4Zm7.1-1.8h-4.2V5.1h4.2c2.1 0 3.8 1.7 3.8 3.8v1.9h-1.5V8.9c0-1.3-1-2.3-2.3-2.3ZM4.4 13.2h1.5v1.9c0 1.3 1 2.3 2.3 2.3h4.2v1.5H8.2c-2.1 0-3.8-1.7-3.8-3.8v-1.9Z"
+      fill="currentColor"
+    />
+  </svg>
+`;
+
+      const CURRENT_POSITION_ICON = `
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 2a1 1 0 0 1 1 1v1.08A8.01 8.01 0 0 1 19.92 11H21a1 1 0 1 1 0 2h-1.08A8.01 8.01 0 0 1 13 19.92V21a1 1 0 1 1-2 0v-1.08A8.01 8.01 0 0 1 4.08 13H3a1 1 0 1 1 0-2h1.08A8.01 8.01 0 0 1 11 4.08V3a1 1 0 0 1 1-1Zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3.2a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z"
+      fill="currentColor"
+    />
+  </svg>
+`;
+
+      // Segment labels are fixed, but bounds are derived from route length.
+      const SEGMENT_TEMPLATES = [
+        {
+          name: "Terminal South",
+          milestone: "Terminal building",
+        },
+        {
+          name: "Cargo perimeter",
+          milestone: "Cargo facility",
+        },
+        {
+          name: "Northern loop",
+          milestone: "Northern gate",
+        },
+        {
+          name: "Return stretch",
+          milestone: "Finish line",
+        },
+      ];
+      const TOTAL_SEGMENTS = SEGMENT_TEMPLATES.length;
+
+      function getRouteSegments() {
+        const coordinateCount =
+          routeCoordinates.length > 0
+            ? routeCoordinates.length
+            : fallbackRouteCoordinates.length;
+        const lastIndex = Math.max(0, coordinateCount - 1);
+
+        return SEGMENT_TEMPLATES.map((segmentTemplate, index) => {
+          const startIdx = Math.floor((index * coordinateCount) / TOTAL_SEGMENTS);
+          let endIdx =
+            Math.floor(((index + 1) * coordinateCount) / TOTAL_SEGMENTS) - 1;
+
+          if (index === TOTAL_SEGMENTS - 1) {
+            endIdx = lastIndex;
+          }
+
+          endIdx = Math.max(startIdx, Math.min(lastIndex, endIdx));
+
+          return {
+            ...segmentTemplate,
+            startIdx,
+            endIdx,
+          };
+        });
+      }
+
+      const map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/dark-v11",
+        center: [-0.4543, 51.47],
+        zoom: 13.5,
+        pitch: 0,
+        bearing: 0,
+        attributionControl: false,
+      });
+
+      let userMarker;
+      let lastActualPosition = null;
+      let lastSnappedPosition = null;
+      let hasInitialPosition = false;
+      let lastWarningUpdate = 0;
+      let lastWarningState = "";
+      let lastViewCenter = null;
+      let lastPosition = null;
+      let lastPositionTime = 0;
+      let lastProcessedPosition = null;
+      let lastProcessedPositionTime = 0;
+      let followMode = true;
+      let routeCenterMode = "route";
+      let showHazards = false;
+      let hazardMarkers = [];
+      let showRest = false;
+      let restMarkers = [];
+      let showHelp = false;
+      let surfaceTooltipMarker = null;
+      let surfaceTooltipElement = null;
+      let routeSurfaceSummary = null;
+      let surfaceTooltipMoveTimer = null;
+      let isMapInteracting = false;
+      let isCompassVisible = false;
+
+      const hazards = [
+        {
+          id: 1,
+          lng: -0.4555,
+          lat: 51.4705,
+          type: "No pavement",
+          message: "No pavement – walk single file",
+          radius: 150,
+        },
+        {
+          id: 2,
+          lng: -0.4605,
+          lat: 51.4725,
+          type: "Vehicle crossing",
+          message: "Active vehicle crossing",
+          radius: 150,
+        },
+        {
+          id: 3,
+          lng: -0.4665,
+          lat: 51.475,
+          type: "Narrow verge",
+          message: "Narrow walking space",
+          radius: 120,
+        },
+        {
+          id: 4,
+          lng: -0.4685,
+          lat: 51.4753,
+          type: "Poor lighting",
+          message: "Low visibility area",
+          radius: 200,
+        },
+        {
+          id: 5,
+          lng: -0.462,
+          lat: 51.4735,
+          type: "Mixed traffic",
+          message: "Shared with vehicles",
+          radius: 150,
+        },
+      ];
+
+      // HAZARDS
+      hazards.forEach((h) => {
+        const marker = new mapboxgl.Marker({ color: "#ef4444" })
+          .setLngLat([h.lng, h.lat])
+          .setPopup(
+            new mapboxgl.Popup().setHTML(
+              `<strong>${h.type}</strong><p>${h.message}</p>`,
+            ),
+          )
+          .addTo(map);
+
+        marker.getElement().style.display = showHazards ? "block" : "none";
+
+        hazardMarkers.push(marker);
+      });
+
+      // REST STOPS
+      const restStops = [
+        { lng: -0.458, lat: 51.4715, label: "Water + Toilets" },
+        { lng: -0.4665, lat: 51.475, label: "Rest Area" },
+      ];
+
+      restStops.forEach((r) => {
+        const marker = new mapboxgl.Marker({ color: "#3b82f6" })
+          .setLngLat([r.lng, r.lat])
+          .setPopup(new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`))
+          .addTo(map);
+
+        marker.getElement().style.display = showRest ? "block" : "none";
+
+        restMarkers.push(marker);
+      });
+
+      function toRadians(value) {
+        return value * (Math.PI / 180);
+      }
+
+      function getCurrentSegment(userPoint) {
+        const segments = getRouteSegments();
+
+        if (routeCoordinates.length < 2) {
+          return {
+            segment: segments[0],
+            segmentProgress: 0,
+            nextMilestone: segments[0].milestone,
+            distanceToMilestone: 0,
+            currentSegmentNumber: 1,
+            totalSegments: segments.length,
+          };
+        }
+
+        let bestDistance = Number.POSITIVE_INFINITY;
+        let bestSegmentProgress = 0;
+        let bestSegmentIndex = 0;
+
+        // Calculate cumulative distances for each segment
+        const segmentDistances = [];
+        let cumulativeDistance = 0;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+          segmentDistances.push(cumulativeDistance);
+          cumulativeDistance += segmentLength;
+        }
+
+        const totalRouteDistance = cumulativeDistance;
+
+        // Find closest point on route and its progress
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const denominator = dLng * dLng + dLat * dLat;
+
+          if (denominator === 0) {
+            const pointDistance = haversineDistanceMeters(userPoint, start);
+            if (pointDistance < bestDistance) {
+              bestDistance = pointDistance;
+              bestSegmentProgress = segmentDistances[i];
+              bestSegmentIndex = i;
+            }
+            continue;
+          }
+
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const pointDistance = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
+          const segmentLength = haversineDistanceMeters(start, end);
+          const candidateProgress =
+            segmentDistances[i] + segmentLength * clampedProjection;
+
+          if (pointDistance < bestDistance) {
+            bestDistance = pointDistance;
+            bestSegmentProgress = candidateProgress;
+            bestSegmentIndex = i;
+          }
+        }
+
+        // Determine which segment based on coordinate index
+        let currentSegmentIndex = 0;
+        for (let s = 0; s < segments.length; s += 1) {
+          if (
+            bestSegmentIndex >= segments[s].startIdx &&
+            bestSegmentIndex <= segments[s].endIdx
+          ) {
+            currentSegmentIndex = s;
+            break;
+          }
+        }
+
+        const currentSegment = segments[currentSegmentIndex];
+
+        // Calculate distance to next milestone
+        let distanceToMilestone = 0;
+        const nextSegmentIndex = currentSegmentIndex + 1;
+        if (nextSegmentIndex < segments.length) {
+          const milestoneCoord =
+            routeCoordinates[segments[nextSegmentIndex].startIdx] ||
+            routeCoordinates[routeCoordinates.length - 1];
+          distanceToMilestone = haversineDistanceMeters(
+            userPoint,
+            milestoneCoord,
+          );
+        }
+
+        return {
+          segment: currentSegment,
+          segmentProgress:
+            totalRouteDistance > 0
+              ? (bestSegmentProgress / totalRouteDistance) * 100
+              : 0,
+          nextMilestone:
+            nextSegmentIndex < segments.length
+              ? segments[nextSegmentIndex].milestone
+              : "Finish line",
+          distanceToMilestone,
+          currentSegmentNumber: currentSegmentIndex + 1,
+          totalSegments: segments.length,
+        };
+      }
+
+      function setInitialMapView() {
+        if (routeCoordinates.length > 0) {
+          const firstPoint = routeCoordinates[0];
+          map.setCenter(firstPoint);
+          map.setZoom(13.5);
+        }
+      }
+
+      function centerMapOnRoute() {
+        if (routeCoordinates.length === 0) {
+          return;
+        }
+
+        const bounds = routeCoordinates.reduce((acc, point) => {
+          acc = acc || [point[0], point[1], point[0], point[1]];
+          acc[0] = Math.min(acc[0], point[0]);
+          acc[1] = Math.min(acc[1], point[1]);
+          acc[2] = Math.max(acc[2], point[0]);
+          acc[3] = Math.max(acc[3], point[1]);
+          return acc;
+        }, null);
+
+        if (bounds) {
+          const topOffset =
+            document.querySelector(".route-card")?.offsetHeight || 140;
+
+          const bottomOffset =
+            document.querySelector(".bottom-panel")?.offsetHeight || 180;
+
+          const uiGap = 60;
+          const isLandscape = window.innerWidth > window.innerHeight;
+
+          map.fitBounds(
+            [
+              [bounds[0], bounds[1]],
+              [bounds[2], bounds[3]],
+            ],
+            {
+              padding: {
+                top: isLandscape
+                  ? topOffset + 20 // ↓ LESS space in landscape
+                  : topOffset + uiGap,
+
+                bottom: isLandscape ? bottomOffset + 20 : bottomOffset + uiGap,
+
+                left: 60, // give more horizontal breathing room in landscape
+                right: 60,
+              },
+              duration: 800,
+            },
+          );
+        }
+      }
+
+      function updateRouteCenterButtonLabel() {
+        const button = document.getElementById(ROUTE_CENTER_BUTTON_ID);
+
+        if (!button) {
+          return;
+        }
+
+        if (routeCenterMode === "route") {
+          button.setAttribute("aria-label", "Show full route");
+          button.setAttribute("title", "Show full route");
+          button.innerHTML = ROUTE_VIEW_ICON;
+        } else {
+          button.setAttribute("aria-label", "Return to my position");
+          button.setAttribute("title", "Return to my position");
+          button.innerHTML = CURRENT_POSITION_ICON;
+        }
+      }
+
+      function centerMapOnCurrentPosition() {
+        const target = lastSnappedPosition || lastActualPosition;
+
+        if (!target) {
+          showToast("Location not available yet");
+          return;
+        }
+
+        followMode = true;
+
+        const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
+
+        if (followButton) {
+          followButton.style.opacity = "1";
+        }
+
+        map.easeTo({
+          center: target,
+          zoom: 16,
+          duration: 700,
+        });
+      }
+
+      function normalizeBearing(bearing) {
+        return ((((bearing + 180) % 360) + 360) % 360) - 180;
+      }
+
+      function getCompassDirectionLabel(bearing) {
+        const normalized = ((bearing % 360) + 360) % 360;
+
+        if (normalized >= 315 || normalized < 45) {
+          return "N";
+        }
+
+        if (normalized >= 45 && normalized < 135) {
+          return "E";
+        }
+
+        if (normalized >= 135 && normalized < 225) {
+          return "S";
+        }
+
+        return "W";
+      }
+
+      function updateCompassButton() {
+        if (!compassButton || !compassLabel) {
+          return;
+        }
+
+        const bearing = normalizeBearing(map.getBearing());
+        const absoluteBearing = Math.abs(bearing);
+
+        if (!isCompassVisible && absoluteBearing > COMPASS_SHOW_BEARING) {
+          isCompassVisible = true;
+        }
+
+        if (isCompassVisible && absoluteBearing < COMPASS_HIDE_BEARING) {
+          isCompassVisible = false;
+        }
+
+        compassButton.hidden = !isCompassVisible;
+
+        if (!isCompassVisible) {
+          compassLabel.textContent = "N";
+
+          const resetIcon = compassButton.querySelector(
+            ".compass-button__icon",
+          );
+
+          if (resetIcon) {
+            resetIcon.style.transform = "rotate(0deg)";
+          }
+
+          return;
+        }
+
+        compassLabel.textContent = getCompassDirectionLabel(map.getBearing());
+
+        const icon = compassButton.querySelector(".compass-button__icon");
+
+        if (icon) {
+          icon.style.transform = `rotate(${-bearing}deg)`;
+        }
+      }
+
+      function getBestVisibleRouteTooltipCoordinate() {
+        if (!routeCoordinates || routeCoordinates.length === 0) {
+          return null;
+        }
+
+        const canvas = map.getCanvas();
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+
+        const safeTop = 210;
+        const safeBottom = height - 170;
+        const safeLeft = 32;
+        const safeRight = width - 32;
+
+        const targetScreenPoint = {
+          x: width * 0.5,
+          y: height * 0.56,
+        };
+
+        let bestCoordinate = null;
+        let bestPoint = null;
+        let bestScore = Number.POSITIVE_INFINITY;
+
+        routeCoordinates.forEach((coordinate) => {
+          const point = map.project(coordinate);
+
+          const isVisible =
+            point.x >= safeLeft &&
+            point.x <= safeRight &&
+            point.y >= safeTop &&
+            point.y <= safeBottom;
+
+          if (!isVisible) {
+            return;
+          }
+
+          const dx = point.x - targetScreenPoint.x;
+          const dy = point.y - targetScreenPoint.y;
+          const score = dx * dx + dy * dy;
+
+          if (score < bestScore) {
+            bestScore = score;
+            bestCoordinate = coordinate;
+            bestPoint = point;
+          }
+        });
+
+        if (!bestCoordinate || !bestPoint) {
+          return routeCoordinates[Math.floor(routeCoordinates.length / 2)];
+        }
+
+        /*
+    Offset the label away from the route in screen space.
+    This makes it feel more like a map annotation, not a pin stuck to the line.
+  */
+        const mapCenter = {
+          x: width / 2,
+          y: height / 2,
+        };
+
+        const directionX = bestPoint.x < mapCenter.x ? -1 : 1;
+        const directionY = bestPoint.y < mapCenter.y ? -1 : 1;
+
+        const offsetPoint = {
+          x: bestPoint.x + directionX * 34,
+          y: bestPoint.y + directionY * 22,
+        };
+
+        const offsetLngLat = map.unproject(offsetPoint);
+
+        return [offsetLngLat.lng, offsetLngLat.lat];
+      }
+
+      function haversineDistanceMeters(pointA, pointB) {
+        const [lng1, lat1] = pointA;
+        const [lng2, lat2] = pointB;
+
+        const earthRadius = 6371000;
+        const dLat = toRadians(lat2 - lat1);
+        const dLng = toRadians(lng2 - lng1);
+
+        const a =
+          Math.sin(dLat / 2) ** 2 +
+          Math.cos(toRadians(lat1)) *
+            Math.cos(toRadians(lat2)) *
+            Math.sin(dLng / 2) ** 2;
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return earthRadius * c;
+      }
+
+      function getClosestPointOnRoute(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return {
+            point: userPoint,
+            distance: 0,
+            segmentIndex: 0,
+            isAhead: false,
+            isBehind: false,
+          };
+        }
+
+        let minDistance = Number.POSITIVE_INFINITY;
+        let closestPoint = userPoint;
+        let closestSegmentIndex = 0;
+        let closestProjection = 0;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const denominator = dLng * dLng + dLat * dLat;
+
+          if (denominator === 0) {
+            const pointDistance = haversineDistanceMeters(userPoint, start);
+            if (pointDistance < minDistance) {
+              minDistance = pointDistance;
+              closestPoint = start;
+              closestSegmentIndex = i;
+              closestProjection = 0;
+            }
+            continue;
+          }
+
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const pointDistance = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
+
+          if (pointDistance < minDistance) {
+            minDistance = pointDistance;
+            closestPoint = [closestLng, closestLat];
+            closestSegmentIndex = i;
+            closestProjection = clampedProjection;
+          }
+        }
+
+        // Determine if ahead or behind based on projection
+        const isAhead = closestProjection > 0.5;
+        const isBehind = closestProjection < 0.5 && closestSegmentIndex > 0;
+
+        return {
+          point: closestPoint,
+          distance: minDistance,
+          segmentIndex: closestSegmentIndex,
+          isAhead,
+          isBehind,
+        };
+      }
+
+      function getDistanceToRoute(userPoint) {
+        let minDistance = Number.POSITIVE_INFINITY;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+
+          const startToUser = haversineDistanceMeters(userPoint, start);
+          const endToUser = haversineDistanceMeters(userPoint, end);
+          const segmentLength = haversineDistanceMeters(start, end);
+
+          if (segmentLength === 0) {
+            minDistance = Math.min(minDistance, startToUser);
+            continue;
+          }
+
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const projection =
+            (dLngU * dLng + dLatU * dLat) / (dLng * dLng + dLat * dLat);
+
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const distanceToSegment = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
+
+          minDistance = Math.min(
+            minDistance,
+            distanceToSegment,
+            startToUser,
+            endToUser,
+          );
+        }
+
+        return minDistance;
+      }
+      function getRouteMeasure(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return {
+            distanceAlongRoute: 0,
+            distanceFromRoute: Infinity,
+          };
+        }
+
+        let totalBeforeSegment = 0;
+        let bestDistance = Infinity;
+        let bestDistanceAlongRoute = 0;
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const denominator = dLng * dLng + dLat * dLat;
+
+          if (denominator === 0) {
+            totalBeforeSegment += segmentLength;
+            continue;
+          }
+
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+
+          const distanceFromRoute = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
+          const distanceAlongRoute =
+            totalBeforeSegment + segmentLength * clampedProjection;
+
+          if (distanceFromRoute < bestDistance) {
+            bestDistance = distanceFromRoute;
+            bestDistanceAlongRoute = distanceAlongRoute;
+          }
+
+          totalBeforeSegment += segmentLength;
+        }
+
+        return {
+          distanceAlongRoute: bestDistanceAlongRoute,
+          distanceFromRoute: bestDistance,
+        };
+      }
+
+      function getNextThingAhead(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return null;
+        }
+
+        const userMeasure = getRouteMeasure(userPoint);
+
+        const routeItems = [
+          ...hazards.map((h) => ({
+            type: "hazard",
+            label: h.type,
+            point: [h.lng, h.lat],
+          })),
+          ...restStops.map((r) => ({
+            type: "rest",
+            label: r.label,
+            point: [r.lng, r.lat],
+          })),
+        ];
+
+        const upcomingItems = routeItems
+          .map((item) => {
+            const itemMeasure = getRouteMeasure(item.point);
+
+            return {
+              ...item,
+              distanceAhead:
+                itemMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
+              distanceFromRoute: itemMeasure.distanceFromRoute,
+            };
+          })
+          .filter((item) => item.distanceAhead > 15)
+          .sort((a, b) => a.distanceAhead - b.distanceAhead);
+
+        return upcomingItems[0] || null;
+      }
+
+      function getNextHazardAhead(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return null;
+        }
+
+        const userMeasure = getRouteMeasure(userPoint);
+
+        const upcomingHazards = hazards
+          .map((h) => {
+            const hazardPoint = [h.lng, h.lat];
+            const hazardMeasure = getRouteMeasure(hazardPoint);
+
+            return {
+              ...h,
+              distanceAhead:
+                hazardMeasure.distanceAlongRoute -
+                userMeasure.distanceAlongRoute,
+              distanceFromRoute: hazardMeasure.distanceFromRoute,
+            };
+          })
+          .filter((h) => h.distanceAhead > 25)
+          .sort((a, b) => a.distanceAhead - b.distanceAhead);
+
+        return upcomingHazards[0] || null;
+      }
+
+      function updateNextThingAhead(userPoint) {
+        const nextThingValue = document.getElementById(NEXT_THING_VALUE_ID);
+
+        if (!nextThingValue) {
+          return;
+        }
+
+        const nextThing = getNextThingAhead(userPoint);
+
+        if (!nextThing) {
+          const distanceToRoute = getDistanceToRoute(userPoint);
+
+          if (distanceToRoute < 50) {
+            nextThingValue.textContent = "You’re at the finish";
+          } else {
+            nextThingValue.textContent = "Finish ahead";
+          }
+
+          return;
+        }
+
+        const icon = nextThing.type === "hazard" ? "⚠️" : "☕";
+        const distance = formatDistance(nextThing.distanceAhead);
+
+        nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
+      }
+
+      function showWarning(message, level = "") {
+        const warning = document.getElementById(WARNING_ID);
+        warning.textContent = message;
+        warning.className = `warning ${level}`.trim();
+        warning.style.display = message ? "block" : "none";
+      }
+
+      function getSurfaceDisplayText(surface) {
+        if (!surface) {
+          return null;
+        }
+
+        const paved = Number(surface.pavedPercent);
+        const unknown = Number(surface.unknownPercent);
+
+        if (!Number.isFinite(paved) || !Number.isFinite(unknown)) {
+          return surface.summaryLabel || "Surface varies";
+        }
+
+        if (unknown <= 15) {
+          return `${paved}% paved`;
+        }
+
+        if (surface.summaryLabel) {
+          return surface.summaryLabel;
+        }
+
+        return "Surface varies";
+      }
+
+      function createSurfaceTooltip(surface) {
+        const displayText = getSurfaceDisplayText(surface);
+
+        if (!displayText) {
+          return;
+        }
+
+        const coordinate = getBestVisibleRouteTooltipCoordinate();
+
+        if (!coordinate) {
+          return;
+        }
+
+        if (!surfaceTooltipElement) {
+          surfaceTooltipElement = document.createElement("div");
+          surfaceTooltipElement.className = "surface-map-tooltip";
+
+          surfaceTooltipElement.innerHTML = `
+      <span class="surface-map-tooltip__line"></span>
+      <span>${displayText}</span>
+    `;
+        } else {
+          surfaceTooltipElement.innerHTML = `
+      <span class="surface-map-tooltip__line"></span>
+      <span>${displayText}</span>
+    `;
+        }
+
+        if (!surfaceTooltipMarker) {
+          surfaceTooltipMarker = new mapboxgl.Marker({
+            element: surfaceTooltipElement,
+            anchor: "center",
+          })
+            .setLngLat(coordinate)
+            .addTo(map);
+        } else {
+          surfaceTooltipMarker.setLngLat(coordinate);
+        }
+
+        updateSurfaceTooltipVisibility();
+      }
+
+      function hideSurfaceTooltip() {
+        if (!surfaceTooltipElement) {
+          return;
+        }
+
+        surfaceTooltipElement.classList.add("is-hidden");
+      }
+
+      function showSurfaceTooltip() {
+        if (!surfaceTooltipElement) return;
+
+        // BLOCK: never show while user is interacting
+        if (isMapInteracting) return;
+
+        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+          hideSurfaceTooltip();
+          return;
+        }
+
+        surfaceTooltipElement.classList.remove("is-hidden");
+      }
+
+      function updateSurfaceTooltipVisibility() {
+        if (!surfaceTooltipElement) {
+          return;
+        }
+
+        if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+          hideSurfaceTooltip();
+        } else {
+          showSurfaceTooltip();
+        }
+      }
+
+      function repositionSurfaceTooltip() {
+        if (
+          !surfaceTooltipMarker ||
+          !surfaceTooltipElement ||
+          !routeSurfaceSummary ||
+          routeCoordinates.length === 0
+        ) {
+          return;
+        }
+
+        clearTimeout(surfaceTooltipMoveTimer);
+
+        // STILL interacting? do nothing
+        if (isMapInteracting) return;
+
+        hideSurfaceTooltip();
+
+        surfaceTooltipMoveTimer = setTimeout(() => {
+          if (map.getZoom() >= SURFACE_TOOLTIP_HIDE_ZOOM) {
+            hideSurfaceTooltip();
+            return;
+          }
+
+          const coordinate = getBestVisibleRouteTooltipCoordinate();
+          if (!coordinate) return;
+
+          surfaceTooltipMarker.setLngLat(coordinate);
+
+          // Only show if interaction has finished
+          if (!isMapInteracting) {
+            showSurfaceTooltip();
+          }
+        }, 280);
+      }
+
+      function loadRouteSurfaceSummary() {
+        fetch("route-surface-summary.json")
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Surface summary not available");
+            }
+
+            return response.json();
+          })
+          .then((surface) => {
+            routeSurfaceSummary = surface;
+
+            if (routeCoordinates.length > 0) {
+              createSurfaceTooltip(routeSurfaceSummary);
+            }
+          })
+          .catch((error) => {
+            console.warn("Surface summary not loaded:", error);
+          });
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        if (!toast) return;
+
+        toast.textContent = message;
+        toast.classList.add("show");
+
+        setTimeout(() => {
+          toast.classList.remove("show");
+        }, 2500);
+      }
+
+      window.addEventListener("offline", () => {
+        showToast("Signal lost — route still available");
+      });
+
+      window.addEventListener("online", () => {
+        showToast("Back online");
+      });
+
+      function formatDistance(distance) {
+        if (distance >= 1000) {
+          return `${(distance / 1000).toFixed(1)} km`;
+        }
+        return `${Math.round(distance)} m`;
+      }
+
+      function getRouteProgress(userPoint) {
+        if (routeCoordinates.length < 2) {
+          return 0;
+        }
+
+        let totalLength = 0;
+        const segmentData = [];
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+          segmentData.push({ start, end, segmentLength });
+          totalLength += segmentLength;
+        }
+
+        if (totalLength === 0) {
+          return 0;
+        }
+
+        let bestDistance = Number.POSITIVE_INFINITY;
+        let bestProgress = 0;
+        let runningLength = 0;
+
+        for (const segment of segmentData) {
+          const { start, end, segmentLength } = segment;
+          const lat1 = toRadians(start[1]);
+          const lat2 = toRadians(end[1]);
+          const lng1 = toRadians(start[0]);
+          const lng2 = toRadians(end[0]);
+          const latU = toRadians(userPoint[1]);
+          const lngU = toRadians(userPoint[0]);
+
+          const dLng = lng2 - lng1;
+          const dLat = lat2 - lat1;
+          const dLngU = lngU - lng1;
+          const dLatU = latU - lat1;
+
+          const denominator = dLng * dLng + dLat * dLat;
+
+          if (denominator === 0) {
+            const pointDistance = haversineDistanceMeters(userPoint, start);
+            if (pointDistance < bestDistance) {
+              bestDistance = pointDistance;
+              bestProgress = runningLength;
+            }
+            runningLength += segmentLength;
+            continue;
+          }
+
+          const projection = (dLngU * dLng + dLatU * dLat) / denominator;
+          const clampedProjection = Math.max(0, Math.min(1, projection));
+
+          const closestLng = start[0] + clampedProjection * (end[0] - start[0]);
+          const closestLat = start[1] + clampedProjection * (end[1] - start[1]);
+          const pointDistance = haversineDistanceMeters(userPoint, [
+            closestLng,
+            closestLat,
+          ]);
+          const candidateProgress =
+            runningLength + segmentLength * clampedProjection;
+
+          if (pointDistance < bestDistance) {
+            bestDistance = pointDistance;
+            bestProgress = candidateProgress;
+          }
+
+          runningLength += segmentLength;
+        }
+
+        const progress = (bestProgress / totalLength) * 100;
+        const distanceToStart = haversineDistanceMeters(
+          userPoint,
+          routeCoordinates[0],
+        );
+
+        if (distanceToStart > START_APPROACH_DISTANCE) {
+          return 0;
+        }
+
+        if (progress >= 99 && bestDistance > FINISH_APPROACH_DISTANCE) {
+          return 99;
+        }
+
+        return Math.min(100, Math.max(0, progress));
+      }
+
+      function updateDistanceDisplay(distance, progress, segmentInfo = null) {
+        const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
+        const progressValue = document.getElementById(PROGRESS_VALUE_ID);
+        const routeBadge = document.getElementById(ROUTE_BADGE_ID);
+        const routeCard = document.getElementById("route-card");
+
+        const hasValidDistance = Number.isFinite(distance);
+        if (routeCard) {
+          routeCard.classList.toggle("is-locating", !hasValidDistance);
+        }
+        const normalizedDistance = hasValidDistance
+          ? Math.max(0, distance)
+          : null;
+        const displayProgress =
+          progress >= 99 &&
+          normalizedDistance !== null &&
+          normalizedDistance > FINISH_APPROACH_DISTANCE
+            ? 99
+            : progress;
+
+        if (!hasValidDistance || normalizedDistance === null) {
+          progressValue.textContent = `Section 1/${TOTAL_SEGMENTS}`;
+          distanceValue.textContent = "Waiting for start";
+          routeBadge.textContent = "Preparing";
+          routeBadge.className = "route-card__badge";
+          return;
+        }
+
+        const safeProgress = Math.min(100, Math.max(0, displayProgress));
+
+        if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
+          progressValue.textContent = "Off route";
+          distanceValue.textContent = "Move closer to the purple route";
+          routeBadge.textContent = "Far off route";
+          routeBadge.className = "route-card__badge alert";
+          return;
+        }
+
+        // Display segment info instead of percentage
+        if (segmentInfo) {
+          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
+          const nextMilestoneDistance = formatDistance(
+            segmentInfo.distanceToMilestone,
+          );
+          distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
+        } else {
+          progressValue.textContent = `${Math.round(safeProgress)}%`;
+          distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
+        }
+
+        if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
+          routeBadge.textContent = "Near edge";
+          routeBadge.className = "route-card__badge warning";
+        } else {
+          routeBadge.textContent = "On route";
+          routeBadge.className = "route-card__badge";
+        }
+      }
+
+      function updateWarningState(distanceToRoute) {
+        const now = Date.now();
+        let nextState = "";
+        let nextLevel = "";
+
+        if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
+          nextState = "You are far from the official route";
+          nextLevel = "alert";
+        } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
+          nextState = "You may be off the official route";
+          nextLevel = "warning";
+        } else {
+          nextState = "You are staying on the route";
+          nextLevel = "safe";
+        }
+
+        if (
+          now - lastWarningUpdate >= WARNING_UPDATE_INTERVAL ||
+          nextLevel !== lastWarningState
+        ) {
+          showWarning(nextState, nextLevel);
+          lastWarningUpdate = now;
+          lastWarningState = nextLevel;
+        }
+      }
+
+      function updateUserMarker(lng, lat) {
+        const actualPosition = [lng, lat];
+        lastActualPosition = actualPosition;
+
+        const routeSnapshot = getClosestPointOnRoute(actualPosition);
+
+        lastSnappedPosition = routeSnapshot.point;
+
+        if (!userMarker) {
+          userMarker = new mapboxgl.Marker({ color: "#00AEEF" })
+            .setLngLat(routeSnapshot.point)
+            .addTo(map);
+        } else {
+          userMarker.setLngLat(routeSnapshot.point);
+        }
+
+        return routeSnapshot;
+      }
+
+      function updateMapView(lng, lat) {
+        // Use snapped position to keep route centered
+        const displayPosition = lastSnappedPosition || [lng, lat];
+        const newCenter = displayPosition;
+        const now = Date.now();
+
+        if (!hasInitialPosition) {
+          map.flyTo({
+            center: newCenter,
+            speed: 0.8,
+            zoom: 16,
+          });
+          hasInitialPosition = true;
+          lastViewCenter = newCenter;
+          lastPosition = newCenter;
+          lastPositionTime = now;
+          return;
+        }
+
+        if (!followMode) {
+          return;
+        }
+
+        if (!lastViewCenter) {
+          lastViewCenter = newCenter;
+          return;
+        }
+
+        const distanceMoved = haversineDistanceMeters(
+          lastViewCenter,
+          newCenter,
+        );
+
+        if (lastPosition && lastPositionTime) {
+          const elapsed = Math.max(1, now - lastPositionTime);
+          const speedMps =
+            haversineDistanceMeters(lastPosition, newCenter) / (elapsed / 1000);
+
+          if (
+            speedMps < MIN_SPEED_FOR_FOLLOW &&
+            distanceMoved < VIEW_UPDATE_DISTANCE
+          ) {
+            lastPosition = newCenter;
+            lastPositionTime = now;
+            return;
+          }
+        }
+
+        if (distanceMoved >= VIEW_UPDATE_DISTANCE) {
+          map.easeTo({
+            center: newCenter,
+            duration: 1000,
+          });
+          lastViewCenter = newCenter;
+        }
+
+        lastPosition = newCenter;
+        lastPositionTime = now;
+      }
+
+      function shouldProcessLocationUpdate(lng, lat) {
+        const now = Date.now();
+
+        if (!lastProcessedPosition) {
+          lastProcessedPosition = [lng, lat];
+          lastProcessedPositionTime = now;
+          return true;
+        }
+
+        const moved = haversineDistanceMeters(lastProcessedPosition, [
+          lng,
+          lat,
+        ]);
+        const elapsed = now - lastProcessedPositionTime;
+
+        if (
+          moved >= POSITION_UPDATE_MIN_METERS ||
+          elapsed >= POSITION_UPDATE_MIN_MS
+        ) {
+          lastProcessedPosition = [lng, lat];
+          lastProcessedPositionTime = now;
+          return true;
+        }
+
+        return false;
+      }
+
+      function buildRouteFeatureFromCoordinates(coordinates) {
+        return {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates,
+          },
+        };
+      }
+
+      function addRouteToMap(routeFeature) {
+        routeCoordinates = routeFeature.geometry.coordinates;
+
+        if (!map.getSource("route")) {
+          map.addSource("route", {
+            type: "geojson",
+            data: routeFeature,
+          });
+
+          map.addLayer({
+            id: "route-shadow",
+            type: "line",
+            source: "route",
+            paint: {
+              "line-color": "#0b1223",
+              "line-width": 8,
+              "line-opacity": 0.45,
+            },
+          });
+
+          map.addLayer({
+            id: "route-dotted-ahead",
+            type: "line",
+            source: "route",
+            paint: {
+              "line-color": "#8b5cf6",
+              "line-width": 2,
+              "line-dasharray": [0, 1.5, 0.8, 1.5],
+              "line-opacity": 0.75,
+            },
+          });
+
+          map.addLayer({
+            id: "route-line",
+            type: "line",
+            source: "route",
+            paint: {
+              "line-color": "#7c3aed",
+              "line-width": 3.5,
+              "line-opacity": 0.95,
+            },
+          });
+        } else {
+          map.getSource("route").setData(routeFeature);
+        }
+
+        setInitialMapView();
+
+        if (routeSurfaceSummary) {
+          createSurfaceTooltip(routeSurfaceSummary);
+        }
+
+        if (routeCoordinates.length > 0) {
+          new mapboxgl.Marker({ color: "#22c55e" })
+            .setLngLat(routeCoordinates[0])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(
+                "<h3>Start</h3><p>Route begins here</p>",
+              ),
+            )
+            .addTo(map);
+
+          new mapboxgl.Marker({ color: "#f97316" })
+            .setLngLat(routeCoordinates[routeCoordinates.length - 1])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(
+                "<h3>Finish</h3><p>End of route</p>",
+              ),
+            )
+            .addTo(map);
+        }
+      }
+
+      function loadRouteGeoJson() {
+        if (window.location.protocol === "file:") {
+          addRouteToMap(
+            buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+          );
+          showWarning(
+            "Open this page from a web server to load the exact route file",
+            "warning",
+          );
+          return;
+        }
+
+        fetch(routeGeoJsonUrl)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(
+                `Failed to load route geojson: ${response.status}`,
+              );
+            }
+            return response.json();
+          })
+          .then((geojson) => {
+            let routeFeature = geojson;
+
+            if (
+              geojson &&
+              geojson.type === "FeatureCollection" &&
+              Array.isArray(geojson.features)
+            ) {
+              routeFeature =
+                geojson.features.find(
+                  (feature) =>
+                    feature &&
+                    feature.geometry &&
+                    feature.geometry.type === "LineString",
+                ) || geojson.features[0];
+            }
+
+            if (routeFeature && routeFeature.type === "FeatureCollection") {
+              routeFeature =
+                routeFeature.features.find(
+                  (feature) =>
+                    feature &&
+                    feature.geometry &&
+                    feature.geometry.type === "LineString",
+                ) || routeFeature.features[0];
+            }
+
+            const geometry = routeFeature && routeFeature.geometry;
+
+            if (
+              !geometry ||
+              geometry.type !== "LineString" ||
+              !Array.isArray(geometry.coordinates)
+            ) {
+              throw new Error("GeoJSON must contain a LineString geometry.");
+            }
+
+            addRouteToMap(routeFeature);
+          })
+          .catch((error) => {
+            console.error(error);
+            addRouteToMap(
+              buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+            );
+            showWarning("Using fallback route preview", "warning");
+          });
+      }
+
+      // Route button
+      document
+        .getElementById(ROUTE_CENTER_BUTTON_ID)
+        .addEventListener("click", () => {
+          if (routeCenterMode === "route") {
+            centerMapOnRoute();
+            routeCenterMode = "position";
+          } else {
+            centerMapOnCurrentPosition();
+            routeCenterMode = "route";
+          }
+
+          updateRouteCenterButtonLabel();
+        });
+
+      // Follow button
+      const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
+      const compassButton = document.getElementById(COMPASS_BUTTON_ID);
+      const compassLabel = document.getElementById(COMPASS_LABEL_ID);
+      document
+        .getElementById(FOLLOW_TOGGLE_BUTTON_ID)
+        .addEventListener("click", () => {
+          followMode = !followMode;
+
+          followButton.style.opacity = followMode ? "1" : "0.5";
+
+          if (followMode && lastSnappedPosition) {
+            map.easeTo({
+              center: lastSnappedPosition,
+              zoom: 16,
+              duration: 600,
+            });
+          }
+
+          if (
+            followMode &&
+            getDistanceToRoute(lastActualPosition || [-0.4543, 51.47]) > 300
+          ) {
+            showWarning(
+              "Move closer to the route to enable tracking",
+              "warning",
+            );
+          }
+        });
+
+      if (compassButton) {
+        compassButton.addEventListener("click", () => {
+          map.easeTo({
+            bearing: 0,
+            pitch: 0,
+            duration: 450,
+          });
+
+          setTimeout(updateCompassButton, 500);
+        });
+      }
+
+      // Share button
+      const shareBtn = document.getElementById("share-location-button");
+
+      if (shareBtn) {
+        shareBtn.addEventListener("click", async () => {
+          if (!lastActualPosition) {
+            showToast("Location not available yet");
+            return;
+          }
+
+          const [lng, lat] = lastActualPosition;
+          const url = `https://www.google.com/maps?q=${lat},${lng}`;
+
+          try {
+            if (navigator.share) {
+              await navigator.share({
+                title: "My location",
+                text: "Here is my current location:",
+                url: url,
+              });
+
+              showToast("Location shared");
+            } else {
+              window.open(url, "_blank");
+              showToast("Map opened to share your location");
+            }
+          } catch (err) {
+            showToast("Share cancelled");
+          }
+        });
+      }
+
+      // Hazards button
+      const hazardsButton = document.getElementById("hazards-button");
+
+      hazardsButton.addEventListener("click", () => {
+        showHazards = !showHazards;
+
+        hazardMarkers.forEach((marker) => {
+          marker.getElement().style.display = showHazards ? "block" : "none";
+        });
+
+        hazardsButton.classList.toggle("on", showHazards);
+      });
+
+      // Rest button
+      const restButton = document.getElementById("rest-button");
+
+      restButton.addEventListener("click", () => {
+        showRest = !showRest;
+
+        restMarkers.forEach((marker) => {
+          marker.getElement().style.display = showRest ? "block" : "none";
+        });
+
+        restButton.classList.toggle("on", showRest);
+      });
+
+      // Help button
+      const helpButton = document.getElementById("help-button");
+      const helpPanel = document.getElementById("help-panel");
+      const helpBackdrop = document.getElementById("help-backdrop");
+      const helpCloseButton = document.getElementById("help-close-button");
+      const showLocationButton = document.getElementById(
+        "show-location-button",
+      );
+      const helpCoordinates = document.getElementById("help-coordinates");
+      const helpRouteDistance = document.getElementById("help-route-distance");
+      const eventSupportLink = document.getElementById("event-support-link");
+      const EVENT_SUPPORT_PHONE = "REPLACE_WITH_EVENT_SUPPORT_NUMBER";
+      if (EVENT_SUPPORT_PHONE === "REPLACE_WITH_EVENT_SUPPORT_NUMBER") {
+        eventSupportLink.removeAttribute("href");
+        eventSupportLink.textContent = "Event support number TBC";
+        eventSupportLink.style.opacity = "0.6";
+      } else {
+        eventSupportLink.href = `tel:${EVENT_SUPPORT_PHONE}`;
+      }
+
+      function updateHelpLocationPanel() {
+        if (!helpCoordinates || !helpRouteDistance) {
+          return;
+        }
+
+        if (!lastActualPosition) {
+          helpCoordinates.textContent = "Getting your location…";
+          helpRouteDistance.textContent = "Make sure location is enabled";
+          return;
+        }
+
+        const [lng, lat] = lastActualPosition;
+        const distanceToRoute = getDistanceToRoute(lastActualPosition);
+
+        helpCoordinates.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+        if (Number.isFinite(distanceToRoute)) {
+          helpRouteDistance.textContent = `${formatDistance(distanceToRoute)} from the purple route`;
+        } else {
+          helpRouteDistance.textContent = "Distance from route unavailable";
+        }
+      }
+
+      function setHelpPanel(open) {
+        showHelp = open;
+
+        helpButton.classList.toggle("on", showHelp);
+        helpPanel.classList.toggle("open", showHelp);
+        helpBackdrop.classList.toggle("open", showHelp);
+
+        if (showHelp) {
+          updateHelpLocationPanel();
+        }
+      }
+
+      helpButton.addEventListener("click", () => {
+        setHelpPanel(!showHelp);
+      });
+
+      helpCloseButton.addEventListener("click", () => {
+        setHelpPanel(false);
+      });
+
+      helpBackdrop.addEventListener("click", () => {
+        setHelpPanel(false);
+      });
+
+      showLocationButton.addEventListener("click", () => {
+        updateHelpLocationPanel();
+
+        const target = lastActualPosition || lastSnappedPosition;
+
+        if (target) {
+          setHelpPanel(false);
+
+          map.easeTo({
+            center: target,
+            zoom: 17,
+            duration: 700,
+          });
+        } else {
+          showWarning(
+            "Location is not available yet. Check location permissions.",
+            "warning",
+          );
+        }
+      });
+
+      hazardsButton.classList.toggle("on", showHazards);
+      restButton.classList.toggle("on", showRest);
+      setHelpPanel(false);
+
+      map.on("load", () => {
+        loadRouteGeoJson();
+        loadRouteSurfaceSummary();
+
+        hazardsButton.classList.toggle("on", showHazards);
+        restButton.classList.toggle("on", showRest);
+        setHelpPanel(false);
+        updateCompassButton();
+        updateRouteCenterButtonLabel();
+      });
+
+      map.on("movestart", () => {
+        isMapInteracting = true;
+        hideSurfaceTooltip();
+      });
+
+      map.on("zoomstart", () => {
+        isMapInteracting = true;
+        hideSurfaceTooltip();
+      });
+
+      map.on("moveend", () => {
+        isMapInteracting = false;
+
+        repositionSurfaceTooltip();
+        updateCompassButton();
+      });
+
+      map.on("zoomend", () => {
+        isMapInteracting = false;
+
+        repositionSurfaceTooltip();
+        updateCompassButton();
+      });
+
+      map.on("rotate", () => {
+        updateCompassButton();
+      });
+
+      map.on("rotateend", () => {
+        updateCompassButton();
+      });
+
+      if ("geolocation" in navigator) {
+        navigator.geolocation.watchPosition(
+          (position) => {
+            const lng = position.coords.longitude;
+            const lat = position.coords.latitude;
+
+            if (!shouldProcessLocationUpdate(lng, lat)) {
+              return;
+            }
+
+            updateUserMarker(lng, lat);
+            updateMapView(lng, lat);
+
+            const userPoint = [lng, lat];
+
+            if (showHelp) {
+              updateHelpLocationPanel();
+            }
+
+            updateNextThingAhead(userPoint);
+
+            const distanceToRoute = getDistanceToRoute(userPoint);
+            const routeProgress = getRouteProgress(userPoint);
+            const segmentInfo = getCurrentSegment(userPoint);
+
+            const nextHazardAhead = getNextHazardAhead(userPoint);
+            let hazardWarningShown = false;
+
+            if (nextHazardAhead && nextHazardAhead.distanceAhead < 400) {
+              const d = Math.round(nextHazardAhead.distanceAhead);
+
+              showWarning(
+                `⚠️ ${nextHazardAhead.type} in ${d}m`,
+                d < 100 ? "alert" : "warning",
+              );
+
+              hazardWarningShown = true;
+            }
+            updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo);
+
+            if (!hazardWarningShown) {
+              updateWarningState(distanceToRoute);
+            }
+          },
+          () => {
+            showWarning("Location access is unavailable or blocked", "alert");
+          },
+          {
+            enableHighAccuracy: false,
+            maximumAge: 20000,
+            timeout: 30000,
+          },
+        );
+      } else {
+        showWarning("Geolocation is not supported on this device", "alert");
+      }
+
+      window.addEventListener("orientationchange", () => {
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+
+          if (map) {
+            map.resize();
+          }
+
+          centerMapOnRoute();
+          repositionSurfaceTooltip();
+          updateCompassButton();
+        }, 350);
+
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+
+          if (map) {
+            map.resize();
+          }
+
+          centerMapOnRoute();
+          repositionSurfaceTooltip();
+          updateCompassButton();
+        }, 800);
+      });
+
+      function refreshLayoutAfterSafariRestore() {
+        window.scrollTo(0, 0);
+
+        if (map) {
+          map.resize();
+        }
+
+        if (routeCoordinates.length > 0 && !lastActualPosition) {
+          centerMapOnRoute();
+        }
+      }
+
+      window.addEventListener("pageshow", () => {
+        setTimeout(refreshLayoutAfterSafariRestore, 150);
+        setTimeout(refreshLayoutAfterSafariRestore, 500);
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          setTimeout(refreshLayoutAfterSafariRestore, 150);
+          setTimeout(refreshLayoutAfterSafariRestore, 500);
+        }
+      });
+
+      window.addEventListener("focus", () => {
+        setTimeout(refreshLayoutAfterSafariRestore, 150);
+      });
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("service-worker.js")
+            .catch((error) => {
+              console.error("Service worker registration failed:", error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
