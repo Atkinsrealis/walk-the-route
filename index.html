@@ -1694,8 +1694,8 @@
           map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/dark-v11",
-            center: [0, 20],  // neutral world position
-            zoom: 5,  // zoomed out
+            center: [-2, 54],  // UK center view
+            zoom: 4,  // zoomed to UK level
             pitch: 0,
             bearing: 0,
             attributionControl: false,
@@ -3368,15 +3368,15 @@
           setTimeout(() => {
             if (!routeCoordinates.length) return;
 
-            // Intro sequence: smooth zoom to full route overview
-            centerMapOnRoute({ duration: 1200 }); // smooth 1.2s zoom to route bounds
+            // Intro sequence: smooth zoom from UK view to route overview
+            centerMapOnRoute({ duration: 1600 }); // smooth 1.6s zoom to route bounds
 
             setTimeout(() => {
               if (!lastActualPosition) {
                 map.easeTo({
                   center: routeCoordinates[0],
                   zoom: 15.8,
-                  duration: 1400,
+                  duration: 1800,
                   easing: (t) => t * (2 - t)
                 });
                 lastViewCenter = routeCoordinates[0];
@@ -3385,8 +3385,8 @@
               // End intro after animation completes
               setTimeout(() => {
                 isIntro = false;
-              }, 1400);
-            }, 1300);  // wait for fitBounds to finish, then start ease to start
+              }, 1800);
+            }, 1700);  // wait for fitBounds to finish, then start ease to start
 
           }, 100); // small delay for route load
         });
