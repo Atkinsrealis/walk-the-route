@@ -1538,7 +1538,7 @@
       const ROUTE_ALERT_DISTANCE = 600;
       const GPS_ACCURACY_HIGH_METERS = 15;
       const GPS_ACCURACY_MEDIUM_METERS = 40;
-      const GPS_PREPARING_MIN_MS = 800;
+      const GPS_PREPARING_MIN_MS = 1400;
       const GPS_LOCATING_MIN_MS = 2200;
       const GPS_LOW_ACCURACY_MIN_MS = 1200;
       const GPS_IMPROVING_MIN_MS = 1200;
@@ -3008,7 +3008,7 @@
 
         const hasValidDistance = Number.isFinite(distance);
         if (routeCard) {
-          routeCard.classList.toggle("is-locating", !hasValidDistance);
+          routeCard.classList.toggle("is-locating", !hasGpsLock);
         }
         const normalizedDistance = hasValidDistance
           ? Math.max(0, distance)
@@ -3023,10 +3023,6 @@
         if (!hasValidDistance || normalizedDistance === null) {
           progressValue.textContent = `Section 1/${TOTAL_SEGMENTS}`;
           distanceValue.textContent = "Waiting for start";
-          if (hasGpsLock && !isColdStartBadgeActive) {
-            routeBadge.textContent = "On route";
-            routeBadge.className = "route-card__badge";
-          }
           return;
         }
 
