@@ -1536,6 +1536,8 @@
 
       const ROUTE_WARNING_DISTANCE = 300;
       const ROUTE_ALERT_DISTANCE = 600;
+      const GPS_ACCURACY_HIGH_METERS = 15;
+      const GPS_ACCURACY_MEDIUM_METERS = 40;
       const WARNING_UPDATE_INTERVAL = 4000; // Increased from 3000ms for battery efficiency
       const VIEW_UPDATE_DISTANCE = 30; // Increased from 25m to reduce map pans
       const MIN_SPEED_FOR_FOLLOW = 0.4;
@@ -1737,6 +1739,7 @@
       let surfaceTooltipMoveTimer = null;
       let isMapInteracting = false;
       let isCompassVisible = false;
+      let hasGpsLock = false;
 
       const hazards = [
         {
@@ -2674,6 +2677,38 @@
         return `${Math.round(distance)} m`;
       }
 
+      function updateColdStartBadge(accuracyMeters) {
+        const routeBadge = document.getElementById(ROUTE_BADGE_ID);
+
+        if (!routeBadge) {
+          return;
+        }
+
+        if (!Number.isFinite(accuracyMeters)) {
+          routeBadge.textContent = "Locating";
+          routeBadge.className = "route-card__badge warning";
+          return;
+        }
+
+        const roundedAccuracy = Math.round(Math.max(0, accuracyMeters));
+
+        if (accuracyMeters > GPS_ACCURACY_MEDIUM_METERS) {
+          routeBadge.textContent = `Low accuracy (±${roundedAccuracy}m)`;
+          routeBadge.className = "route-card__badge warning";
+          return;
+        }
+
+        if (accuracyMeters > GPS_ACCURACY_HIGH_METERS) {
+          routeBadge.textContent = `Improving (±${roundedAccuracy}m)`;
+          routeBadge.className = "route-card__badge warning";
+          return;
+        }
+
+        routeBadge.textContent = `GPS locked (±${roundedAccuracy}m)`;
+        routeBadge.className = "route-card__badge";
+        hasGpsLock = true;
+      }
+
       function getRouteProgress(userPoint) {
         if (routeCoordinates.length < 2) {
           return 0;
@@ -2784,8 +2819,14 @@
         if (!hasValidDistance || normalizedDistance === null) {
           progressValue.textContent = `Section 1/${TOTAL_SEGMENTS}`;
           distanceValue.textContent = "Waiting for start";
-          routeBadge.textContent = "Preparing";
-          routeBadge.className = "route-card__badge";
+          if (hasGpsLock) {
+            routeBadge.textContent = "On route";
+            routeBadge.className = "route-card__badge";
+          }
+          return;
+        }
+
+        if (!hasGpsLock) {
           return;
         }
 
@@ -3432,6 +3473,8 @@
       // (removed - now handled in map.on('load'))
 
       if ("geolocation" in navigator) {
+        updateColdStartBadge(Number.NaN);
+
         // Show waiting message if first location takes too long
         firstLocationTimeout = setTimeout(() => {
           if (isWaitingForFirstLocation) {
@@ -3446,6 +3489,9 @@
           (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
+            const accuracy = position.coords.accuracy;
+
+            updateColdStartBadge(accuracy);
 
             // Clear waiting state on first location
             if (isWaitingForFirstLocation) {
