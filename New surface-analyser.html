@@ -23,6 +23,11 @@ button {
   font-weight:700;
 }
 
+button:disabled {
+  opacity:0.6;
+  cursor:not-allowed;
+}
+
 button.secondary {
   background:#374151;
 }
@@ -57,6 +62,7 @@ const OVERPASS_ENDPOINTS = [
 const TIMEOUT_MS = 12000;
 const SEARCH_BUFFER = 60;
 const MIN_SEGMENT_LENGTH = 10;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const COLORS = {
   paved:"#22c55e",
@@ -69,6 +75,7 @@ const PAVED = new Set(["asphalt","paved","concrete","tarmac"]);
 const UNPAVED = new Set(["gravel","dirt","grass","earth"]);
 
 const out = document.getElementById("output");
+const runButton = document.getElementById("run");
 
 function log(m){
   out.textContent += "\n" + m;
@@ -92,7 +99,26 @@ function getDebugKey(lines){
 function getCached(key){
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) {
+      return null;
+    }
+
+    const parsed = JSON.parse(raw);
+
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    if (typeof parsed.ts !== "number" || !parsed.data) {
+      return null;
+    }
+
+    if (Date.now() - parsed.ts > CACHE_TTL_MS) {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return parsed;
   } catch { return null }
 }
 
@@ -104,7 +130,21 @@ function setCached(key,data){
 }
 
 function clearCache(){
-  localStorage.clear();
+  const keysToDelete = [];
+
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+
+    if (!key) {
+      continue;
+    }
+
+    if (key.startsWith("osm_") || key.startsWith("debug_")) {
+      keysToDelete.push(key);
+    }
+  }
+
+  keysToDelete.forEach((key) => localStorage.removeItem(key));
   location.reload();
 }
 
@@ -133,7 +173,35 @@ function dist(a,b){
   return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
 
-// ✅ midpoint matching (important)
+function pointToSegmentDistance(point, start, end){
+  const [lng, lat] = point;
+  const [lng1, lat1] = start;
+  const [lng2, lat2] = end;
+
+  const x = lng;
+  const y = lat;
+  const x1 = lng1;
+  const y1 = lat1;
+  const x2 = lng2;
+  const y2 = lat2;
+
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+
+  if (dx === 0 && dy === 0) {
+    return dist(point, start);
+  }
+
+  const t = Math.max(
+    0,
+    Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy))
+  );
+
+  const projected = [x1 + t * dx, y1 + t * dy];
+  return dist(point, projected);
+}
+
+// Midpoint-to-way distance using segment projection for better matching.
 function segmentToWayDistance(seg,wayCoords){
   const mid = [
     (seg[0][0]+seg[1][0])/2,
@@ -143,7 +211,7 @@ function segmentToWayDistance(seg,wayCoords){
   let best=Infinity;
 
   for(let i=0;i<wayCoords.length-1;i++){
-    const d=dist(mid, wayCoords[i]);
+    const d=pointToSegmentDistance(mid, wayCoords[i], wayCoords[i+1]);
     if(d<best) best=d;
   }
 
@@ -165,11 +233,13 @@ function extractLines(g){
 
 function bbox(lines){
   const c=lines.flat();
+  const pad = 0.004;
+
   return {
-    w:Math.min(...c.map(c=>c[0])),
-    e:Math.max(...c.map(c=>c[0])),
-    s:Math.min(...c.map(c=>c[1])),
-    n:Math.max(...c.map(c=>c[1]))
+    w:Math.min(...c.map(c=>c[0])) - pad,
+    e:Math.max(...c.map(c=>c[0])) + pad,
+    s:Math.min(...c.map(c=>c[1])) - pad,
+    n:Math.max(...c.map(c=>c[1])) + pad
   };
 }
 
@@ -230,33 +300,39 @@ out tags geom;`;
 
 // ---------- MAIN ----------
 document.getElementById("run").onclick = async () => {
-
   out.textContent="";
+  runButton.disabled = true;
 
-  const f=document.getElementById("file").files[0];
-  if(!f){
-    log("Pick a file");
-    return;
-  }
+  try {
+    const f=document.getElementById("file").files[0];
+    if(!f){
+      log("Pick a file");
+      return;
+    }
 
-  const geo=JSON.parse(await f.text());
-  const lines=extractLines(geo);
+    const geo=JSON.parse(await f.text());
+    const lines=extractLines(geo);
 
-  const debugKey=getDebugKey(lines);
-  const cached=getCached(debugKey);
+    if (!lines.length) {
+      throw new Error("No line geometry found in file.");
+    }
 
-  if(cached){
-    log("⚡ Using cached result");
+    const debugKey=getDebugKey(lines);
+    const cached=getCached(debugKey);
 
-    download("surface.geojson", cached.data.geojson);
-    log(JSON.stringify(cached.data.summary,null,2));
-    return;
-  }
+    if(cached){
+      log("⚡ Using cached result");
 
-  const ways = await fetchOSM(bbox(lines));
+      download("surface.geojson", cached.data.geojson);
+      download("route-surface-summary.json", cached.data.summary);
+      log(JSON.stringify(cached.data.summary,null,2));
+      return;
+    }
 
-  const features=[];
-  let totals={paved:0,unpaved:0,unknown:0};
+    const ways = await fetchOSM(bbox(lines));
+
+    const features=[];
+    let totals={paved:0,unpaved:0,unknown:0};
 
   // ✅ PER LINE SAFE LOOP
   for(const line of lines){
@@ -376,25 +452,39 @@ document.getElementById("run").onclick = async () => {
     }
   }
 
-  const summary={
-    pavedPercent:Math.round((totals.paved/(totals.paved+totals.unpaved+totals.unknown))*100),
-    unpavedPercent:Math.round((totals.unpaved/(totals.paved+totals.unpaved+totals.unknown))*100),
-    unknownPercent:Math.round((totals.unknown/(totals.paved+totals.unpaved+totals.unknown))*100)
-  };
+    const totalLength = totals.paved + totals.unpaved + totals.unknown;
 
-  log(JSON.stringify(summary,null,2));
+    const summary={
+      pavedPercent: totalLength > 0
+        ? Math.round((totals.paved / totalLength) * 100)
+        : 0,
+      unpavedPercent: totalLength > 0
+        ? Math.round((totals.unpaved / totalLength) * 100)
+        : 0,
+      unknownPercent: totalLength > 0
+        ? Math.round((totals.unknown / totalLength) * 100)
+        : 0
+    };
 
-  const final={
-    summary,
-    geojson:{
-      type:"FeatureCollection",
-      features
-    }
-  };
+    log(JSON.stringify(summary,null,2));
 
-  setCached(debugKey, final);
+    const final={
+      summary,
+      geojson:{
+        type:"FeatureCollection",
+        features
+      }
+    };
 
-  download("surface.geojson", final.geojson);
+    setCached(debugKey, final);
+
+    download("surface.geojson", final.geojson);
+    download("route-surface-summary.json", summary);
+  } catch (error) {
+    log("Error: " + (error?.message || String(error)));
+  } finally {
+    runButton.disabled = false;
+  }
 };
 
 function download(name,data){
