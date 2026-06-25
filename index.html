@@ -1948,7 +1948,8 @@
         }
       }
 
-      function centerMapOnRoute() {
+      function centerMapOnRoute(options = {}) {
+        const { duration = 800 } = options;
         if (!map || routeCoordinates.length === 0) {
           return;
         }
@@ -1988,7 +1989,7 @@
                 left: 60, // give more horizontal breathing room in landscape
                 right: 60,
               },
-              duration: 800,
+              duration,
             },
           );
         }
@@ -3371,12 +3372,13 @@
             if (!lastActualPosition && routeCoordinates.length > 0) {
               map.easeTo({
                 center: routeCoordinates[0],
-                zoom: 16,
-                duration: 900,
+                zoom: 15.8,
+                duration: 1400,
+                easing: (t) => t * (2 - t), // ease-out curve
               });
               lastViewCenter = routeCoordinates[0];
             }
-          }, 900);
+          }, 800);
         });
 
         map.on("movestart", () => {
