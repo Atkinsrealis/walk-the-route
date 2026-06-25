@@ -3368,16 +3368,16 @@
           setTimeout(() => {
             if (!routeCoordinates.length) return;
 
-            // Intro sequence: smooth zoom from UK view to route overview
-            centerMapOnRoute({ duration: 1600 }); // smooth 1.6s zoom to route bounds
+            // Intro sequence: ultra-smooth, slow zoom from UK view to route overview
+            centerMapOnRoute({ duration: 2200 }); // luxurious 2.2s zoom to route bounds
 
             setTimeout(() => {
               if (!lastActualPosition) {
                 map.easeTo({
                   center: routeCoordinates[0],
                   zoom: 15.8,
-                  duration: 1800,
-                  easing: (t) => t * (2 - t)
+                  duration: 2600,
+                  easing: (t) => 1 - Math.pow(1 - t, 3)  // smooth cubic ease-out
                 });
                 lastViewCenter = routeCoordinates[0];
               }
@@ -3385,8 +3385,8 @@
               // End intro after animation completes
               setTimeout(() => {
                 isIntro = false;
-              }, 1800);
-            }, 1700);  // wait for fitBounds to finish, then start ease to start
+              }, 2600);
+            }, 2300);  // wait for fitBounds to finish, then start ease to start
 
           }, 100); // small delay for route load
         });
