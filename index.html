@@ -3019,8 +3019,6 @@
           map.getSource("route").setData(routeFeature);
         }
 
-        setInitialMapView();
-
         if (routeSurfaceSummary) {
           createSurfaceTooltip(routeSurfaceSummary);
         }
@@ -3379,6 +3377,7 @@
                   center: routeCoordinates[0],
                   zoom: 15.8,
                   duration: 1400,
+                  easing: (t) => t * (2 - t)
                 });
                 lastViewCenter = routeCoordinates[0];
               }
