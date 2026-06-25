@@ -2997,6 +2997,10 @@
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
         const routeCard = document.getElementById("route-card");
 
+        if (isColdStartBadgeActive) {
+          return; // 🔒 nothing else can touch the badge
+        }
+
         if (
           hasGpsLock &&
           isColdStartBadgeActive &&
@@ -3676,6 +3680,9 @@
         resetColdStartBadgeFlow();
         updateColdStartBadge(Number.NaN);
         startColdStartBadgeTicker();
+        setTimeout(() => {
+          updateColdStartBadge(Number.NaN);
+        }, 0);
 
         // Show waiting message if first location takes too long
         firstLocationTimeout = setTimeout(() => {
