@@ -21,7 +21,6 @@ button {
   border-radius: 10px;
   border: 0;
   font-weight: 700;
-  cursor: pointer;
 }
 
 button.secondary {
@@ -61,6 +60,9 @@ const TIMEOUT_MS = 12000;
 const SEARCH_BUFFER = 50;
 const BBOX_PAD = 0.0015;
 
+// ✅ NEW: min segment filter (kills flicker)
+const MIN_SEGMENT_LENGTH = 10; // metres
+
 const COLORS = {
   paved:"#22c55e",
   unpaved:"#f59e0b",
@@ -72,6 +74,7 @@ const PAVED = new Set(["asphalt","paved","concrete","tarmac"]);
 const UNPAVED = new Set(["gravel","dirt","grass","earth"]);
 
 const out = document.getElementById("output");
+
 function log(m){ out.textContent += "\n" + m }
 
 // ---------- CACHE ----------
@@ -85,20 +88,17 @@ function getCacheKey(b){
 }
 
 function getDebugKey(lines){
-  const hash = lines.flat().slice(0,50).map(c=>c.join(",")).join("|");
-  return "debug_" + hash;
+  return "debug_" + lines.flat().slice(0,50).map(c=>c.join(",")).join("|");
 }
 
-function getCachedJSON(key){
-  try{
-    const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : null;
-  } catch {
-    return null;
-  }
+function getCached(key){
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null }
 }
 
-function setCachedJSON(key,data){
+function setCached(key, data){
   try{
     localStorage.setItem(key, JSON.stringify({
       timestamp: Date.now(),
@@ -116,9 +116,7 @@ function clearCache(){
 function fetchWithTimeout(url, options){
   return Promise.race([
     fetch(url, options),
-    new Promise((_,reject)=>
-      setTimeout(()=>reject(new Error("timeout")), TIMEOUT_MS)
-    )
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error("timeout")), TIMEOUT_MS))
   ]);
 }
 
@@ -130,7 +128,7 @@ function dist(a,b){
   const dLat=rad(b[1]-a[1]);
   const dLng=rad(b[0]-a[0]);
 
-  const x =
+  const x=
     Math.sin(dLat/2)**2 +
     Math.cos(rad(a[1]))*
     Math.cos(rad(b[1]))*
@@ -166,7 +164,8 @@ function wayDist(seg,coords){
 // ---------- ROUTE ----------
 function extractLines(g){
   const lines=[];
-  const add=x=>{
+
+  const add = x=>{
     if(!x) return;
     if(x.type==="LineString") lines.push(x.coordinates);
     if(x.type==="MultiLineString") x.coordinates.forEach(l=>lines.push(l));
@@ -180,10 +179,10 @@ function extractLines(g){
 }
 
 function split(lines){
-  return lines.flatMap(l=>{
+  return lines.flatMap(line=>{
     const segs=[];
-    for(let i=0;i<l.length-1;i++){
-      segs.push([l[i],l[i+1]]);
+    for(let i=0;i<line.length-1;i++){
+      segs.push([line[i],line[i+1]]);
     }
     return segs;
   });
@@ -199,13 +198,13 @@ function bbox(lines){
   };
 }
 
-// ---------- FETCH OSM ----------
+// ---------- OSM ----------
 async function fetchOSM(b){
   const key = getCacheKey(b);
 
-  const cached = getCachedJSON(key);
+  const cached = getCached(key);
   if(cached){
-    log("⚡ Using cached OSM data");
+    log("⚡ Using cached OSM");
     return cached.data;
   }
 
@@ -217,14 +216,12 @@ out tags geom;
 
   for(const url of OVERPASS_ENDPOINTS){
     try{
-      log("🌐 Trying: " + url);
+      log("🌐 Trying: "+url);
 
       const res = await fetchWithTimeout(url,{
         method:"POST",
         body:"data="+encodeURIComponent(query),
-        headers:{
-          "Content-Type":"application/x-www-form-urlencoded"
-        }
+        headers:{ "Content-Type":"application/x-www-form-urlencoded" }
       });
 
       if(!res.ok) continue;
@@ -238,12 +235,11 @@ out tags geom;
           coords:e.geometry.map(p=>[p.lon,p.lat])
         }));
 
-      setCachedJSON(key, ways);
-
+      setCached(key, ways);
       return ways;
 
     }catch(e){
-      log("❌ Failed ("+e.message+")");
+      log("❌ "+e.message);
     }
   }
 
@@ -258,6 +254,30 @@ function classify(tags){
     if(UNPAVED.has(s)) return "unpaved";
   }
   return "unknown";
+}
+
+// ---------- MERGE ----------
+function mergeSegmentsByType(segments){
+  const merged=[];
+  let current=null;
+
+  for(const seg of segments){
+    if(!current){
+      current={type:seg.type,coords:[...seg.coords]};
+      continue;
+    }
+
+    if(current.type===seg.type){
+      current.coords.push(seg.coords[1]);
+    } else {
+      merged.push(current);
+      current={type:seg.type,coords:[...seg.coords]};
+    }
+  }
+
+  if(current) merged.push(current);
+
+  return merged;
 }
 
 // ---------- DOWNLOAD ----------
@@ -282,21 +302,17 @@ document.getElementById("run").onclick=async()=>{
       return;
     }
 
-    log("Reading...");
     const geo=JSON.parse(await file.text());
-
     const lines=extractLines(geo);
 
     const debugKey=getDebugKey(lines);
-    const cachedDebug=getCachedJSON(debugKey);
+    const cachedDebug=getCached(debugKey);
 
     if(cachedDebug){
-      log("⚡ Using cached debug result");
-
-      log(JSON.stringify(cachedDebug.data.summary,null,2));
+      log("⚡ Using cached result");
 
       download("surface-debug.geojson",cachedDebug.data.geojson);
-
+      log(JSON.stringify(cachedDebug.data.summary,null,2));
       return;
     }
 
@@ -304,18 +320,14 @@ document.getElementById("run").onclick=async()=>{
     const ways=await fetchOSM(bbox(lines));
 
     let totals={paved:0,unpaved:0,unknown:0};
-    const features=[];
-
-    lines.forEach(line=>{
-      features.push({
-        type:"Feature",
-        properties:{stroke:COLORS.route,"stroke-width":4},
-        geometry:{type:"LineString",coordinates:line}
-      });
-    });
+    const classified=[];
 
     segs.forEach(seg=>{
-      const len=dist(seg[0],seg[1]);
+
+      const len = dist(seg[0],seg[1]);
+
+      // ✅ NEW: remove tiny segments
+      if(len < MIN_SEGMENT_LENGTH) return;
 
       let best=Infinity,nearest=null;
 
@@ -334,15 +346,39 @@ document.getElementById("run").onclick=async()=>{
 
       totals[type]+=len;
 
+      classified.push({type,coords:seg});
+    });
+
+    const merged = mergeSegmentsByType(classified);
+
+    const features=[];
+
+    // route layer
+    lines.forEach(line=>{
+      features.push({
+        type:"Feature",
+        properties:{stroke:COLORS.route,"stroke-width":4},
+        geometry:{type:"LineString",coordinates:line}
+      });
+    });
+
+    // merged segments
+    merged.forEach(seg=>{
+      const color =
+        seg.type==="paved" ? COLORS.paved :
+        seg.type==="unpaved" ? COLORS.unpaved :
+        COLORS.unknown;
+
       features.push({
         type:"Feature",
         properties:{
-          stroke:COLORS[type],
-          "stroke-width":3
+          stroke:color,
+          "stroke-width":5,
+          surface:seg.type
         },
         geometry:{
           type:"LineString",
-          coordinates:seg
+          coordinates:seg.coords
         }
       });
     });
@@ -357,17 +393,14 @@ document.getElementById("run").onclick=async()=>{
 
     log(JSON.stringify(summary,null,2));
 
-    const debugResult={
+    const debugData={
       summary,
-      geojson:{
-        type:"FeatureCollection",
-        features
-      }
+      geojson:{type:"FeatureCollection",features}
     };
 
-    setCachedJSON(debugKey, debugResult);
+    setCached(debugKey, debugData);
 
-    download("surface-debug.geojson", debugResult.geojson);
+    download("surface-debug.geojson",debugData.geojson);
 
   }catch(e){
     log("❌ "+e.message);
@@ -375,6 +408,5 @@ document.getElementById("run").onclick=async()=>{
 };
 
 </script>
-
 </body>
 </html>
