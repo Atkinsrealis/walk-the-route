@@ -1017,13 +1017,13 @@
         z-index: 999;
         pointer-events: none;
         background: linear-gradient(
-          90deg,
+          45deg,
           transparent,
-          rgba(255, 255, 255, 0.15),
+          rgba(255, 255, 255, 0.08),
           transparent
         );
         background-size: 1000px 100%;
-        animation: shimmer 2s infinite;
+        animation: shimmer 3.5s infinite;
         opacity: 0;
         transition: opacity 0.3s ease;
       }
@@ -3395,12 +3395,6 @@
           updateCompassButton();
           updateRouteCenterButtonLabel();
 
-          // Show shimmer overlay while waiting for GPS (during intro)
-          const shimmerOverlay = document.getElementById('shimmer-overlay');
-          if (shimmerOverlay) {
-            shimmerOverlay.classList.add('loading');
-          }
-
           // Wait for route to exist (important)
           setTimeout(() => {
             if (!routeCoordinates.length) return;
@@ -3419,9 +3413,15 @@
                 lastViewCenter = routeCoordinates[0];
               }
 
-              // End intro after animation completes
+              // End intro after animation completes and show shimmer while waiting for GPS
               setTimeout(() => {
                 isIntro = false;
+                
+                // Show shimmer after intro animation finishes
+                const shimmerOverlay = document.getElementById('shimmer-overlay');
+                if (shimmerOverlay) {
+                  shimmerOverlay.classList.add('loading');
+                }
               }, 2600);
             }, 3300);  // wait for fitBounds to finish, then start ease to start
 
