@@ -3368,8 +3368,8 @@
           setTimeout(() => {
             if (!routeCoordinates.length) return;
 
-            // Intro sequence: show full route then ease to start
-            centerMapOnRoute({ duration: 0 }); // instant overview
+            // Intro sequence: smooth zoom to full route overview
+            centerMapOnRoute({ duration: 1200 }); // smooth 1.2s zoom to route bounds
 
             setTimeout(() => {
               if (!lastActualPosition) {
@@ -3386,7 +3386,7 @@
               setTimeout(() => {
                 isIntro = false;
               }, 1400);
-            }, 800);
+            }, 1300);  // wait for fitBounds to finish, then start ease to start
 
           }, 100); // small delay for route load
         });
