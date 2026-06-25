@@ -1715,6 +1715,7 @@
       let lastSnappedPosition = null;
       let hasInitialPosition = false;
       let isWaitingForFirstLocation = true;
+      let isIntro = true;  // Track if we're in intro sequence
       let firstLocationTimeout = null;
       let lastWarningUpdate = 0;
       let lastWarningState = "";
@@ -2868,6 +2869,7 @@
 
       function updateMapView(lng, lat) {
         if (!map) return; // Map unavailable in fallback mode
+        if (isIntro) return;  // Skip updates during intro sequence
 
         // Use snapped position to keep route centered
         const displayPosition = lastSnappedPosition || [lng, lat];
@@ -3364,21 +3366,46 @@
           updateCompassButton();
           updateRouteCenterButtonLabel();
 
-          // Show full route first
-          centerMapOnRoute();
-
-          // Then ease to start point if no GPS position yet
+          // Wait for route to exist (important)
           setTimeout(() => {
-            if (!lastActualPosition && routeCoordinates.length > 0) {
-              map.easeTo({
-                center: routeCoordinates[0],
-                zoom: 15.8,
-                duration: 1400,
-                easing: (t) => t * (2 - t), // ease-out curve
+            if (!routeCoordinates.length) return;
+
+            const cachedPos = loadCachedPosition();
+
+            // ✅ If cached → go straight there (no intro)
+            if (cachedPos) {
+              map.jumpTo({
+                center: [cachedPos.lng, cachedPos.lat],
+                zoom: 16
               });
-              lastViewCenter = routeCoordinates[0];
+
+              lastViewCenter = [cachedPos.lng, cachedPos.lat];
+              isIntro = false;  // Skip intro for cached position
+              return;
             }
-          }, 800);
+
+            // ✅ Otherwise → proper intro sequence
+
+            centerMapOnRoute({ duration: 0 }); // instant overview
+
+            setTimeout(() => {
+              if (!lastActualPosition) {
+                map.easeTo({
+                  center: routeCoordinates[0],
+                  zoom: 15.8,
+                  duration: 1400,
+                  easing: (t) => t * (2 - t)
+                });
+
+                lastViewCenter = routeCoordinates[0];
+
+                setTimeout(() => {
+                  isIntro = false;  // End intro after animation
+                }, 1400);
+              }
+            }, 800);
+
+          }, 100); // small delay for route load
         });
 
         map.on("movestart", () => {
@@ -3419,13 +3446,7 @@
       }
 
       // Initialize map view once route is loaded
-      if (map) {
-        setTimeout(() => {
-          if (!hasInitialPosition && routeCoordinates.length > 0) {
-            initializeMapView();
-          }
-        }, 500);
-      }
+      // (removed - now handled in map.on('load'))
 
       if ("geolocation" in navigator) {
         // Show waiting message if first location takes too long
