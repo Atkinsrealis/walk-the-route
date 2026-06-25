@@ -1510,6 +1510,30 @@
       let isAppVisible = true;
       let geolocationWatchId = null;
 
+      // Load cached position to restore previous map state
+      function loadCachedPosition() {
+        try {
+          const cached = localStorage.getItem('lastKnownPosition');
+          if (cached) {
+            const pos = JSON.parse(cached);
+            if (pos && pos.lng && pos.lat && Date.now() - pos.timestamp < 86400000) { // 24 hour cache
+              return pos;
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to load cached position:', e);
+        }
+        return null;
+      }
+
+      function cachePosition(lng, lat) {
+        try {
+          localStorage.setItem('lastKnownPosition', JSON.stringify({ lng, lat, timestamp: Date.now() }));
+        } catch (e) {
+          console.warn('Failed to cache position:', e);
+        }
+      }
+
       const ROUTE_WARNING_DISTANCE = 300;
       const ROUTE_ALERT_DISTANCE = 600;
       const WARNING_UPDATE_INTERVAL = 4000; // Increased from 3000ms for battery efficiency
@@ -1690,6 +1714,8 @@
       let lastActualPosition = null;
       let lastSnappedPosition = null;
       let hasInitialPosition = false;
+      let isWaitingForFirstLocation = true;
+      let firstLocationTimeout = null;
       let lastWarningUpdate = 0;
       let lastWarningState = "";
       let lastViewCenter = null;
@@ -3293,6 +3319,38 @@
       restButton.classList.toggle("on", showRest);
       setHelpPanel(false);
 
+      // Center map on route start point while waiting for GPS
+      function setInitialViewToRouteStart() {
+        if (!map || !routeCoordinates.length) return;
+        
+        const startPoint = routeCoordinates[0];
+        map.flyTo({
+          center: startPoint,
+          zoom: 16.5,
+          speed: 1.2,
+          duration: 1500,
+        });
+        lastViewCenter = startPoint;
+      }
+
+      // Initialize with cached position if available, otherwise route start
+      function initializeMapView() {
+        if (!map) return;
+
+        const cachedPos = loadCachedPosition();
+        if (cachedPos) {
+          map.easeTo({
+            center: [cachedPos.lng, cachedPos.lat],
+            zoom: 16,
+            duration: 800,
+          });
+          lastViewCenter = [cachedPos.lng, cachedPos.lat];
+          showToast("Resuming from last position");
+        } else if (routeCoordinates.length > 0) {
+          setInitialViewToRouteStart();
+        }
+      }
+
       // Only set up map events if map is available
       if (map) {
         map.on("load", () => {
@@ -3343,11 +3401,39 @@
         loadRouteSurfaceSummary();
       }
 
+      // Initialize map view once route is loaded
+      if (map) {
+        setTimeout(() => {
+          if (!hasInitialPosition && routeCoordinates.length > 0) {
+            initializeMapView();
+          }
+        }, 500);
+      }
+
       if ("geolocation" in navigator) {
+        // Show waiting message if first location takes too long
+        firstLocationTimeout = setTimeout(() => {
+          if (isWaitingForFirstLocation) {
+            showWarning(
+              "📍 Acquiring GPS location... Check location permissions if stuck",
+              "help"
+            );
+          }
+        }, 8000);
+
         geolocationWatchId = navigator.geolocation.watchPosition(
           (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
+
+            // Clear waiting state on first location
+            if (isWaitingForFirstLocation) {
+              isWaitingForFirstLocation = false;
+              clearTimeout(firstLocationTimeout);
+            }
+
+            // Cache this position for session resume
+            cachePosition(lng, lat);
 
             if (!shouldProcessLocationUpdate(lng, lat)) {
               return;
@@ -3389,15 +3475,23 @@
             }
           },
           () => {
-            showWarning("Location access is unavailable or blocked", "alert");
+            if (isWaitingForFirstLocation) {
+              clearTimeout(firstLocationTimeout);
+              isWaitingForFirstLocation = false;
+              showWarning(
+                "📍 Location blocked – grant permission in settings to continue",
+                "alert"
+              );
+            }
           },
           {
             enableHighAccuracy: false,
-            maximumAge: 30000, // Increased from 20000ms - reuse cached positions for 30 seconds
+            maximumAge: 30000, // Reuse cached positions for 30 seconds
             timeout: 30000,
           },
         );
       } else {
+        isWaitingForFirstLocation = false;
         showWarning("Geolocation is not supported on this device", "alert");
       }
 
