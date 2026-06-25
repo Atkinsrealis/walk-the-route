@@ -3370,22 +3370,7 @@
           setTimeout(() => {
             if (!routeCoordinates.length) return;
 
-            const cachedPos = loadCachedPosition();
-
-            // ✅ If cached → go straight there (no intro)
-            if (cachedPos) {
-              map.jumpTo({
-                center: [cachedPos.lng, cachedPos.lat],
-                zoom: 16
-              });
-
-              lastViewCenter = [cachedPos.lng, cachedPos.lat];
-              isIntro = false;  // Skip intro for cached position
-              return;
-            }
-
-            // ✅ Otherwise → proper intro sequence
-
+            // Intro sequence: show full route then ease to start
             centerMapOnRoute({ duration: 0 }); // instant overview
 
             setTimeout(() => {
@@ -3394,15 +3379,14 @@
                   center: routeCoordinates[0],
                   zoom: 15.8,
                   duration: 1400,
-                  easing: (t) => t * (2 - t)
                 });
-
                 lastViewCenter = routeCoordinates[0];
-
-                setTimeout(() => {
-                  isIntro = false;  // End intro after animation
-                }, 1400);
               }
+
+              // End intro after animation completes
+              setTimeout(() => {
+                isIntro = false;
+              }, 1400);
             }, 800);
 
           }, 100); // small delay for route load
