@@ -1499,46 +1499,46 @@
           "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
       }
 
-const ROUTES = {
-  heathrow: {
-    name: "Heathrow",
-    fullName: "Heathrow Perimeter",
-    sourceLabel: "Heathrow perimeter",
-    geojsonUrl: "heathrow-perimeter-route.geojson",
-  },
+      const ROUTES = {
+        heathrow: {
+          name: "Heathrow",
+          fullName: "Heathrow Perimeter",
+          sourceLabel: "Heathrow perimeter",
+          geojsonUrl: "heathrow-perimeter-route.geojson",
+        },
 
-  bledlow: {
-    name: "Bledlow",
-    fullName: "Bledlow Test",
-    sourceLabel: "Bledlow test route",
-    geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
-  },
-};
+        bledlow: {
+          name: "Bledlow",
+          fullName: "Bledlow Test",
+          sourceLabel: "Bledlow test route",
+          geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
+        },
+      };
 
-const routeParams = new URLSearchParams(window.location.search);
-const requestedRouteKey = routeParams.get("route");
+      const routeParams = new URLSearchParams(window.location.search);
+      const requestedRouteKey = routeParams.get("route");
 
-let activeRouteKey = ROUTES[requestedRouteKey]
-  ? requestedRouteKey
-  : "heathrow";
+      let activeRouteKey = ROUTES[requestedRouteKey]
+        ? requestedRouteKey
+        : "heathrow";
 
-function getActiveRoute() {
-  return ROUTES[activeRouteKey] || ROUTES.heathrow;
-}
+      function getActiveRoute() {
+        return ROUTES[activeRouteKey] || ROUTES.heathrow;
+      }
 
-const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
+      const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
 
-window.routeDebug = {
-  search: window.location.search,
-  requestedRouteKey,
-  activeRouteKey,
-  routeGeoJsonUrl,
-  activeRoute: getActiveRoute(),
-};
+      window.routeDebug = {
+        search: window.location.search,
+        requestedRouteKey,
+        activeRouteKey,
+        routeGeoJsonUrl,
+        activeRoute: getActiveRoute(),
+      };
 
-console.log("Route debug:", window.routeDebug);
+      console.log("Route debug:", window.routeDebug);
 
-const fallbackRouteCoordinates = [
+      const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
         [-0.4552, 51.4706],
         [-0.4561, 51.4712],
@@ -3170,11 +3170,13 @@ const fallbackRouteCoordinates = [
             addRouteToMap(routeFeature);
             addRouteToMap(routeFeature);
 
-const routeSourceLabel = document.querySelector(".route-card__source");
+            const routeSourceLabel = document.querySelector(
+              ".route-card__source",
+            );
 
-if (routeSourceLabel) {
-  routeSourceLabel.textContent = `Route source: ${getActiveRoute().sourceLabel}`;
-}
+            if (routeSourceLabel) {
+              routeSourceLabel.textContent = `Route source: ${getActiveRoute().sourceLabel}`;
+            }
           })
           .catch((error) => {
             console.error(error);
