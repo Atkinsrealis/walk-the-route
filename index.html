@@ -1322,8 +1322,8 @@
         />
       </div>
 
-<h1 id="app-title">Perimeter Walk</h1>
-<p id="app-subtitle">Infrastructure Charity Event</p>
+      <h1 id="app-title">Perimeter Walk</h1>
+      <p id="app-subtitle">Infrastructure Charity Event</p>
     </div>
 
     <div class="route-test-switcher" aria-label="Test route switcher">
@@ -1549,33 +1549,33 @@
           "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
       }
 
-const ROUTES = {
-  heathrow: {
-    name: "Heathrow",
-    fullName: "Heathrow Perimeter",
-    sourceLabel: "Heathrow perimeter",
-    geojsonUrl: "heathrow-perimeter-route.geojson",
-    title: "Perimeter Walk",
-    subtitle: "Infrastructure Charity Event",
-    startLabel: "Start",
-    startDescription: "Route begins here",
-    finishLabel: "Finish",
-    finishDescription: "End of route",
-  },
+      const ROUTES = {
+        heathrow: {
+          name: "Heathrow",
+          fullName: "Heathrow Perimeter",
+          sourceLabel: "Heathrow perimeter",
+          geojsonUrl: "heathrow-perimeter-route.geojson",
+          title: "Perimeter Walk",
+          subtitle: "Infrastructure Charity Event",
+          startLabel: "Start",
+          startDescription: "Route begins here",
+          finishLabel: "Finish",
+          finishDescription: "End of route",
+        },
 
-  bledlow: {
-    name: "Bledlow",
-    fullName: "Bledlow Test",
-    sourceLabel: "Bledlow test route",
-    geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
-    title: "Bledlow Test",
-    subtitle: "GPS test route",
-    startLabel: "Test start",
-    startDescription: "Bledlow test route begins here",
-    finishLabel: "Test finish",
-    finishDescription: "Bledlow test route ends here",
-  },
-};
+        bledlow: {
+          name: "Bledlow",
+          fullName: "Bledlow Test",
+          sourceLabel: "Bledlow test route",
+          geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
+          title: "Bledlow Test",
+          subtitle: "GPS test route",
+          startLabel: "Test start",
+          startDescription: "Bledlow test route begins here",
+          finishLabel: "Test finish",
+          finishDescription: "Bledlow test route ends here",
+        },
+      };
       const routeParams = new URLSearchParams(window.location.search);
       const requestedRouteKey = routeParams.get("route");
 
@@ -1591,20 +1591,21 @@ const ROUTES = {
         return activeRouteKey === "heathrow";
       }
       function applyRouteHeaderText() {
-  const activeRoute = getActiveRoute();
-  const title = document.getElementById("app-title");
-  const subtitle = document.getElementById("app-subtitle");
+        const activeRoute = getActiveRoute();
+        const title = document.getElementById("app-title");
+        const subtitle = document.getElementById("app-subtitle");
 
-  if (title) {
-    title.textContent = activeRoute.title || "Perimeter Walk";
-  }
+        if (title) {
+          title.textContent = activeRoute.title || "Perimeter Walk";
+        }
 
-  if (subtitle) {
-    subtitle.textContent = activeRoute.subtitle || "Infrastructure Charity Event";
-  }
+        if (subtitle) {
+          subtitle.textContent =
+            activeRoute.subtitle || "Infrastructure Charity Event";
+        }
 
-  document.title = activeRoute.title || "Heathrow Perimeter Walk";
-}
+        document.title = activeRoute.title || "Heathrow Perimeter Walk";
+      }
       const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
 
       window.routeDebug = {
@@ -1620,18 +1621,18 @@ const ROUTES = {
       const heathrowRouteLink = document.getElementById("route-link-heathrow");
       const bledlowRouteLink = document.getElementById("route-link-bledlow");
 
-if (heathrowRouteLink && bledlowRouteLink) {
-  heathrowRouteLink.classList.toggle(
-    "active",
-    activeRouteKey === "heathrow",
-  );
-  bledlowRouteLink.classList.toggle(
-    "active",
-    activeRouteKey === "bledlow",
-  );
-}
+      if (heathrowRouteLink && bledlowRouteLink) {
+        heathrowRouteLink.classList.toggle(
+          "active",
+          activeRouteKey === "heathrow",
+        );
+        bledlowRouteLink.classList.toggle(
+          "active",
+          activeRouteKey === "bledlow",
+        );
+      }
 
-applyRouteHeaderText();
+      applyRouteHeaderText();
 
       const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
