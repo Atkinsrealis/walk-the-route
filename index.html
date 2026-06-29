@@ -1499,36 +1499,46 @@
           "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
       }
 
-      const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
+const ROUTES = {
+  heathrow: {
+    name: "Heathrow",
+    fullName: "Heathrow Perimeter",
+    sourceLabel: "Heathrow perimeter",
+    geojsonUrl: "heathrow-perimeter-route.geojson",
+  },
 
-      const ROUTES = {
-        heathrow: {
-          name: "Heathrow",
-          fullName: "Heathrow Perimeter",
-          sourceLabel: "Heathrow perimeter",
-          geojsonUrl: routeGeoJsonUrl,
-        },
+  bledlow: {
+    name: "Bledlow",
+    fullName: "Bledlow Test",
+    sourceLabel: "Bledlow test route",
+    geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
+  },
+};
 
-        bledlow: {
-          name: "Bledlow",
-          fullName: "Bledlow Test",
-          sourceLabel: "Bledlow test route",
-          geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
-        },
-      };
+const routeParams = new URLSearchParams(window.location.search);
+const requestedRouteKey = routeParams.get("route");
 
-      const routeParams = new URLSearchParams(window.location.search);
-      const requestedRouteKey = routeParams.get("route");
+let activeRouteKey = ROUTES[requestedRouteKey]
+  ? requestedRouteKey
+  : "heathrow";
 
-      let activeRouteKey = ROUTES[requestedRouteKey]
-        ? requestedRouteKey
-        : "heathrow";
+function getActiveRoute() {
+  return ROUTES[activeRouteKey] || ROUTES.heathrow;
+}
 
-      function getActiveRoute() {
-        return ROUTES[activeRouteKey] || ROUTES.heathrow;
-      }
+const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
 
-      const fallbackRouteCoordinates = [
+window.routeDebug = {
+  search: window.location.search,
+  requestedRouteKey,
+  activeRouteKey,
+  routeGeoJsonUrl,
+  activeRoute: getActiveRoute(),
+};
+
+console.log("Route debug:", window.routeDebug);
+
+const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
         [-0.4552, 51.4706],
         [-0.4561, 51.4712],
