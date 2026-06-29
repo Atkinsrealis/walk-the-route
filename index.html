@@ -1536,16 +1536,6 @@
 
       const ROUTE_WARNING_DISTANCE = 300;
       const ROUTE_ALERT_DISTANCE = 600;
-      const GPS_ACCURACY_HIGH_METERS = 15;
-      const GPS_ACCURACY_MEDIUM_METERS = 40;
-      const GPS_PREPARING_MIN_MS = 1400;
-      const GPS_LOCATING_MIN_MS = 2200;
-      const GPS_LOW_ACCURACY_MIN_MS = 1200;
-      const GPS_IMPROVING_MIN_MS = 1200;
-      const GPS_LOCK_STABLE_MIN_MS = 2000;
-      const GPS_LOCK_MIN_CONSECUTIVE_READS = 2;
-      const GPS_BADGE_HANDOFF_MS = 4500;
-      const GPS_BADGE_TICK_MS = 250;
       const WARNING_UPDATE_INTERVAL = 4000; // Increased from 3000ms for battery efficiency
       const VIEW_UPDATE_DISTANCE = 30; // Increased from 25m to reduce map pans
       const MIN_SPEED_FOR_FOLLOW = 0.4;
@@ -1747,16 +1737,6 @@
       let surfaceTooltipMoveTimer = null;
       let isMapInteracting = false;
       let isCompassVisible = false;
-      let hasGpsLock = false;
-      let gpsLockTimeMs = 0;
-      let isColdStartBadgeActive = true;
-      let coldStartBadgePhase = "preparing";
-      let coldStartBadgePhaseStartMs = Date.now();
-      let locatingShownAtMs = 0;
-      let highAccuracyStreak = 0;
-      let highAccuracyFirstSeenMs = 0;
-      let lastGpsAccuracyMeters = Number.NaN;
-      let coldStartBadgeTimerId = null;
 
       const hazards = [
         {
@@ -2694,216 +2674,6 @@
         return `${Math.round(distance)} m`;
       }
 
-      function updateColdStartBadge(accuracyMeters) {
-        const routeBadge = document.getElementById(ROUTE_BADGE_ID);
-        const now = Date.now();
-
-        if (!routeBadge) {
-          return;
-        }
-
-        if (
-          hasGpsLock &&
-          isColdStartBadgeActive &&
-          now - gpsLockTimeMs >= GPS_BADGE_HANDOFF_MS
-        ) {
-          isColdStartBadgeActive = false;
-          stopColdStartBadgeTicker();
-        }
-
-        if (!isColdStartBadgeActive && hasGpsLock) {
-          return;
-        }
-
-        const setPhase = (phase) => {
-          if (coldStartBadgePhase !== phase) {
-            coldStartBadgePhase = phase;
-            coldStartBadgePhaseStartMs = now;
-
-            if (phase === "locating") {
-              locatingShownAtMs = now;
-            } else {
-              locatingShownAtMs = 0;
-            }
-          }
-        };
-
-        const setBadge = (text, level = "") => {
-          routeBadge.textContent = text;
-          routeBadge.className = `route-card__badge ${level}`.trim();
-        };
-
-        const hasAccuracy = Number.isFinite(accuracyMeters);
-        const safeAccuracy = hasAccuracy ? Math.max(0, accuracyMeters) : Number.NaN;
-        const roundedAccuracy = hasAccuracy ? Math.round(safeAccuracy) : null;
-        const isHighAccuracy = hasAccuracy && safeAccuracy <= GPS_ACCURACY_HIGH_METERS;
-
-        if (isHighAccuracy) {
-          highAccuracyStreak += 1;
-
-          if (!highAccuracyFirstSeenMs) {
-            highAccuracyFirstSeenMs = now;
-          }
-        } else {
-          highAccuracyStreak = 0;
-          highAccuracyFirstSeenMs = 0;
-        }
-
-        const lockStableByStreak = highAccuracyStreak >= GPS_LOCK_MIN_CONSECUTIVE_READS;
-        const lockStableByTime =
-          highAccuracyFirstSeenMs > 0 &&
-          now - highAccuracyFirstSeenMs >= GPS_LOCK_STABLE_MIN_MS;
-        const isLockStable = lockStableByStreak || lockStableByTime;
-
-        if (coldStartBadgePhase === "preparing") {
-          if (now - coldStartBadgePhaseStartMs >= GPS_PREPARING_MIN_MS) {
-            setPhase("locating");
-            setBadge("Locating", "warning");
-            return;
-          }
-
-          setBadge("Preparing");
-
-          return;
-        }
-
-        if (coldStartBadgePhase === "locating") {
-          setBadge("Locating", "warning");
-
-          if (!locatingShownAtMs) {
-            locatingShownAtMs = now;
-          }
-
-          if (now - locatingShownAtMs < GPS_LOCATING_MIN_MS) {
-            return;
-          }
-
-          if (!hasAccuracy) {
-            return;
-          }
-
-          if (safeAccuracy > GPS_ACCURACY_MEDIUM_METERS) {
-            setPhase("low");
-            setBadge(`Low accuracy (±${roundedAccuracy}m)`, "warning");
-            return;
-          }
-
-          if (isLockStable) {
-            setPhase("locked");
-            setBadge(`GPS locked (±${roundedAccuracy}m)`);
-
-            if (!hasGpsLock) {
-              gpsLockTimeMs = now;
-            }
-
-            hasGpsLock = true;
-            return;
-          }
-
-          setPhase("improving");
-          setBadge(`Improving (±${roundedAccuracy}m)`, "warning");
-          return;
-        }
-
-        if (coldStartBadgePhase === "low") {
-          if (!hasAccuracy) {
-            setBadge("Low accuracy", "warning");
-            return;
-          }
-
-          setBadge(`Low accuracy (±${roundedAccuracy}m)`, "warning");
-
-          if (now - coldStartBadgePhaseStartMs < GPS_LOW_ACCURACY_MIN_MS) {
-            return;
-          }
-
-          if (safeAccuracy <= GPS_ACCURACY_MEDIUM_METERS) {
-            setPhase("improving");
-          }
-
-          return;
-        }
-
-        if (coldStartBadgePhase === "improving") {
-          if (!hasAccuracy) {
-            setBadge("Improving", "warning");
-            return;
-          }
-
-          if (safeAccuracy > GPS_ACCURACY_MEDIUM_METERS) {
-            setPhase("low");
-            setBadge(`Low accuracy (±${roundedAccuracy}m)`, "warning");
-            return;
-          }
-
-          setBadge(`Improving (±${roundedAccuracy}m)`, "warning");
-
-          if (
-            isLockStable &&
-            now - coldStartBadgePhaseStartMs >= GPS_IMPROVING_MIN_MS
-          ) {
-            setPhase("locked");
-            setBadge(`GPS locked (±${roundedAccuracy}m)`);
-
-            if (!hasGpsLock) {
-              gpsLockTimeMs = now;
-            }
-
-            hasGpsLock = true;
-          }
-
-          return;
-        }
-
-        if (coldStartBadgePhase === "locked") {
-          if (hasAccuracy) {
-            setBadge(`GPS locked (±${roundedAccuracy}m)`);
-          } else {
-            setBadge("GPS locked");
-          }
-
-          if (!hasGpsLock) {
-            gpsLockTimeMs = now;
-          }
-
-          hasGpsLock = true;
-          return;
-        }
-
-        setBadge("Locating", "warning");
-      }
-
-      function resetColdStartBadgeFlow() {
-        hasGpsLock = false;
-        gpsLockTimeMs = 0;
-        isColdStartBadgeActive = true;
-        coldStartBadgePhase = "preparing";
-        coldStartBadgePhaseStartMs = Date.now();
-        locatingShownAtMs = 0;
-        highAccuracyStreak = 0;
-        highAccuracyFirstSeenMs = 0;
-        lastGpsAccuracyMeters = Number.NaN;
-      }
-
-      function startColdStartBadgeTicker() {
-        if (coldStartBadgeTimerId) {
-          return;
-        }
-
-        coldStartBadgeTimerId = window.setInterval(() => {
-          updateColdStartBadge(lastGpsAccuracyMeters);
-        }, GPS_BADGE_TICK_MS);
-      }
-
-      function stopColdStartBadgeTicker() {
-        if (!coldStartBadgeTimerId) {
-          return;
-        }
-
-        window.clearInterval(coldStartBadgeTimerId);
-        coldStartBadgeTimerId = null;
-      }
-
       function getRouteProgress(userPoint) {
         if (routeCoordinates.length < 2) {
           return 0;
@@ -2997,22 +2767,9 @@
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
         const routeCard = document.getElementById("route-card");
 
-        if (isColdStartBadgeActive) {
-          return; // 🔒 nothing else can touch the badge
-        }
-
-        if (
-          hasGpsLock &&
-          isColdStartBadgeActive &&
-          Date.now() - gpsLockTimeMs >= GPS_BADGE_HANDOFF_MS
-        ) {
-          isColdStartBadgeActive = false;
-          stopColdStartBadgeTicker();
-        }
-
         const hasValidDistance = Number.isFinite(distance);
         if (routeCard) {
-          routeCard.classList.toggle("is-locating", !hasGpsLock);
+          routeCard.classList.toggle("is-locating", !hasValidDistance);
         }
         const normalizedDistance = hasValidDistance
           ? Math.max(0, distance)
@@ -3027,10 +2784,8 @@
         if (!hasValidDistance || normalizedDistance === null) {
           progressValue.textContent = `Section 1/${TOTAL_SEGMENTS}`;
           distanceValue.textContent = "Waiting for start";
-          return;
-        }
-
-        if (!hasGpsLock || isColdStartBadgeActive) {
+          routeBadge.textContent = "Preparing";
+          routeBadge.className = "route-card__badge";
           return;
         }
 
@@ -3677,13 +3432,6 @@
       // (removed - now handled in map.on('load'))
 
       if ("geolocation" in navigator) {
-        resetColdStartBadgeFlow();
-        updateColdStartBadge(Number.NaN);
-        startColdStartBadgeTicker();
-        setTimeout(() => {
-          updateColdStartBadge(Number.NaN);
-        }, 0);
-
         // Show waiting message if first location takes too long
         firstLocationTimeout = setTimeout(() => {
           if (isWaitingForFirstLocation) {
@@ -3698,11 +3446,6 @@
           (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
-            const accuracy = position.coords.accuracy;
-
-            lastGpsAccuracyMeters = accuracy;
-
-            updateColdStartBadge(accuracy);
 
             // Clear waiting state on first location
             if (isWaitingForFirstLocation) {
