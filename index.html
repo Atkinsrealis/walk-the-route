@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
@@ -20,18 +20,24 @@
     <link
       href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
       rel="stylesheet"
-      onerror="window.MAPBOX_LOAD_FAILED = true; initFallbackUI();"
+      onerror="
+        window.MAPBOX_LOAD_FAILED = true;
+        initFallbackUI();
+      "
     />
 
-    <script 
+    <script
       src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"
-      onerror="window.MAPBOX_LOAD_FAILED = true; initFallbackUI();"
+      onerror="
+        window.MAPBOX_LOAD_FAILED = true;
+        initFallbackUI();
+      "
     ></script>
     <script>
       // Detect if Mapbox fails to load within a timeout
       window.MAPBOX_LOAD_FAILED = false;
       setTimeout(() => {
-        if (typeof mapboxgl === 'undefined') {
+        if (typeof mapboxgl === "undefined") {
           window.MAPBOX_LOAD_FAILED = true;
           initFallbackUI();
         }
@@ -1418,7 +1424,10 @@
         </div>
         <div id="fallback-segments" class="fallback-segments"></div>
         <div class="fallback-info">
-          <p>🚨 Hazards and rest stops still tracked. Check "Need help" for locations.</p>
+          <p>
+            🚨 Hazards and rest stops still tracked. Check "Need help" for
+            locations.
+          </p>
         </div>
       </div>
     </div>
@@ -1485,12 +1494,40 @@
     </div>
     <script>
       // Only set token if Mapbox is loaded
-      if (typeof mapboxgl !== 'undefined') {
+      if (typeof mapboxgl !== "undefined") {
         mapboxgl.accessToken =
           "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
       }
 
       const routeGeoJsonUrl = "heathrow-perimeter-route.geojson";
+
+      const ROUTES = {
+        heathrow: {
+          name: "Heathrow",
+          fullName: "Heathrow Perimeter",
+          sourceLabel: "Heathrow perimeter",
+          geojsonUrl: routeGeoJsonUrl,
+        },
+
+        bledlow: {
+          name: "Bledlow",
+          fullName: "Bledlow Test",
+          sourceLabel: "Bledlow test route",
+          geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
+        },
+      };
+
+      const routeParams = new URLSearchParams(window.location.search);
+      const requestedRouteKey = routeParams.get("route");
+
+      let activeRouteKey = ROUTES[requestedRouteKey]
+        ? requestedRouteKey
+        : "heathrow";
+
+      function getActiveRoute() {
+        return ROUTES[activeRouteKey] || ROUTES.heathrow;
+      }
+
       const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
         [-0.4552, 51.4706],
@@ -1513,24 +1550,33 @@
       // Load cached position to restore previous map state
       function loadCachedPosition() {
         try {
-          const cached = localStorage.getItem('lastKnownPosition');
+          const cached = localStorage.getItem("lastKnownPosition");
           if (cached) {
             const pos = JSON.parse(cached);
-            if (pos && pos.lng && pos.lat && Date.now() - pos.timestamp < 86400000) { // 24 hour cache
+            if (
+              pos &&
+              pos.lng &&
+              pos.lat &&
+              Date.now() - pos.timestamp < 86400000
+            ) {
+              // 24 hour cache
               return pos;
             }
           }
         } catch (e) {
-          console.warn('Failed to load cached position:', e);
+          console.warn("Failed to load cached position:", e);
         }
         return null;
       }
 
       function cachePosition(lng, lat) {
         try {
-          localStorage.setItem('lastKnownPosition', JSON.stringify({ lng, lat, timestamp: Date.now() }));
+          localStorage.setItem(
+            "lastKnownPosition",
+            JSON.stringify({ lng, lat, timestamp: Date.now() }),
+          );
         } catch (e) {
-          console.warn('Failed to cache position:', e);
+          console.warn("Failed to cache position:", e);
         }
       }
 
@@ -1603,7 +1649,9 @@
         const lastIndex = Math.max(0, coordinateCount - 1);
 
         return SEGMENT_TEMPLATES.map((segmentTemplate, index) => {
-          const startIdx = Math.floor((index * coordinateCount) / TOTAL_SEGMENTS);
+          const startIdx = Math.floor(
+            (index * coordinateCount) / TOTAL_SEGMENTS,
+          );
           let endIdx =
             Math.floor(((index + 1) * coordinateCount) / TOTAL_SEGMENTS) - 1;
 
@@ -1627,11 +1675,11 @@
       function initFallbackUI() {
         const mapContainer = document.getElementById("map");
         const fallbackContainer = document.getElementById("fallback-container");
-        
+
         if (mapContainer) {
           mapContainer.style.display = "none";
         }
-        
+
         if (fallbackContainer) {
           fallbackContainer.removeAttribute("hidden");
         }
@@ -1640,29 +1688,36 @@
         const segmentsContainer = document.getElementById("fallback-segments");
         if (segmentsContainer) {
           const segments = getRouteSegments();
-          segmentsContainer.innerHTML = segments.map(seg => `
+          segmentsContainer.innerHTML = segments
+            .map(
+              (seg) => `
             <div class="fallback-segment-item">
               <div class="fallback-segment-name">${seg.name}</div>
               <div class="fallback-segment-milestone">Next: ${seg.milestone}</div>
             </div>
-          `).join("");
+          `,
+            )
+            .join("");
         }
 
         showWarning(
           "Map service unavailable – using text-based navigation",
-          "warning"
+          "warning",
         );
       }
 
-      function updateFallbackDisplay(distanceToRoute, routeProgress, segmentInfo) {
+      function updateFallbackDisplay(
+        distanceToRoute,
+        routeProgress,
+        segmentInfo,
+      ) {
         const distanceEl = document.getElementById("fallback-distance");
         const progressEl = document.getElementById("fallback-progress");
         const segmentEl = document.getElementById("fallback-segment");
 
         if (distanceEl) {
-          distanceEl.textContent = distanceToRoute !== null 
-            ? `${Math.round(distanceToRoute)}m` 
-            : "—";
+          distanceEl.textContent =
+            distanceToRoute !== null ? `${Math.round(distanceToRoute)}m` : "—";
         }
 
         if (progressEl) {
@@ -1686,7 +1741,7 @@
       }
 
       // Only initialize map if Mapbox is available
-      if (typeof mapboxgl !== 'undefined' && !window.MAPBOX_LOAD_FAILED) {
+      if (typeof mapboxgl !== "undefined" && !window.MAPBOX_LOAD_FAILED) {
         try {
           mapboxgl.accessToken =
             "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
@@ -1694,8 +1749,8 @@
           map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/dark-v11",
-            center: [-2, 54],  // UK center view
-            zoom: 4,  // zoomed to UK level
+            center: [-2, 54], // UK center view
+            zoom: 4, // zoomed to UK level
             pitch: 0,
             bearing: 0,
             attributionControl: false,
@@ -1715,7 +1770,7 @@
       let lastSnappedPosition = null;
       let hasInitialPosition = false;
       let isWaitingForFirstLocation = true;
-      let isIntro = true;  // Track if we're in intro sequence
+      let isIntro = true; // Track if we're in intro sequence
       let firstLocationTimeout = null;
       let lastWarningUpdate = 0;
       let lastWarningState = "";
@@ -2869,7 +2924,7 @@
 
       function updateMapView(lng, lat) {
         if (!map) return; // Map unavailable in fallback mode
-        if (isIntro) return;  // Skip updates during intro sequence
+        if (isIntro) return; // Skip updates during intro sequence
 
         // Use snapped position to keep route centered
         const displayPosition = lastSnappedPosition || [lng, lat];
@@ -3323,7 +3378,7 @@
       // Center map on route start point while waiting for GPS
       function setInitialViewToRouteStart() {
         if (!map || !routeCoordinates.length) return;
-        
+
         const startPoint = routeCoordinates[0];
         map.flyTo({
           center: startPoint,
@@ -3377,7 +3432,7 @@
                   center: routeCoordinates[0],
                   zoom: 15.8,
                   duration: 2600,
-                  easing: (t) => 1 - Math.pow(1 - t, 3)  // smooth cubic ease-out
+                  easing: (t) => 1 - Math.pow(1 - t, 3), // smooth cubic ease-out
                 });
                 lastViewCenter = routeCoordinates[0];
               }
@@ -3386,8 +3441,7 @@
               setTimeout(() => {
                 isIntro = false;
               }, 2600);
-            }, 3300);  // wait for fitBounds to finish, then start ease to start
-
+            }, 3300); // wait for fitBounds to finish, then start ease to start
           }, 100); // small delay for route load
         });
 
@@ -3437,7 +3491,7 @@
           if (isWaitingForFirstLocation) {
             showWarning(
               "📍 Acquiring GPS location... Check location permissions if stuck",
-              "help"
+              "help",
             );
           }
         }, 8000);
@@ -3501,7 +3555,7 @@
               isWaitingForFirstLocation = false;
               showWarning(
                 "📍 Location blocked – grant permission in settings to continue",
-                "alert"
+                "alert",
               );
             }
           },
