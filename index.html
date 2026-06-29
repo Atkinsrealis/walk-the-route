@@ -2683,6 +2683,11 @@ function getNextHazardAhead(userPoint) {
       }
 
       function createSurfaceTooltip(surface) {
+        
+  if (!isHeathrowRoute()) {
+    return;
+  }
+
         const displayText = getSurfaceDisplayText(surface);
 
         if (!displayText) {
@@ -2793,26 +2798,32 @@ function getNextHazardAhead(userPoint) {
         }, 280);
       }
 
-      function loadRouteSurfaceSummary() {
-        fetch("route-surface-summary.json")
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error("Surface summary not available");
-            }
+function loadRouteSurfaceSummary() {
+  if (!isHeathrowRoute()) {
+    routeSurfaceSummary = null;
+    hideSurfaceTooltip();
+    return;
+  }
 
-            return response.json();
-          })
-          .then((surface) => {
-            routeSurfaceSummary = surface;
-
-            if (routeCoordinates.length > 0) {
-              createSurfaceTooltip(routeSurfaceSummary);
-            }
-          })
-          .catch((error) => {
-            console.warn("Surface summary not loaded:", error);
-          });
+  fetch("route-surface-summary.json")
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Surface summary not available");
       }
+
+      return response.json();
+    })
+    .then((surface) => {
+      routeSurfaceSummary = surface;
+
+      if (routeCoordinates.length > 0) {
+        createSurfaceTooltip(routeSurfaceSummary);
+      }
+    })
+    .catch((error) => {
+      console.warn("Surface summary not loaded:", error);
+    });
+}
 
       function showToast(message) {
         const toast = document.getElementById("toast");
