@@ -1,11 +1,12 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v25";
-const MAPBOX_CACHE_NAME = "heathrow-mapbox-v1";
+const CACHE_NAME = "heathrow-perimeter-walk-v26";
+const MAPBOX_CACHE_NAME = "heathrow-mapbox-v2";
 
 const APP_ASSETS = [
   "/",
   "/index.html",
   "/manifest.json",
   "/heathrow-perimeter-route.geojson",
+  "/bledlow test/bledlow-test-route.geojson",
   "/route-surface-summary.json",
   "/assets/heathrow-logo-white.svg",
   "/Icons/icon-192.png",
@@ -40,7 +41,10 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .filter(
+            (cacheName) =>
+              cacheName !== CACHE_NAME && cacheName !== MAPBOX_CACHE_NAME
+          )
           .map((cacheName) => caches.delete(cacheName))
       );
     })
@@ -90,6 +94,24 @@ self.addEventListener("fetch", (event) => {
     Let other external resources go straight to the network.
   */
   if (requestUrl.origin !== self.location.origin) {
+    return;
+  }
+
+  const isRouteGeoJsonRequest =
+    requestUrl.pathname === "/heathrow-perimeter-route.geojson" ||
+    requestUrl.pathname === "/bledlow test/bledlow-test-route.geojson";
+
+  if (isRouteGeoJsonRequest) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+          });
+        })
+        .catch(() => caches.match(request))
+    );
     return;
   }
 

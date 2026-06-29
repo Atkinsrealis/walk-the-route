@@ -147,9 +147,63 @@
       .topbar p {
         transform: translateY(15px);
       }
+
+      .route-switcher {
+        position: fixed;
+        top: calc(92px + env(safe-area-inset-top));
+        left: 16px;
+        right: 16px;
+        z-index: 11;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .route-switcher__button {
+        flex: 1;
+        border: 1px solid rgba(124, 58, 237, 0.35);
+        border-radius: 999px;
+        background: rgba(6, 11, 24, 0.88);
+        color: rgba(255, 255, 255, 0.82);
+        padding: 9px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition:
+          background 0.2s ease,
+          color 0.2s ease,
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+
+      .route-switcher__button.active {
+        background: rgba(124, 58, 237, 0.2);
+        border-color: rgba(196, 181, 253, 0.9);
+        color: #fff;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+      }
+
+      .route-name-pill {
+        position: fixed;
+        top: calc(132px + env(safe-area-inset-top));
+        left: 16px;
+        z-index: 11;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(6, 11, 24, 0.88);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
       .warning {
         position: fixed;
-        top: calc(96px + env(safe-area-inset-top));
+        top: calc(166px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         color: white;
@@ -185,7 +239,7 @@
 
       .route-card {
         position: fixed;
-        top: calc(154px + env(safe-area-inset-top));
+        top: calc(224px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         z-index: 19;
@@ -1145,15 +1199,34 @@
         }
 
         .warning {
-          top: calc(94px + env(safe-area-inset-top));
+          top: calc(162px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
           font-size: 13px;
         }
 
+        .route-switcher {
+          top: calc(90px + env(safe-area-inset-top));
+          left: 12px;
+          right: 12px;
+          gap: 7px;
+        }
+
+        .route-switcher__button {
+          padding: 8px 10px;
+          font-size: 12px;
+        }
+
+        .route-name-pill {
+          top: calc(126px + env(safe-area-inset-top));
+          left: 12px;
+          font-size: 10px;
+          padding: 5px 8px;
+        }
+
         .route-card {
-          top: calc(148px + env(safe-area-inset-top));
+          top: calc(216px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -1213,6 +1286,8 @@
 
       @media screen and (orientation: landscape) and (max-height: 520px) and (pointer: coarse) {
         .topbar,
+        .route-switcher,
+        .route-name-pill,
         .warning,
         .route-card,
         .bottom-panel,
@@ -1279,6 +1354,17 @@
 
     <div class="warning" id="warning">You may be off the official route</div>
 
+    <div class="route-switcher" id="route-switcher" aria-label="Select route">
+      <button class="route-switcher__button active" data-route-key="heathrow">
+        Heathrow
+      </button>
+      <button class="route-switcher__button" data-route-key="bledlow">
+        Bledlow
+      </button>
+    </div>
+
+    <div class="route-name-pill" id="active-route-label">Heathrow Perimeter</div>
+
     <div class="route-card is-locating" id="route-card">
       <div class="route-card__main">
         <div class="route-card__text">
@@ -1289,7 +1375,7 @@
         <div class="route-card__meta">
           <span id="distance-value">Finding your position</span>
           <span id="next-thing-value">Next: checking route…</span>
-          <span class="route-card__source"
+          <span class="route-card__source" id="route-source-label"
             >Route source: Heathrow perimeter</span
           >
         </div>
@@ -1490,7 +1576,20 @@
           "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
       }
 
-      const routeGeoJsonUrl = "heathrow-perimeter-route.geojson";
+      const ROUTES = {
+        heathrow: {
+          name: "Heathrow Perimeter",
+          geojsonUrl: "/heathrow-perimeter-route.geojson",
+          center: [-0.4605, 51.4725],
+        },
+        bledlow: {
+          name: "Bledlow Test",
+          geojsonUrl: "/bledlow test/bledlow-test-route.geojson",
+          center: [-0.82, 51.69],
+        },
+      };
+      const routeGeoJsonCache = {};
+      let activeRouteKey = "heathrow";
       const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
         [-0.4552, 51.4706],
@@ -1513,7 +1612,7 @@
       // Load cached position to restore previous map state
       function loadCachedPosition() {
         try {
-          const cached = localStorage.getItem('lastKnownPosition');
+          const cached = localStorage.getItem(getPositionCacheKey(activeRouteKey));
           if (cached) {
             const pos = JSON.parse(cached);
             if (pos && pos.lng && pos.lat && Date.now() - pos.timestamp < 86400000) { // 24 hour cache
@@ -1528,10 +1627,17 @@
 
       function cachePosition(lng, lat) {
         try {
-          localStorage.setItem('lastKnownPosition', JSON.stringify({ lng, lat, timestamp: Date.now() }));
+          localStorage.setItem(
+            getPositionCacheKey(activeRouteKey),
+            JSON.stringify({ lng, lat, timestamp: Date.now() }),
+          );
         } catch (e) {
           console.warn('Failed to cache position:', e);
         }
+      }
+
+      function getPositionCacheKey(routeKey) {
+        return `lastKnownPosition:${routeKey}`;
       }
 
       const ROUTE_WARNING_DISTANCE = 300;
@@ -1551,6 +1657,8 @@
       const PROGRESS_VALUE_ID = "progress-value";
       const ROUTE_BADGE_ID = "route-badge";
       const NEXT_THING_VALUE_ID = "next-thing-value";
+      const ROUTE_SOURCE_LABEL_ID = "route-source-label";
+      const ACTIVE_ROUTE_LABEL_ID = "active-route-label";
       const ROUTE_CENTER_BUTTON_ID = "route-center-button";
       const FOLLOW_TOGGLE_BUTTON_ID = "follow-toggle-button";
       const COMPASS_BUTTON_ID = "compass-button";
@@ -1737,6 +1845,9 @@
       let surfaceTooltipMoveTimer = null;
       let isMapInteracting = false;
       let isCompassVisible = false;
+      let hasGpsLock = false;
+      let routeStartMarker = null;
+      let routeFinishMarker = null;
 
       const hazards = [
         {
@@ -1782,20 +1893,22 @@
       ];
 
       // HAZARDS
-      hazards.forEach((h) => {
-        const marker = new mapboxgl.Marker({ color: "#ef4444" })
-          .setLngLat([h.lng, h.lat])
-          .setPopup(
-            new mapboxgl.Popup().setHTML(
-              `<strong>${h.type}</strong><p>${h.message}</p>`,
-            ),
-          )
-          .addTo(map);
+      if (map && typeof mapboxgl !== "undefined") {
+        hazards.forEach((h) => {
+          const marker = new mapboxgl.Marker({ color: "#ef4444" })
+            .setLngLat([h.lng, h.lat])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(
+                `<strong>${h.type}</strong><p>${h.message}</p>`,
+              ),
+            )
+            .addTo(map);
 
-        marker.getElement().style.display = showHazards ? "block" : "none";
+          marker.getElement().style.display = showHazards ? "block" : "none";
 
-        hazardMarkers.push(marker);
-      });
+          hazardMarkers.push(marker);
+        });
+      }
 
       // REST STOPS
       const restStops = [
@@ -1803,16 +1916,18 @@
         { lng: -0.4665, lat: 51.475, label: "Rest Area" },
       ];
 
-      restStops.forEach((r) => {
-        const marker = new mapboxgl.Marker({ color: "#3b82f6" })
-          .setLngLat([r.lng, r.lat])
-          .setPopup(new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`))
-          .addTo(map);
+      if (map && typeof mapboxgl !== "undefined") {
+        restStops.forEach((r) => {
+          const marker = new mapboxgl.Marker({ color: "#3b82f6" })
+            .setLngLat([r.lng, r.lat])
+            .setPopup(new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`))
+            .addTo(map);
 
-        marker.getElement().style.display = showRest ? "block" : "none";
+          marker.getElement().style.display = showRest ? "block" : "none";
 
-        restMarkers.push(marker);
-      });
+          restMarkers.push(marker);
+        });
+      }
 
       function toRadians(value) {
         return value * (Math.PI / 180);
@@ -2968,8 +3083,149 @@
         };
       }
 
+      function normalizeRouteFeature(geojson) {
+        let routeFeature = geojson;
+
+        if (
+          geojson &&
+          geojson.type === "FeatureCollection" &&
+          Array.isArray(geojson.features)
+        ) {
+          routeFeature =
+            geojson.features.find(
+              (feature) =>
+                feature &&
+                feature.geometry &&
+                (feature.geometry.type === "LineString" ||
+                  feature.geometry.type === "MultiLineString"),
+            ) || geojson.features[0];
+        }
+
+        if (routeFeature && routeFeature.type === "FeatureCollection") {
+          routeFeature =
+            routeFeature.features.find(
+              (feature) =>
+                feature &&
+                feature.geometry &&
+                (feature.geometry.type === "LineString" ||
+                  feature.geometry.type === "MultiLineString"),
+            ) || routeFeature.features[0];
+        }
+
+        const geometry = routeFeature && routeFeature.geometry;
+
+        if (!geometry || !Array.isArray(geometry.coordinates)) {
+          throw new Error("GeoJSON must contain route coordinates.");
+        }
+
+        if (geometry.type !== "LineString" && geometry.type !== "MultiLineString") {
+          throw new Error("GeoJSON must contain a LineString or MultiLineString geometry.");
+        }
+
+        return routeFeature;
+      }
+
+      function getCoordinatesFromRouteFeature(routeFeature) {
+        const geometry = routeFeature && routeFeature.geometry;
+
+        if (!geometry || !Array.isArray(geometry.coordinates)) {
+          return [];
+        }
+
+        if (geometry.type === "LineString") {
+          return geometry.coordinates;
+        }
+
+        return geometry.coordinates.reduce((acc, line) => {
+          if (Array.isArray(line)) {
+            acc.push(...line);
+          }
+          return acc;
+        }, []);
+      }
+
+      function updateRouteLabels() {
+        const route = ROUTES[activeRouteKey];
+        const activeRouteLabel = document.getElementById(ACTIVE_ROUTE_LABEL_ID);
+        const sourceLabel = document.getElementById(ROUTE_SOURCE_LABEL_ID);
+
+        if (activeRouteLabel && route) {
+          activeRouteLabel.textContent = route.name;
+        }
+
+        if (sourceLabel && route) {
+          sourceLabel.textContent = `Route source: ${route.name}`;
+        }
+      }
+
+      function updateRouteToggleButtons() {
+        document
+          .querySelectorAll("#route-switcher .route-switcher__button")
+          .forEach((button) => {
+            const isActive = button.dataset.routeKey === activeRouteKey;
+            button.classList.toggle("active", isActive);
+          });
+      }
+
+      function resetRouteTrackingState() {
+        hasGpsLock = false;
+        hasInitialPosition = false;
+        isWaitingForFirstLocation = true;
+        isIntro = true;
+        followMode = true;
+        routeCenterMode = "route";
+        lastWarningUpdate = 0;
+        lastWarningState = "";
+        lastViewCenter = null;
+        lastPosition = null;
+        lastPositionTime = 0;
+        lastProcessedPosition = null;
+        lastProcessedPositionTime = 0;
+        lastActualPosition = null;
+        lastSnappedPosition = null;
+
+        if (userMarker && map) {
+          userMarker.remove();
+        }
+
+        userMarker = null;
+
+        const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
+        if (followButton) {
+          followButton.style.opacity = "1";
+        }
+
+        updateRouteCenterButtonLabel();
+
+        updateDistanceDisplay(null, 0, null);
+        showWarning("Switching route…", "help");
+      }
+
+      async function fetchRouteGeoJsonForKey(routeKey) {
+        const route = ROUTES[routeKey];
+
+        if (!route) {
+          throw new Error(`Unknown route key: ${routeKey}`);
+        }
+
+        if (routeGeoJsonCache[routeKey]) {
+          return routeGeoJsonCache[routeKey];
+        }
+
+        const response = await fetch(route.geojsonUrl, { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load route geojson: ${response.status}`);
+        }
+
+        const geojson = await response.json();
+        routeGeoJsonCache[routeKey] = geojson;
+
+        return geojson;
+      }
+
       function addRouteToMap(routeFeature) {
-        routeCoordinates = routeFeature.geometry.coordinates;
+        routeCoordinates = getCoordinatesFromRouteFeature(routeFeature);
 
         if (!map) {
           // Even without map, we have the route coordinates for fallback display
@@ -3024,92 +3280,113 @@
         }
 
         if (routeCoordinates.length > 0) {
-          new mapboxgl.Marker({ color: "#22c55e" })
-            .setLngLat(routeCoordinates[0])
-            .setPopup(
-              new mapboxgl.Popup().setHTML(
-                "<h3>Start</h3><p>Route begins here</p>",
-              ),
-            )
-            .addTo(map);
+          if (!routeStartMarker) {
+            routeStartMarker = new mapboxgl.Marker({ color: "#22c55e" })
+              .setPopup(
+                new mapboxgl.Popup().setHTML(
+                  "<h3>Start</h3><p>Route begins here</p>",
+                ),
+              )
+              .addTo(map);
+          }
 
-          new mapboxgl.Marker({ color: "#f97316" })
-            .setLngLat(routeCoordinates[routeCoordinates.length - 1])
-            .setPopup(
-              new mapboxgl.Popup().setHTML(
-                "<h3>Finish</h3><p>End of route</p>",
-              ),
-            )
-            .addTo(map);
+          if (!routeFinishMarker) {
+            routeFinishMarker = new mapboxgl.Marker({ color: "#f97316" })
+              .setPopup(
+                new mapboxgl.Popup().setHTML(
+                  "<h3>Finish</h3><p>End of route</p>",
+                ),
+              )
+              .addTo(map);
+          }
+
+          routeStartMarker.setLngLat(routeCoordinates[0]);
+          routeFinishMarker.setLngLat(routeCoordinates[routeCoordinates.length - 1]);
         }
       }
 
-      function loadRouteGeoJson() {
+      async function loadRoute() {
+        const route = ROUTES[activeRouteKey];
+        if (!route) {
+          return;
+        }
+
+        updateRouteLabels();
+
         if (window.location.protocol === "file:") {
-          addRouteToMap(
-            buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
-          );
+          const fallbackCoordinates =
+            route.fallbackCoordinates || fallbackRouteCoordinates;
+
+          addRouteToMap(buildRouteFeatureFromCoordinates(fallbackCoordinates));
+
           showWarning(
             "Open this page from a web server to load the exact route file",
             "warning",
           );
+
+          if (map) {
+            map.flyTo({
+              center: route.center,
+              zoom: 14,
+              duration: 800,
+            });
+          }
           return;
         }
 
-        fetch(routeGeoJsonUrl)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(
-                `Failed to load route geojson: ${response.status}`,
-              );
-            }
-            return response.json();
-          })
-          .then((geojson) => {
-            let routeFeature = geojson;
+        try {
+          const geojson = await fetchRouteGeoJsonForKey(activeRouteKey);
+          const routeFeature = normalizeRouteFeature(geojson);
+          addRouteToMap(routeFeature);
 
-            if (
-              geojson &&
-              geojson.type === "FeatureCollection" &&
-              Array.isArray(geojson.features)
-            ) {
-              routeFeature =
-                geojson.features.find(
-                  (feature) =>
-                    feature &&
-                    feature.geometry &&
-                    feature.geometry.type === "LineString",
-                ) || geojson.features[0];
-            }
+          if (map) {
+            map.flyTo({
+              center: route.center,
+              zoom: 13.6,
+              duration: 700,
+            });
 
-            if (routeFeature && routeFeature.type === "FeatureCollection") {
-              routeFeature =
-                routeFeature.features.find(
-                  (feature) =>
-                    feature &&
-                    feature.geometry &&
-                    feature.geometry.type === "LineString",
-                ) || routeFeature.features[0];
-            }
+            setTimeout(() => {
+              centerMapOnRoute({ duration: 900 });
+            }, 120);
+          }
+        } catch (error) {
+          console.error(error);
 
-            const geometry = routeFeature && routeFeature.geometry;
+          const fallbackCoordinates =
+            route.fallbackCoordinates || fallbackRouteCoordinates;
 
-            if (
-              !geometry ||
-              geometry.type !== "LineString" ||
-              !Array.isArray(geometry.coordinates)
-            ) {
-              throw new Error("GeoJSON must contain a LineString geometry.");
-            }
+          addRouteToMap(buildRouteFeatureFromCoordinates(fallbackCoordinates));
 
-            addRouteToMap(routeFeature);
-          })
-          .catch((error) => {
-            console.error(error);
-            addRouteToMap(
-              buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
-            );
-            showWarning("Using fallback route preview", "warning");
+          showWarning("Using fallback route preview", "warning");
+        }
+      }
+
+      function setActiveRoute(key) {
+        if (!ROUTES[key]) {
+          return;
+        }
+
+        if (key === activeRouteKey) {
+          return;
+        }
+
+        activeRouteKey = key;
+        updateRouteToggleButtons();
+        resetRouteTrackingState();
+        loadRoute();
+      }
+
+      function initializeRouteSwitcher() {
+        updateRouteToggleButtons();
+        updateRouteLabels();
+
+        document
+          .querySelectorAll("#route-switcher .route-switcher__button")
+          .forEach((button) => {
+            button.addEventListener("click", () => {
+              setActiveRoute(button.dataset.routeKey);
+            });
           });
       }
 
@@ -3319,6 +3596,7 @@
       hazardsButton.classList.toggle("on", showHazards);
       restButton.classList.toggle("on", showRest);
       setHelpPanel(false);
+      initializeRouteSwitcher();
 
       // Center map on route start point while waiting for GPS
       function setInitialViewToRouteStart() {
@@ -3354,8 +3632,8 @@
 
       // Only set up map events if map is available
       if (map) {
-        map.on("load", () => {
-          loadRouteGeoJson();
+        map.on("load", async () => {
+          await loadRoute();
           loadRouteSurfaceSummary();
 
           hazardsButton.classList.toggle("on", showHazards);
@@ -3424,7 +3702,7 @@
         });
       } else {
         // Load route data even without map
-        loadRouteGeoJson();
+        loadRoute();
         loadRouteSurfaceSummary();
       }
 
@@ -3450,6 +3728,7 @@
             // Clear waiting state on first location
             if (isWaitingForFirstLocation) {
               isWaitingForFirstLocation = false;
+              hasGpsLock = true;
               clearTimeout(firstLocationTimeout);
             }
 
@@ -3580,7 +3859,7 @@
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-06-25-1";
+          const SERVICE_WORKER_VERSION = "2026-06-29-1";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
