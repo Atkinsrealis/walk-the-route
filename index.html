@@ -1552,48 +1552,56 @@
       }
 
       const ROUTES = {
-        heathrow: {
-          name: "Heathrow",
-          fullName: "Heathrow Perimeter",
-          sourceLabel: "Heathrow perimeter",
-          geojsonUrl: "heathrow-perimeter-route.geojson",
-          title: "Perimeter Walk",
-          subtitle: "Infrastructure Charity Event",
-          helpIntro: "We’ll help you get back on track.",
-          helpSummary: "Move somewhere safe, away from traffic.",
-          helpSteps: [
-            "Open the route before you start in case signal is poor",
-            "Use the map to find the purple route",
-            "Follow it until you’re back on track",
-            "If unsure, stay safe and wait for support",
-          ],
-          startLabel: "Start",
-          startDescription: "Route begins here",
-          finishLabel: "Finish",
-          finishDescription: "End of route",
-        },
+ heathrow: {
+  name: "Heathrow",
+  fullName: "Heathrow Perimeter",
+  sourceLabel: "Heathrow perimeter",
+  geojsonUrl: "heathrow-perimeter-route.geojson",
+  title: "Perimeter Walk",
+  subtitle: "Infrastructure Charity Event",
+  helpIntro: "We’ll help you get back on track.",
+  helpSummary: "Move somewhere safe, away from traffic.",
+  helpSteps: [
+    "Open the route before you start in case signal is poor",
+    "Use the map to find the purple route",
+    "Follow it until you’re back on track",
+    "If unsure, stay safe and wait for support",
+  ],
+  badgePreparing: "Preparing",
+  badgeOnRoute: "On route",
+  badgeNearEdge: "Near edge",
+  badgeFarOffRoute: "Far off route",
+  startLabel: "Start",
+  startDescription: "Route begins here",
+  finishLabel: "Finish",
+  finishDescription: "End of route",
+},
 
-        bledlow: {
-          name: "Bledlow",
-          fullName: "Bledlow Test",
-          sourceLabel: "Bledlow test route",
-          geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
-          title: "Bledlow Test",
-          subtitle: "GPS test route",
-          helpIntro: "GPS test route active.",
-          helpSummary:
-            "Use this route to test GPS tracking, panning and route snapping.",
-          helpSteps: [
-            "Load the Bledlow route before starting the walk",
-            "Check that the route line, start marker and finish marker appear correctly",
-            "Walk a short section and watch how the location marker behaves",
-            "Use this route for testing only — not event guidance",
-          ],
-          startLabel: "Test start",
-          startDescription: "Bledlow test route begins here",
-          finishLabel: "Test finish",
-          finishDescription: "Bledlow test route ends here",
-        },
+
+bledlow: {
+  name: "Bledlow",
+  fullName: "Bledlow Test",
+  sourceLabel: "Bledlow test route",
+  geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
+  title: "Bledlow Test",
+  subtitle: "GPS test route",
+  helpIntro: "GPS test route active.",
+  helpSummary: "Use this route to test GPS tracking, panning and route snapping.",
+  helpSteps: [
+    "Load the Bledlow route before starting the walk",
+    "Check that the route line, start marker and finish marker appear correctly",
+    "Walk a short section and watch how the location marker behaves",
+    "Use this route for testing only — not event guidance",
+  ],
+  badgePreparing: "Test mode",
+  badgeOnRoute: "Test mode",
+  badgeNearEdge: "Test edge",
+  badgeFarOffRoute: "Off test route",
+  startLabel: "Test start",
+  startDescription: "Bledlow test route begins here",
+  finishLabel: "Test finish",
+  finishDescription: "Bledlow test route ends here",
+},
       };
       const routeParams = new URLSearchParams(window.location.search);
       const requestedRouteKey = routeParams.get("route");
@@ -3076,6 +3084,7 @@
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
         const routeCard = document.getElementById("route-card");
+        const activeRoute = getActiveRoute();
 
         const hasValidDistance = Number.isFinite(distance);
         if (routeCard) {
@@ -3094,7 +3103,7 @@
         if (!hasValidDistance || normalizedDistance === null) {
           progressValue.textContent = `Section 1/${getTotalSegments()}`;
           distanceValue.textContent = "Waiting for start";
-          routeBadge.textContent = "Preparing";
+          routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           routeBadge.className = "route-card__badge";
           return;
         }
@@ -3104,7 +3113,7 @@
         if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
           progressValue.textContent = "Off route";
           distanceValue.textContent = "Move closer to the purple route";
-          routeBadge.textContent = "Far off route";
+          routeBadge.textContent = activeRoute.badgeFarOffRoute || "Far off route";
           routeBadge.className = "route-card__badge alert";
           return;
         }
@@ -3122,10 +3131,10 @@
         }
 
         if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
-          routeBadge.textContent = "Near edge";
+          routeBadge.textContent = activeRoute.badgeNearEdge || "Near edge";
           routeBadge.className = "route-card__badge warning";
         } else {
-          routeBadge.textContent = "On route";
+          routeBadge.textContent = activeRoute.badgeOnRoute || "On route";
           routeBadge.className = "route-card__badge";
         }
       }
