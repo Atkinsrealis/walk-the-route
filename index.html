@@ -1343,11 +1343,12 @@
         </div>
 
         <div class="route-card__meta">
-          <span id="distance-value">Finding your position</span>
-          <span id="next-thing-value">Next: checking route…</span>
-          <span class="route-card__source"
-            >Route source: Heathrow perimeter</span
-          >
+<span id="distance-value">Finding your position</span>
+<span id="route-summary-value">Route distance calculating…</span>
+<span id="next-thing-value">Next: checking route…</span>
+<span class="route-card__source"
+  >Route source: Heathrow perimeter</span
+>
         </div>
       </div>
 
@@ -1585,6 +1586,7 @@ bledlow: {
   geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
   title: "Bledlow Test",
   subtitle: "GPS test route",
+  walkingSpeedKmh: 4.8,
   helpIntro: "GPS test route active.",
   helpSummary: "Use this route to test GPS tracking, panning and route snapping.",
   helpSteps: [
@@ -1593,10 +1595,6 @@ bledlow: {
     "Walk a short section and watch how the location marker behaves",
     "Use this route for testing only — not event guidance",
   ],
-  badgePreparing: "Test mode",
-  badgeOnRoute: "Test mode",
-  badgeNearEdge: "Test edge",
-  badgeFarOffRoute: "Off test route",
   startLabel: "Test start",
   startDescription: "Bledlow test route begins here",
   finishLabel: "Test finish",
@@ -2456,6 +2454,75 @@ localStorage.setItem(
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return earthRadius * c;
       }
+
+function getRouteDistanceMeters() {
+  if (!routeCoordinates || routeCoordinates.length < 2) {
+    return 0;
+  }
+
+  let totalDistance = 0;
+
+  for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+    totalDistance += haversineDistanceMeters(
+      routeCoordinates[i],
+      routeCoordinates[i + 1],
+    );
+  }
+
+  return totalDistance;
+}
+
+function formatRouteDistance(distanceMeters) {
+  if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) {
+    return "Route distance unavailable";
+  }
+
+  if (distanceMeters >= 1000) {
+    return `${(distanceMeters / 1000).toFixed(1)} km`;
+  }
+
+  return `${Math.round(distanceMeters)} m`;
+}
+
+function formatEstimatedWalkTime(distanceMeters) {
+  const activeRoute = getActiveRoute();
+  const walkingSpeedKmh = activeRoute.walkingSpeedKmh || 4.8;
+
+  if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) {
+    return "time unavailable";
+  }
+
+  const distanceKm = distanceMeters / 1000;
+  const hours = distanceKm / walkingSpeedKmh;
+  const totalMinutes = Math.max(1, Math.round(hours * 60));
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min walk`;
+  }
+
+  const walkHours = Math.floor(totalMinutes / 60);
+  const walkMinutes = totalMinutes % 60;
+
+  if (walkMinutes === 0) {
+    return `${walkHours} hr walk`;
+  }
+
+  return `${walkHours} hr ${walkMinutes} min walk`;
+}
+
+function updateRouteSummaryDisplay() {
+  const routeSummaryValue = document.getElementById("route-summary-value");
+
+  if (!routeSummaryValue) {
+    return;
+  }
+
+  const distanceMeters = getRouteDistanceMeters();
+  const distanceText = formatRouteDistance(distanceMeters);
+  const timeText = formatEstimatedWalkTime(distanceMeters);
+
+  routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
+}
 
       function getClosestPointOnRoute(userPoint) {
         if (routeCoordinates.length < 2) {
@@ -3484,6 +3551,7 @@ function runRouteIntroAfterLoad() {
             }
 
 addRouteToMap(routeFeature);
+updateRouteSummaryDisplay();
 runRouteIntroAfterLoad();
 
 const routeSourceLabel = document.querySelector(
@@ -3499,12 +3567,14 @@ const routeSourceLabel = document.querySelector(
 addRouteToMap(
   buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
 );
+updateRouteSummaryDisplay();
 runRouteIntroAfterLoad();
 
 showWarning(
   `Using fallback route preview for ${getActiveRoute().fullName}`,
   "warning",
 );
+updateRouteSummaryDisplay();
           });
       }
 
