@@ -1576,13 +1576,13 @@
 
       const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
 
-      window.routeDebug = {
-        search: window.location.search,
-        requestedRouteKey,
-        activeRouteKey,
-        routeGeoJsonUrl,
-        activeRoute: getActiveRoute(),
-      };
+window.routeDebug = {
+  search: window.location.search,
+  requestedRouteKey,
+  activeRouteKey,
+  routeGeoJsonUrl,
+  activeRoute: getActiveRoute(),
+};
 
       console.log("Route debug:", window.routeDebug);
 
