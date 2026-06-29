@@ -161,26 +161,26 @@
 
       .route-switcher__button {
         flex: 1;
-        border: 1px solid rgba(124, 58, 237, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 999px;
-        background: rgba(6, 11, 24, 0.88);
-        color: rgba(255, 255, 255, 0.82);
-        padding: 9px 12px;
-        font-size: 13px;
-        font-weight: 700;
+        background: rgba(6, 11, 24, 0.62);
+        color: rgba(255, 255, 255, 0.66);
+        padding: 8px 11px;
+        font-size: 12px;
+        font-weight: 600;
         cursor: pointer;
         transition:
-          background 0.2s ease,
+          background 0.18s ease,
           color 0.2s ease,
           border-color 0.2s ease,
-          box-shadow 0.2s ease;
+          box-shadow 0.18s ease;
       }
 
       .route-switcher__button.active {
-        background: rgba(124, 58, 237, 0.2);
-        border-color: rgba(196, 181, 253, 0.9);
-        color: #fff;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24);
+        background: rgba(124, 58, 237, 0.12);
+        border-color: rgba(196, 181, 253, 0.42);
+        color: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
       }
 
       .route-name-pill {
@@ -193,11 +193,11 @@
         gap: 6px;
         padding: 6px 10px;
         border-radius: 999px;
-        background: rgba(6, 11, 24, 0.88);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        color: rgba(255, 255, 255, 0.86);
+        background: rgba(6, 11, 24, 0.62);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.72);
         font-size: 11px;
-        font-weight: 700;
+        font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;
       }
@@ -3171,7 +3171,7 @@
         hasGpsLock = false;
         hasInitialPosition = false;
         isWaitingForFirstLocation = true;
-        isIntro = true;
+        isIntro = false;
         followMode = true;
         routeCenterMode = "route";
         lastWarningUpdate = 0;
@@ -3305,7 +3305,8 @@
         }
       }
 
-      async function loadRoute() {
+      async function loadRoute(options = {}) {
+        const { isInitialLoad = false } = options;
         const route = ROUTES[activeRouteKey];
         if (!route) {
           return;
@@ -3324,7 +3325,7 @@
             "warning",
           );
 
-          if (map) {
+          if (map && !isInitialLoad) {
             map.flyTo({
               center: route.center,
               zoom: 14,
@@ -3339,7 +3340,7 @@
           const routeFeature = normalizeRouteFeature(geojson);
           addRouteToMap(routeFeature);
 
-          if (map) {
+          if (map && !isInitialLoad) {
             map.flyTo({
               center: route.center,
               zoom: 13.6,
@@ -3362,7 +3363,7 @@
         }
       }
 
-      function setActiveRoute(key) {
+      async function setActiveRoute(key) {
         if (!ROUTES[key]) {
           return;
         }
@@ -3374,7 +3375,8 @@
         activeRouteKey = key;
         updateRouteToggleButtons();
         resetRouteTrackingState();
-        loadRoute();
+        await loadRoute();
+        isIntro = false;
       }
 
       function initializeRouteSwitcher() {
@@ -3633,7 +3635,7 @@
       // Only set up map events if map is available
       if (map) {
         map.on("load", async () => {
-          await loadRoute();
+          await loadRoute({ isInitialLoad: true });
           loadRouteSurfaceSummary();
 
           hazardsButton.classList.toggle("on", showHazards);
