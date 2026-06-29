@@ -1697,54 +1697,85 @@
   </svg>
 `;
 
-      // Segment labels are fixed, but bounds are derived from route length.
-      const SEGMENT_TEMPLATES = [
-        {
-          name: "Terminal South",
-          milestone: "Terminal building",
-        },
-        {
-          name: "Cargo perimeter",
-          milestone: "Cargo facility",
-        },
-        {
-          name: "Northern loop",
-          milestone: "Northern gate",
-        },
-        {
-          name: "Return stretch",
-          milestone: "Finish line",
-        },
-      ];
-      const TOTAL_SEGMENTS = SEGMENT_TEMPLATES.length;
+// Segment labels are route-aware, but bounds are still derived from route length.
+const ROUTE_SEGMENT_TEMPLATES = {
+  heathrow: [
+    {
+      name: "Terminal South",
+      milestone: "Terminal building",
+    },
+    {
+      name: "Cargo perimeter",
+      milestone: "Cargo facility",
+    },
+    {
+      name: "Northern loop",
+      milestone: "Northern gate",
+    },
+    {
+      name: "Return stretch",
+      milestone: "Finish line",
+    },
+  ],
 
-      function getRouteSegments() {
-        const coordinateCount =
-          routeCoordinates.length > 0
-            ? routeCoordinates.length
-            : fallbackRouteCoordinates.length;
-        const lastIndex = Math.max(0, coordinateCount - 1);
+  bledlow: [
+    {
+      name: "Test start",
+      milestone: "Start section",
+    },
+    {
+      name: "Middle section",
+      milestone: "Mid-route check",
+    },
+    {
+      name: "Later section",
+      milestone: "Final approach",
+    },
+    {
+      name: "Finish section",
+      milestone: "Finish point",
+    },
+  ],
+};
 
-        return SEGMENT_TEMPLATES.map((segmentTemplate, index) => {
-          const startIdx = Math.floor(
-            (index * coordinateCount) / TOTAL_SEGMENTS,
-          );
-          let endIdx =
-            Math.floor(((index + 1) * coordinateCount) / TOTAL_SEGMENTS) - 1;
+function getSegmentTemplates() {
+  return ROUTE_SEGMENT_TEMPLATES[activeRouteKey] || ROUTE_SEGMENT_TEMPLATES.heathrow;
+}
 
-          if (index === TOTAL_SEGMENTS - 1) {
-            endIdx = lastIndex;
-          }
+function getTotalSegments() {
+  return getSegmentTemplates().length;
+}
 
-          endIdx = Math.max(startIdx, Math.min(lastIndex, endIdx));
+function getRouteSegments() {
+  const segmentTemplates = getSegmentTemplates();
+  const totalSegments = segmentTemplates.length;
 
-          return {
-            ...segmentTemplate,
-            startIdx,
-            endIdx,
-          };
-        });
-      }
+  const coordinateCount =
+    routeCoordinates.length > 0
+      ? routeCoordinates.length
+      : fallbackRouteCoordinates.length;
+
+  const lastIndex = Math.max(0, coordinateCount - 1);
+
+  return segmentTemplates.map((segmentTemplate, index) => {
+    const startIdx = Math.floor((index * coordinateCount) / totalSegments);
+
+    let endIdx =
+      Math.floor(((index + 1) * coordinateCount) / totalSegments) - 1;
+
+    if (index === totalSegments - 1) {
+      endIdx = lastIndex;
+    }
+
+    endIdx = Math.max(startIdx, Math.min(lastIndex, endIdx));
+
+    return {
+      ...segmentTemplate,
+      startIdx,
+      endIdx,
+    };
+  });
+}
 
       // Initialize fallback UI if Mapbox is unavailable
       let map = null;
@@ -2974,7 +3005,7 @@ function getNextHazardAhead(userPoint) {
             : progress;
 
         if (!hasValidDistance || normalizedDistance === null) {
-          progressValue.textContent = `Section 1/${TOTAL_SEGMENTS}`;
+          progressValue.textContent = `Section 1/${getTotalSegments()}`;
           distanceValue.textContent = "Waiting for start";
           routeBadge.textContent = "Preparing";
           routeBadge.className = "route-card__badge";
