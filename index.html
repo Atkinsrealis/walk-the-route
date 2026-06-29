@@ -1492,7 +1492,9 @@
           <span class="help-panel__label">Route help</span>
           <h2>Need help?</h2>
 
-          <p class="help-intro">We’ll help you get back on track.</p>
+          <p class="help-intro" id="help-intro">
+            We’ll help you get back on track.
+          </p>
         </div>
 
         <button class="help-panel__close" id="help-close-button">
@@ -1502,9 +1504,9 @@
 
       <div class="help-panel__body compact-help">
         <div class="help-summary">
-          <p>Move somewhere safe, away from traffic.</p>
+          <p id="help-summary-text">Move somewhere safe, away from traffic.</p>
 
-          <ul class="help-steps">
+          <ul class="help-steps" id="help-steps">
             <li>Open the route before you start in case signal is poor</li>
             <li>Use the map to find the purple route</li>
             <li>Follow it until you’re back on track</li>
@@ -1557,6 +1559,14 @@
           geojsonUrl: "heathrow-perimeter-route.geojson",
           title: "Perimeter Walk",
           subtitle: "Infrastructure Charity Event",
+          helpIntro: "We’ll help you get back on track.",
+          helpSummary: "Move somewhere safe, away from traffic.",
+          helpSteps: [
+            "Open the route before you start in case signal is poor",
+            "Use the map to find the purple route",
+            "Follow it until you’re back on track",
+            "If unsure, stay safe and wait for support",
+          ],
           startLabel: "Start",
           startDescription: "Route begins here",
           finishLabel: "Finish",
@@ -1570,6 +1580,15 @@
           geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
           title: "Bledlow Test",
           subtitle: "GPS test route",
+          helpIntro: "GPS test route active.",
+          helpSummary:
+            "Use this route to test GPS tracking, panning and route snapping.",
+          helpSteps: [
+            "Load the Bledlow route before starting the walk",
+            "Check that the route line, start marker and finish marker appear correctly",
+            "Walk a short section and watch how the location marker behaves",
+            "Use this route for testing only — not event guidance",
+          ],
           startLabel: "Test start",
           startDescription: "Bledlow test route begins here",
           finishLabel: "Test finish",
@@ -1606,6 +1625,29 @@
 
         document.title = activeRoute.title || "Heathrow Perimeter Walk";
       }
+
+      function applyRouteHelpText() {
+        const activeRoute = getActiveRoute();
+
+        const helpIntro = document.getElementById("help-intro");
+        const helpSummaryText = document.getElementById("help-summary-text");
+        const helpSteps = document.getElementById("help-steps");
+
+        if (helpIntro && activeRoute.helpIntro) {
+          helpIntro.textContent = activeRoute.helpIntro;
+        }
+
+        if (helpSummaryText && activeRoute.helpSummary) {
+          helpSummaryText.textContent = activeRoute.helpSummary;
+        }
+
+        if (helpSteps && Array.isArray(activeRoute.helpSteps)) {
+          helpSteps.innerHTML = activeRoute.helpSteps
+            .map((step) => `<li>${step}</li>`)
+            .join("");
+        }
+      }
+
       const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
 
       window.routeDebug = {
@@ -1633,6 +1675,7 @@
       }
 
       applyRouteHeaderText();
+      applyRouteHelpText();
 
       const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
