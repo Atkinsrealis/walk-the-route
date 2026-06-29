@@ -1617,6 +1617,9 @@ bledlow: {
       function isHeathrowRoute() {
         return activeRouteKey === "heathrow";
       }
+      function getRouteStorageKey(key) {
+  return `${key}:${activeRouteKey}`;
+}
       function applyRouteHeaderText() {
         const activeRoute = getActiveRoute();
         const title = document.getElementById("app-title");
@@ -1709,7 +1712,7 @@ bledlow: {
       // Load cached position to restore previous map state
       function loadCachedPosition() {
         try {
-          const cached = localStorage.getItem("lastKnownPosition");
+          const cached = localStorage.getItem(getRouteStorageKey("lastKnownPosition"));
           if (cached) {
             const pos = JSON.parse(cached);
             if (
@@ -1730,10 +1733,15 @@ bledlow: {
 
       function cachePosition(lng, lat) {
         try {
-          localStorage.setItem(
-            "lastKnownPosition",
-            JSON.stringify({ lng, lat, timestamp: Date.now() }),
-          );
+localStorage.setItem(
+  getRouteStorageKey("lastKnownPosition"),
+  JSON.stringify({
+    lng,
+    lat,
+    route: activeRouteKey,
+    timestamp: Date.now(),
+  }),
+);
         } catch (e) {
           console.warn("Failed to cache position:", e);
         }
@@ -3710,7 +3718,7 @@ bledlow: {
             duration: 800,
           });
           lastViewCenter = [cachedPos.lng, cachedPos.lat];
-          showToast("Resuming from last position");
+          showToast(`Resuming ${getActiveRoute().name} position`);
         } else if (routeCoordinates.length > 0) {
           setInitialViewToRouteStart();
         }
