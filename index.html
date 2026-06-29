@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
@@ -20,18 +20,24 @@
     <link
       href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
       rel="stylesheet"
-      onerror="window.MAPBOX_LOAD_FAILED = true; initFallbackUI();"
+      onerror="
+        window.MAPBOX_LOAD_FAILED = true;
+        initFallbackUI();
+      "
     />
 
-    <script 
+    <script
       src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"
-      onerror="window.MAPBOX_LOAD_FAILED = true; initFallbackUI();"
+      onerror="
+        window.MAPBOX_LOAD_FAILED = true;
+        initFallbackUI();
+      "
     ></script>
     <script>
       // Detect if Mapbox fails to load within a timeout
       window.MAPBOX_LOAD_FAILED = false;
       setTimeout(() => {
-        if (typeof mapboxgl === 'undefined') {
+        if (typeof mapboxgl === "undefined") {
           window.MAPBOX_LOAD_FAILED = true;
           initFallbackUI();
         }
@@ -147,9 +153,52 @@
       .topbar p {
         transform: translateY(15px);
       }
+      .route-test-switcher {
+        position: fixed;
+        top: calc(92px + env(safe-area-inset-top));
+        left: 16px;
+        z-index: 21;
+
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+
+        padding: 3px;
+        border-radius: 999px;
+
+        background: rgba(6, 11, 24, 0.52);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      .route-test-switcher a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        min-height: 24px;
+        padding: 0 9px;
+
+        border-radius: 999px;
+
+        color: rgba(255, 255, 255, 0.54);
+        text-decoration: none;
+
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
+
+      .route-test-switcher a.active {
+        background: rgba(124, 58, 237, 0.28);
+        color: rgba(255, 255, 255, 0.92);
+      }
+
       .warning {
         position: fixed;
-        top: calc(96px + env(safe-area-inset-top));
+        top: calc(126px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         color: white;
@@ -185,7 +234,7 @@
 
       .route-card {
         position: fixed;
-        top: calc(154px + env(safe-area-inset-top));
+        top: calc(180px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         z-index: 19;
@@ -1145,7 +1194,7 @@
         }
 
         .warning {
-          top: calc(94px + env(safe-area-inset-top));
+          top: calc(126px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -1153,7 +1202,7 @@
         }
 
         .route-card {
-          top: calc(148px + env(safe-area-inset-top));
+          top: calc(176px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -1273,8 +1322,15 @@
         />
       </div>
 
-      <h1>Perimeter Walk</h1>
-      <p>Infrastructure Charity Event</p>
+      <h1 id="app-title">Perimeter Walk</h1>
+      <p id="app-subtitle">Infrastructure Charity Event</p>
+    </div>
+
+    <div class="route-test-switcher" aria-label="Test route switcher">
+      <a href="index.html" id="route-link-heathrow">Heathrow</a>
+      <a href="index.html?route=bledlow" id="route-link-bledlow"
+        >Bledlow test</a
+      >
     </div>
 
     <div class="warning" id="warning">You may be off the official route</div>
@@ -1287,11 +1343,12 @@
         </div>
 
         <div class="route-card__meta">
-          <span id="distance-value">Finding your position</span>
-          <span id="next-thing-value">Next: checking route…</span>
-          <span class="route-card__source"
-            >Route source: Heathrow perimeter</span
-          >
+<span id="distance-value">Finding your position</span>
+<span id="route-summary-value">Route distance calculating…</span>
+<span id="next-thing-value">Next: checking route…</span>
+<span class="route-card__source"
+  >Route source: Heathrow perimeter</span
+>
         </div>
       </div>
 
@@ -1418,7 +1475,10 @@
         </div>
         <div id="fallback-segments" class="fallback-segments"></div>
         <div class="fallback-info">
-          <p>🚨 Hazards and rest stops still tracked. Check "Need help" for locations.</p>
+          <p>
+            🚨 Hazards and rest stops still tracked. Check "Need help" for
+            locations.
+          </p>
         </div>
       </div>
     </div>
@@ -1433,7 +1493,9 @@
           <span class="help-panel__label">Route help</span>
           <h2>Need help?</h2>
 
-          <p class="help-intro">We’ll help you get back on track.</p>
+          <p class="help-intro" id="help-intro">
+            We’ll help you get back on track.
+          </p>
         </div>
 
         <button class="help-panel__close" id="help-close-button">
@@ -1443,9 +1505,9 @@
 
       <div class="help-panel__body compact-help">
         <div class="help-summary">
-          <p>Move somewhere safe, away from traffic.</p>
+          <p id="help-summary-text">Move somewhere safe, away from traffic.</p>
 
-          <ul class="help-steps">
+          <ul class="help-steps" id="help-steps">
             <li>Open the route before you start in case signal is poor</li>
             <li>Use the map to find the purple route</li>
             <li>Follow it until you’re back on track</li>
@@ -1485,12 +1547,145 @@
     </div>
     <script>
       // Only set token if Mapbox is loaded
-      if (typeof mapboxgl !== 'undefined') {
+      if (typeof mapboxgl !== "undefined") {
         mapboxgl.accessToken =
           "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
       }
 
-      const routeGeoJsonUrl = "heathrow-perimeter-route.geojson";
+      const ROUTES = {
+ heathrow: {
+  name: "Heathrow",
+  fullName: "Heathrow Perimeter",
+  sourceLabel: "Heathrow perimeter",
+  geojsonUrl: "heathrow-perimeter-route.geojson",
+  title: "Perimeter Walk",
+  subtitle: "Infrastructure Charity Event",
+  helpIntro: "We’ll help you get back on track.",
+  helpSummary: "Move somewhere safe, away from traffic.",
+  helpSteps: [
+    "Open the route before you start in case signal is poor",
+    "Use the map to find the purple route",
+    "Follow it until you’re back on track",
+    "If unsure, stay safe and wait for support",
+  ],
+  badgePreparing: "Preparing",
+  badgeOnRoute: "On route",
+  badgeNearEdge: "Near edge",
+  badgeFarOffRoute: "Far off route",
+  startLabel: "Start",
+  startDescription: "Route begins here",
+  finishLabel: "Finish",
+  finishDescription: "End of route",
+},
+
+
+bledlow: {
+  name: "Bledlow",
+  fullName: "Bledlow Test",
+  sourceLabel: "Bledlow test route",
+  geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
+  title: "Bledlow Test",
+  subtitle: "GPS test route",
+  walkingSpeedKmh: 4.8,
+  helpIntro: "GPS test route active.",
+  helpSummary: "Use this route to test GPS tracking, panning and route snapping.",
+  helpSteps: [
+    "Load the Bledlow route before starting the walk",
+    "Check that the route line, start marker and finish marker appear correctly",
+    "Walk a short section and watch how the location marker behaves",
+    "Use this route for testing only — not event guidance",
+  ],
+  startLabel: "Test start",
+  startDescription: "Bledlow test route begins here",
+  finishLabel: "Test finish",
+  finishDescription: "Bledlow test route ends here",
+},
+      };
+      const routeParams = new URLSearchParams(window.location.search);
+      const requestedRouteKey = routeParams.get("route");
+
+      let activeRouteKey = ROUTES[requestedRouteKey]
+        ? requestedRouteKey
+        : "heathrow";
+
+      function getActiveRoute() {
+        return ROUTES[activeRouteKey] || ROUTES.heathrow;
+      }
+
+      function isHeathrowRoute() {
+        return activeRouteKey === "heathrow";
+      }
+      function getRouteStorageKey(key) {
+  return `${key}:${activeRouteKey}`;
+}
+      function applyRouteHeaderText() {
+        const activeRoute = getActiveRoute();
+        const title = document.getElementById("app-title");
+        const subtitle = document.getElementById("app-subtitle");
+
+        if (title) {
+          title.textContent = activeRoute.title || "Perimeter Walk";
+        }
+
+        if (subtitle) {
+          subtitle.textContent =
+            activeRoute.subtitle || "Infrastructure Charity Event";
+        }
+
+        document.title = activeRoute.title || "Heathrow Perimeter Walk";
+      }
+
+      function applyRouteHelpText() {
+        const activeRoute = getActiveRoute();
+
+        const helpIntro = document.getElementById("help-intro");
+        const helpSummaryText = document.getElementById("help-summary-text");
+        const helpSteps = document.getElementById("help-steps");
+
+        if (helpIntro && activeRoute.helpIntro) {
+          helpIntro.textContent = activeRoute.helpIntro;
+        }
+
+        if (helpSummaryText && activeRoute.helpSummary) {
+          helpSummaryText.textContent = activeRoute.helpSummary;
+        }
+
+        if (helpSteps && Array.isArray(activeRoute.helpSteps)) {
+          helpSteps.innerHTML = activeRoute.helpSteps
+            .map((step) => `<li>${step}</li>`)
+            .join("");
+        }
+      }
+
+      const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
+
+      window.routeDebug = {
+        search: window.location.search,
+        requestedRouteKey,
+        activeRouteKey,
+        routeGeoJsonUrl,
+        activeRoute: getActiveRoute(),
+      };
+
+      console.log("Route debug:", window.routeDebug);
+
+      const heathrowRouteLink = document.getElementById("route-link-heathrow");
+      const bledlowRouteLink = document.getElementById("route-link-bledlow");
+
+      if (heathrowRouteLink && bledlowRouteLink) {
+        heathrowRouteLink.classList.toggle(
+          "active",
+          activeRouteKey === "heathrow",
+        );
+        bledlowRouteLink.classList.toggle(
+          "active",
+          activeRouteKey === "bledlow",
+        );
+      }
+
+      applyRouteHeaderText();
+      applyRouteHelpText();
+
       const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
         [-0.4552, 51.4706],
@@ -1507,30 +1702,48 @@
         [-0.47, 51.475],
       ];
       let routeCoordinates = [];
+      let routeStartMarker = null;
+      let routeFinishMarker = null;
+      let hasRouteLoaded = false
       let isAppVisible = true;
       let geolocationWatchId = null;
+      
 
       // Load cached position to restore previous map state
       function loadCachedPosition() {
         try {
-          const cached = localStorage.getItem('lastKnownPosition');
+          const cached = localStorage.getItem(getRouteStorageKey("lastKnownPosition"));
           if (cached) {
             const pos = JSON.parse(cached);
-            if (pos && pos.lng && pos.lat && Date.now() - pos.timestamp < 86400000) { // 24 hour cache
+            if (
+              pos &&
+              pos.lng &&
+              pos.lat &&
+              Date.now() - pos.timestamp < 86400000
+            ) {
+              // 24 hour cache
               return pos;
             }
           }
         } catch (e) {
-          console.warn('Failed to load cached position:', e);
+          console.warn("Failed to load cached position:", e);
         }
         return null;
       }
 
       function cachePosition(lng, lat) {
         try {
-          localStorage.setItem('lastKnownPosition', JSON.stringify({ lng, lat, timestamp: Date.now() }));
+localStorage.setItem(
+  getRouteStorageKey("lastKnownPosition"),
+  JSON.stringify({
+    lng,
+    lat,
+    route: activeRouteKey,
+    timestamp: Date.now(),
+  }),
+);
         } catch (e) {
-          console.warn('Failed to cache position:', e);
+          console.warn("Failed to cache position:", e);
         }
       }
 
@@ -1557,57 +1770,95 @@
       const COMPASS_LABEL_ID = "compass-label";
 
       const ROUTE_VIEW_ICON = `
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      d="M6 4.5a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5S7.4 4.5 6 4.5Zm0 3.6A1.1 1.1 0 1 1 6 5.9a1.1 1.1 0 0 1 0 2.2Zm12 6.4a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5Zm0 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2ZM8.7 8.4l1.1-1.1 6.4 6.4-1.1 1.1-6.4-6.4Zm7.1-1.8h-4.2V5.1h4.2c2.1 0 3.8 1.7 3.8 3.8v1.9h-1.5V8.9c0-1.3-1-2.3-2.3-2.3ZM4.4 13.2h1.5v1.9c0 1.3 1 2.3 2.3 2.3h4.2v1.5H8.2c-2.1 0-3.8-1.7-3.8-3.8v-1.9Z"
-      fill="currentColor"
-    />
-  </svg>
-`;
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M6 4.5a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5S7.4 4.5 6 4.5Zm0 3.6A1.1 1.1 0 1 1 6 5.9a1.1 1.1 0 0 1 0 2.2Zm12 6.4a2.5 2.5 0 1 0 0 5c1.4 0 2.5-1.1 2.5-2.5s-1.1-2.5-2.5-2.5Zm0 3.6a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2ZM8.7 8.4l1.1-1.1 6.4 6.4-1.1 1.1-6.4-6.4Zm7.1-1.8h-4.2V5.1h4.2c2.1 0 3.8 1.7 3.8 3.8v1.9h-1.5V8.9c0-1.3-1-2.3-2.3-2.3ZM4.4 13.2h1.5v1.9c0 1.3 1 2.3 2.3 2.3h4.2v1.5H8.2c-2.1 0-3.8-1.7-3.8-3.8v-1.9Z"
+            fill="currentColor"
+          />
+        </svg>
+      `;
 
       const CURRENT_POSITION_ICON = `
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      d="M12 2a1 1 0 0 1 1 1v1.08A8.01 8.01 0 0 1 19.92 11H21a1 1 0 1 1 0 2h-1.08A8.01 8.01 0 0 1 13 19.92V21a1 1 0 1 1-2 0v-1.08A8.01 8.01 0 0 1 4.08 13H3a1 1 0 1 1 0-2h1.08A8.01 8.01 0 0 1 11 4.08V3a1 1 0 0 1 1-1Zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3.2a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z"
-      fill="currentColor"
-    />
-  </svg>
-`;
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 2a1 1 0 0 1 1 1v1.08A8.01 8.01 0 0 1 19.92 11H21a1 1 0 1 1 0 2h-1.08A8.01 8.01 0 0 1 13 19.92V21a1 1 0 1 1-2 0v-1.08A8.01 8.01 0 0 1 4.08 13H3a1 1 0 1 1 0-2h1.08A8.01 8.01 0 0 1 11 4.08V3a1 1 0 0 1 1-1Zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3.2a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z"
+            fill="currentColor"
+          />
+        </svg>
+      `;
 
-      // Segment labels are fixed, but bounds are derived from route length.
-      const SEGMENT_TEMPLATES = [
-        {
-          name: "Terminal South",
-          milestone: "Terminal building",
-        },
-        {
-          name: "Cargo perimeter",
-          milestone: "Cargo facility",
-        },
-        {
-          name: "Northern loop",
-          milestone: "Northern gate",
-        },
-        {
-          name: "Return stretch",
-          milestone: "Finish line",
-        },
-      ];
-      const TOTAL_SEGMENTS = SEGMENT_TEMPLATES.length;
+      // Segment labels are route-aware, but bounds are still derived from route length.
+      const ROUTE_SEGMENT_TEMPLATES = {
+        heathrow: [
+          {
+            name: "Terminal South",
+            milestone: "Terminal building",
+          },
+          {
+            name: "Cargo perimeter",
+            milestone: "Cargo facility",
+          },
+          {
+            name: "Northern loop",
+            milestone: "Northern gate",
+          },
+          {
+            name: "Return stretch",
+            milestone: "Finish line",
+          },
+        ],
+
+        bledlow: [
+          {
+            name: "Test start",
+            milestone: "Start section",
+          },
+          {
+            name: "Middle section",
+            milestone: "Mid-route check",
+          },
+          {
+            name: "Later section",
+            milestone: "Final approach",
+          },
+          {
+            name: "Finish section",
+            milestone: "Finish point",
+          },
+        ],
+      };
+
+      function getSegmentTemplates() {
+        return (
+          ROUTE_SEGMENT_TEMPLATES[activeRouteKey] ||
+          ROUTE_SEGMENT_TEMPLATES.heathrow
+        );
+      }
+
+      function getTotalSegments() {
+        return getSegmentTemplates().length;
+      }
 
       function getRouteSegments() {
+        const segmentTemplates = getSegmentTemplates();
+        const totalSegments = segmentTemplates.length;
+
         const coordinateCount =
           routeCoordinates.length > 0
             ? routeCoordinates.length
             : fallbackRouteCoordinates.length;
+
         const lastIndex = Math.max(0, coordinateCount - 1);
 
-        return SEGMENT_TEMPLATES.map((segmentTemplate, index) => {
-          const startIdx = Math.floor((index * coordinateCount) / TOTAL_SEGMENTS);
-          let endIdx =
-            Math.floor(((index + 1) * coordinateCount) / TOTAL_SEGMENTS) - 1;
+        return segmentTemplates.map((segmentTemplate, index) => {
+          const startIdx = Math.floor(
+            (index * coordinateCount) / totalSegments,
+          );
 
-          if (index === TOTAL_SEGMENTS - 1) {
+          let endIdx =
+            Math.floor(((index + 1) * coordinateCount) / totalSegments) - 1;
+
+          if (index === totalSegments - 1) {
             endIdx = lastIndex;
           }
 
@@ -1627,11 +1878,11 @@
       function initFallbackUI() {
         const mapContainer = document.getElementById("map");
         const fallbackContainer = document.getElementById("fallback-container");
-        
+
         if (mapContainer) {
           mapContainer.style.display = "none";
         }
-        
+
         if (fallbackContainer) {
           fallbackContainer.removeAttribute("hidden");
         }
@@ -1640,29 +1891,36 @@
         const segmentsContainer = document.getElementById("fallback-segments");
         if (segmentsContainer) {
           const segments = getRouteSegments();
-          segmentsContainer.innerHTML = segments.map(seg => `
-            <div class="fallback-segment-item">
-              <div class="fallback-segment-name">${seg.name}</div>
-              <div class="fallback-segment-milestone">Next: ${seg.milestone}</div>
-            </div>
-          `).join("");
+          segmentsContainer.innerHTML = segments
+            .map(
+              (seg) => `
+                  <div class="fallback-segment-item">
+                    <div class="fallback-segment-name">${seg.name}</div>
+                    <div class="fallback-segment-milestone">Next: ${seg.milestone}</div>
+                  </div>
+                `,
+            )
+            .join("");
         }
 
         showWarning(
           "Map service unavailable – using text-based navigation",
-          "warning"
+          "warning",
         );
       }
 
-      function updateFallbackDisplay(distanceToRoute, routeProgress, segmentInfo) {
+      function updateFallbackDisplay(
+        distanceToRoute,
+        routeProgress,
+        segmentInfo,
+      ) {
         const distanceEl = document.getElementById("fallback-distance");
         const progressEl = document.getElementById("fallback-progress");
         const segmentEl = document.getElementById("fallback-segment");
 
         if (distanceEl) {
-          distanceEl.textContent = distanceToRoute !== null 
-            ? `${Math.round(distanceToRoute)}m` 
-            : "—";
+          distanceEl.textContent =
+            distanceToRoute !== null ? `${Math.round(distanceToRoute)}m` : "—";
         }
 
         if (progressEl) {
@@ -1686,7 +1944,7 @@
       }
 
       // Only initialize map if Mapbox is available
-      if (typeof mapboxgl !== 'undefined' && !window.MAPBOX_LOAD_FAILED) {
+      if (typeof mapboxgl !== "undefined" && !window.MAPBOX_LOAD_FAILED) {
         try {
           mapboxgl.accessToken =
             "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
@@ -1694,8 +1952,8 @@
           map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/dark-v11",
-            center: [-2, 54],  // UK center view
-            zoom: 4,  // zoomed to UK level
+            center: [-2, 54], // UK center view
+            zoom: 4, // zoomed to UK level
             pitch: 0,
             bearing: 0,
             attributionControl: false,
@@ -1715,7 +1973,7 @@
       let lastSnappedPosition = null;
       let hasInitialPosition = false;
       let isWaitingForFirstLocation = true;
-      let isIntro = true;  // Track if we're in intro sequence
+      let isIntro = true; // Track if we're in intro sequence
       let firstLocationTimeout = null;
       let lastWarningUpdate = 0;
       let lastWarningState = "";
@@ -1781,38 +2039,44 @@
         },
       ];
 
-      // HAZARDS
-      hazards.forEach((h) => {
-        const marker = new mapboxgl.Marker({ color: "#ef4444" })
-          .setLngLat([h.lng, h.lat])
-          .setPopup(
-            new mapboxgl.Popup().setHTML(
-              `<strong>${h.type}</strong><p>${h.message}</p>`,
-            ),
-          )
-          .addTo(map);
+      // HAZARDS — Heathrow only
+      if (isHeathrowRoute()) {
+        hazards.forEach((h) => {
+          const marker = new mapboxgl.Marker({ color: "#ef4444" })
+            .setLngLat([h.lng, h.lat])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(
+                `<strong>${h.type}</strong><p>${h.message}</p>`,
+              ),
+            )
+            .addTo(map);
 
-        marker.getElement().style.display = showHazards ? "block" : "none";
+          marker.getElement().style.display = showHazards ? "block" : "none";
 
-        hazardMarkers.push(marker);
-      });
+          hazardMarkers.push(marker);
+        });
+      }
 
-      // REST STOPS
       const restStops = [
         { lng: -0.458, lat: 51.4715, label: "Water + Toilets" },
         { lng: -0.4665, lat: 51.475, label: "Rest Area" },
       ];
 
-      restStops.forEach((r) => {
-        const marker = new mapboxgl.Marker({ color: "#3b82f6" })
-          .setLngLat([r.lng, r.lat])
-          .setPopup(new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`))
-          .addTo(map);
+      // REST STOPS — Heathrow only
+      if (isHeathrowRoute()) {
+        restStops.forEach((r) => {
+          const marker = new mapboxgl.Marker({ color: "#3b82f6" })
+            .setLngLat([r.lng, r.lat])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`),
+            )
+            .addTo(map);
 
-        marker.getElement().style.display = showRest ? "block" : "none";
+          marker.getElement().style.display = showRest ? "block" : "none";
 
-        restMarkers.push(marker);
-      });
+          restMarkers.push(marker);
+        });
+      }
 
       function toRadians(value) {
         return value * (Math.PI / 180);
@@ -2152,9 +2416,9 @@
         }
 
         /*
-    Offset the label away from the route in screen space.
-    This makes it feel more like a map annotation, not a pin stuck to the line.
-  */
+          Offset the label away from the route in screen space.
+          This makes it feel more like a map annotation, not a pin stuck to the line.
+        */
         const mapCenter = {
           x: width / 2,
           y: height / 2,
@@ -2190,6 +2454,75 @@
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return earthRadius * c;
       }
+
+function getRouteDistanceMeters() {
+  if (!routeCoordinates || routeCoordinates.length < 2) {
+    return 0;
+  }
+
+  let totalDistance = 0;
+
+  for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+    totalDistance += haversineDistanceMeters(
+      routeCoordinates[i],
+      routeCoordinates[i + 1],
+    );
+  }
+
+  return totalDistance;
+}
+
+function formatRouteDistance(distanceMeters) {
+  if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) {
+    return "Route distance unavailable";
+  }
+
+  if (distanceMeters >= 1000) {
+    return `${(distanceMeters / 1000).toFixed(1)} km`;
+  }
+
+  return `${Math.round(distanceMeters)} m`;
+}
+
+function formatEstimatedWalkTime(distanceMeters) {
+  const activeRoute = getActiveRoute();
+  const walkingSpeedKmh = activeRoute.walkingSpeedKmh || 4.8;
+
+  if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) {
+    return "time unavailable";
+  }
+
+  const distanceKm = distanceMeters / 1000;
+  const hours = distanceKm / walkingSpeedKmh;
+  const totalMinutes = Math.max(1, Math.round(hours * 60));
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min walk`;
+  }
+
+  const walkHours = Math.floor(totalMinutes / 60);
+  const walkMinutes = totalMinutes % 60;
+
+  if (walkMinutes === 0) {
+    return `${walkHours} hr walk`;
+  }
+
+  return `${walkHours} hr ${walkMinutes} min walk`;
+}
+
+function updateRouteSummaryDisplay() {
+  const routeSummaryValue = document.getElementById("route-summary-value");
+
+  if (!routeSummaryValue) {
+    return;
+  }
+
+  const distanceMeters = getRouteDistanceMeters();
+  const distanceText = formatRouteDistance(distanceMeters);
+  const timeText = formatEstimatedWalkTime(distanceMeters);
+
+  routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
+}
 
       function getClosestPointOnRoute(userPoint) {
         if (routeCoordinates.length < 2) {
@@ -2380,6 +2713,10 @@
       }
 
       function getNextThingAhead(userPoint) {
+        if (!isHeathrowRoute()) {
+          return null;
+        }
+
         if (routeCoordinates.length < 2) {
           return null;
         }
@@ -2398,7 +2735,6 @@
             point: [r.lng, r.lat],
           })),
         ];
-
         const upcomingItems = routeItems
           .map((item) => {
             const itemMeasure = getRouteMeasure(item.point);
@@ -2417,6 +2753,10 @@
       }
 
       function getNextHazardAhead(userPoint) {
+        if (!isHeathrowRoute()) {
+          return null;
+        }
+
         if (routeCoordinates.length < 2) {
           return null;
         }
@@ -2446,6 +2786,11 @@
         const nextThingValue = document.getElementById(NEXT_THING_VALUE_ID);
 
         if (!nextThingValue) {
+          return;
+        }
+
+        if (!isHeathrowRoute()) {
+          nextThingValue.textContent = "Test route active";
           return;
         }
 
@@ -2500,6 +2845,10 @@
       }
 
       function createSurfaceTooltip(surface) {
+        if (!isHeathrowRoute()) {
+          return;
+        }
+
         const displayText = getSurfaceDisplayText(surface);
 
         if (!displayText) {
@@ -2517,14 +2866,14 @@
           surfaceTooltipElement.className = "surface-map-tooltip";
 
           surfaceTooltipElement.innerHTML = `
-      <span class="surface-map-tooltip__line"></span>
-      <span>${displayText}</span>
-    `;
+            <span class="surface-map-tooltip__line"></span>
+            <span>${displayText}</span>
+          `;
         } else {
           surfaceTooltipElement.innerHTML = `
-      <span class="surface-map-tooltip__line"></span>
-      <span>${displayText}</span>
-    `;
+            <span class="surface-map-tooltip__line"></span>
+            <span>${displayText}</span>
+          `;
         }
 
         if (!surfaceTooltipMarker) {
@@ -2611,6 +2960,12 @@
       }
 
       function loadRouteSurfaceSummary() {
+        if (!isHeathrowRoute()) {
+          routeSurfaceSummary = null;
+          hideSurfaceTooltip();
+          return;
+        }
+
         fetch("route-surface-summary.json")
           .then((response) => {
             if (!response.ok) {
@@ -2641,6 +2996,46 @@
         setTimeout(() => {
           toast.classList.remove("show");
         }, 2500);
+      }
+
+      function applyRouteAwareMarkerControls() {
+        const hazardsButton = document.getElementById("hazards-button");
+        const restButton = document.getElementById("rest-button");
+
+        if (!hazardsButton || !restButton) {
+          return;
+        }
+
+        if (!isHeathrowRoute()) {
+          showHazards = false;
+          showRest = false;
+
+          hazardsButton.classList.remove("on");
+          restButton.classList.remove("on");
+
+          hazardsButton.style.opacity = "0.42";
+          restButton.style.opacity = "0.42";
+
+          hazardsButton.style.pointerEvents = "none";
+          restButton.style.pointerEvents = "none";
+
+          hazardsButton.setAttribute("title", "Heathrow-only marker layer");
+          restButton.setAttribute("title", "Heathrow-only marker layer");
+
+          return;
+        }
+
+        hazardsButton.classList.toggle("on", showHazards);
+        restButton.classList.toggle("on", showRest);
+
+        hazardsButton.style.opacity = "";
+        restButton.style.opacity = "";
+
+        hazardsButton.style.pointerEvents = "";
+        restButton.style.pointerEvents = "";
+
+        hazardsButton.removeAttribute("title");
+        restButton.removeAttribute("title");
       }
 
       window.addEventListener("offline", () => {
@@ -2766,6 +3161,7 @@
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
         const routeCard = document.getElementById("route-card");
+        const activeRoute = getActiveRoute();
 
         const hasValidDistance = Number.isFinite(distance);
         if (routeCard) {
@@ -2782,9 +3178,9 @@
             : progress;
 
         if (!hasValidDistance || normalizedDistance === null) {
-          progressValue.textContent = `Section 1/${TOTAL_SEGMENTS}`;
+          progressValue.textContent = `Section 1/${getTotalSegments()}`;
           distanceValue.textContent = "Waiting for start";
-          routeBadge.textContent = "Preparing";
+          routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           routeBadge.className = "route-card__badge";
           return;
         }
@@ -2794,7 +3190,7 @@
         if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
           progressValue.textContent = "Off route";
           distanceValue.textContent = "Move closer to the purple route";
-          routeBadge.textContent = "Far off route";
+          routeBadge.textContent = activeRoute.badgeFarOffRoute || "Far off route";
           routeBadge.className = "route-card__badge alert";
           return;
         }
@@ -2812,10 +3208,10 @@
         }
 
         if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
-          routeBadge.textContent = "Near edge";
+          routeBadge.textContent = activeRoute.badgeNearEdge || "Near edge";
           routeBadge.className = "route-card__badge warning";
         } else {
-          routeBadge.textContent = "On route";
+          routeBadge.textContent = activeRoute.badgeOnRoute || "On route";
           routeBadge.className = "route-card__badge";
         }
       }
@@ -2869,7 +3265,7 @@
 
       function updateMapView(lng, lat) {
         if (!map) return; // Map unavailable in fallback mode
-        if (isIntro) return;  // Skip updates during intro sequence
+        if (isIntro) return; // Skip updates during intro sequence
 
         // Use snapped position to keep route centered
         const displayPosition = lastSnappedPosition || [lng, lat];
@@ -2969,7 +3365,12 @@
       }
 
       function addRouteToMap(routeFeature) {
-        routeCoordinates = routeFeature.geometry.coordinates;
+        const geometry = routeFeature.geometry;
+
+        routeCoordinates =
+          geometry.type === "LineString"
+            ? geometry.coordinates
+            : geometry.coordinates.flat();
 
         if (!map) {
           // Even without map, we have the route coordinates for fallback display
@@ -3024,25 +3425,72 @@
         }
 
         if (routeCoordinates.length > 0) {
-          new mapboxgl.Marker({ color: "#22c55e" })
-            .setLngLat(routeCoordinates[0])
-            .setPopup(
-              new mapboxgl.Popup().setHTML(
-                "<h3>Start</h3><p>Route begins here</p>",
-              ),
-            )
+          const activeRoute = getActiveRoute();
+          const startCoordinate = routeCoordinates[0];
+          const finishCoordinate =
+            routeCoordinates[routeCoordinates.length - 1];
+
+          const startLabel = activeRoute.startLabel || "Start";
+          const startDescription =
+            activeRoute.startDescription || "Route begins here";
+
+          const finishLabel = activeRoute.finishLabel || "Finish";
+          const finishDescription =
+            activeRoute.finishDescription || "End of route";
+
+          const startPopupHtml =
+            "<h3>" + startLabel + "</h3><p>" + startDescription + "</p>";
+
+          const finishPopupHtml =
+            "<h3>" + finishLabel + "</h3><p>" + finishDescription + "</p>";
+
+          if (!routeStartMarker) {
+            routeStartMarker = new mapboxgl.Marker({ color: "#22c55e" });
+          }
+
+          routeStartMarker
+            .setLngLat(startCoordinate)
+            .setPopup(new mapboxgl.Popup().setHTML(startPopupHtml))
             .addTo(map);
 
-          new mapboxgl.Marker({ color: "#f97316" })
-            .setLngLat(routeCoordinates[routeCoordinates.length - 1])
-            .setPopup(
-              new mapboxgl.Popup().setHTML(
-                "<h3>Finish</h3><p>End of route</p>",
-              ),
-            )
+          if (!routeFinishMarker) {
+            routeFinishMarker = new mapboxgl.Marker({ color: "#f97316" });
+          }
+
+          routeFinishMarker
+            .setLngLat(finishCoordinate)
+            .setPopup(new mapboxgl.Popup().setHTML(finishPopupHtml))
             .addTo(map);
         }
       }
+
+function runRouteIntroAfterLoad() {
+  if (!map || !routeCoordinates.length || hasRouteLoaded) {
+    return;
+  }
+
+  hasRouteLoaded = true;
+
+  centerMapOnRoute({ duration: 3200 });
+
+  setTimeout(() => {
+    if (!lastActualPosition && routeCoordinates.length > 0) {
+      map.easeTo({
+        center: routeCoordinates[0],
+        zoom: 15.8,
+        duration: 2600,
+        easing: (t) => 1 - Math.pow(1 - t, 3),
+      });
+
+      lastViewCenter = routeCoordinates[0];
+    }
+
+    setTimeout(() => {
+      isIntro = false;
+    }, 2600);
+  }, 3300);
+}
+
 
       function loadRouteGeoJson() {
         if (window.location.protocol === "file:") {
@@ -3102,14 +3550,31 @@
               throw new Error("GeoJSON must contain a LineString geometry.");
             }
 
-            addRouteToMap(routeFeature);
+addRouteToMap(routeFeature);
+updateRouteSummaryDisplay();
+runRouteIntroAfterLoad();
+
+const routeSourceLabel = document.querySelector(
+  ".route-card__source",
+);
+
+            if (routeSourceLabel) {
+              routeSourceLabel.textContent = `Route source: ${getActiveRoute().sourceLabel}`;
+            }
           })
           .catch((error) => {
             console.error(error);
-            addRouteToMap(
-              buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
-            );
-            showWarning("Using fallback route preview", "warning");
+addRouteToMap(
+  buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+);
+updateRouteSummaryDisplay();
+runRouteIntroAfterLoad();
+
+showWarning(
+  `Using fallback route preview for ${getActiveRoute().fullName}`,
+  "warning",
+);
+updateRouteSummaryDisplay();
           });
       }
 
@@ -3206,6 +3671,11 @@
       const hazardsButton = document.getElementById("hazards-button");
 
       hazardsButton.addEventListener("click", () => {
+        if (!isHeathrowRoute()) {
+          showToast("Hazards are Heathrow-only");
+          return;
+        }
+
         showHazards = !showHazards;
 
         hazardMarkers.forEach((marker) => {
@@ -3219,6 +3689,11 @@
       const restButton = document.getElementById("rest-button");
 
       restButton.addEventListener("click", () => {
+        if (!isHeathrowRoute()) {
+          showToast("Rest stops are Heathrow-only");
+          return;
+        }
+
         showRest = !showRest;
 
         restMarkers.forEach((marker) => {
@@ -3227,6 +3702,8 @@
 
         restButton.classList.toggle("on", showRest);
       });
+
+      applyRouteAwareMarkerControls();
 
       // Help button
       const helpButton = document.getElementById("help-button");
@@ -3316,14 +3793,12 @@
         }
       });
 
-      hazardsButton.classList.toggle("on", showHazards);
-      restButton.classList.toggle("on", showRest);
       setHelpPanel(false);
 
       // Center map on route start point while waiting for GPS
       function setInitialViewToRouteStart() {
         if (!map || !routeCoordinates.length) return;
-        
+
         const startPoint = routeCoordinates[0];
         map.flyTo({
           center: startPoint,
@@ -3346,7 +3821,7 @@
             duration: 800,
           });
           lastViewCenter = [cachedPos.lng, cachedPos.lat];
-          showToast("Resuming from last position");
+          showToast(`Resuming ${getActiveRoute().name} position`);
         } else if (routeCoordinates.length > 0) {
           setInitialViewToRouteStart();
         }
@@ -3354,42 +3829,16 @@
 
       // Only set up map events if map is available
       if (map) {
-        map.on("load", () => {
-          loadRouteGeoJson();
-          loadRouteSurfaceSummary();
+map.on("load", () => {
+  loadRouteGeoJson();
+  loadRouteSurfaceSummary();
 
-          hazardsButton.classList.toggle("on", showHazards);
-          restButton.classList.toggle("on", showRest);
-          setHelpPanel(false);
-          updateCompassButton();
-          updateRouteCenterButtonLabel();
-
-          // Wait for route to exist (important)
-          setTimeout(() => {
-            if (!routeCoordinates.length) return;
-
-            // Intro sequence: ultra-smooth, slow zoom from UK view to route overview
-            centerMapOnRoute({ duration: 3200 }); // luxurious 3.2s zoom to route bounds
-
-            setTimeout(() => {
-              if (!lastActualPosition) {
-                map.easeTo({
-                  center: routeCoordinates[0],
-                  zoom: 15.8,
-                  duration: 2600,
-                  easing: (t) => 1 - Math.pow(1 - t, 3)  // smooth cubic ease-out
-                });
-                lastViewCenter = routeCoordinates[0];
-              }
-
-              // End intro after animation completes
-              setTimeout(() => {
-                isIntro = false;
-              }, 2600);
-            }, 3300);  // wait for fitBounds to finish, then start ease to start
-
-          }, 100); // small delay for route load
-        });
+  applyRouteAwareMarkerControls();
+  setHelpPanel(false);
+  updateCompassButton();
+  updateRouteCenterButtonLabel();
+  runRouteIntroAfterLoad();
+});
 
         map.on("movestart", () => {
           isMapInteracting = true;
@@ -3437,7 +3886,7 @@
           if (isWaitingForFirstLocation) {
             showWarning(
               "📍 Acquiring GPS location... Check location permissions if stuck",
-              "help"
+              "help",
             );
           }
         }, 8000);
@@ -3501,7 +3950,7 @@
               isWaitingForFirstLocation = false;
               showWarning(
                 "📍 Location blocked – grant permission in settings to continue",
-                "alert"
+                "alert",
               );
             }
           },
