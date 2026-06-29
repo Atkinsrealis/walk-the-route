@@ -2517,26 +2517,29 @@
         };
       }
 
-      function getNextThingAhead(userPoint) {
-        if (routeCoordinates.length < 2) {
-          return null;
-        }
+     function getNextThingAhead(userPoint) {
+  if (!isHeathrowRoute()) {
+    return null;
+  }
 
-        const userMeasure = getRouteMeasure(userPoint);
+  if (routeCoordinates.length < 2) {
+    return null;
+  }
 
-        const routeItems = [
-          ...hazards.map((h) => ({
-            type: "hazard",
-            label: h.type,
-            point: [h.lng, h.lat],
-          })),
-          ...restStops.map((r) => ({
-            type: "rest",
-            label: r.label,
-            point: [r.lng, r.lat],
-          })),
-        ];
+  const userMeasure = getRouteMeasure(userPoint);
 
+  const routeItems = [
+    ...hazards.map((h) => ({
+      type: "hazard",
+      label: h.type,
+      point: [h.lng, h.lat],
+    })),
+    ...restStops.map((r) => ({
+      type: "rest",
+      label: r.label,
+      point: [r.lng, r.lat],
+    })),
+  ];
         const upcomingItems = routeItems
           .map((item) => {
             const itemMeasure = getRouteMeasure(item.point);
@@ -2554,7 +2557,12 @@
         return upcomingItems[0] || null;
       }
 
-      function getNextHazardAhead(userPoint) {
+      
+function getNextHazardAhead(userPoint) {
+  if (!isHeathrowRoute()) {
+    return null;
+  }
+
         if (routeCoordinates.length < 2) {
           return null;
         }
@@ -2586,6 +2594,12 @@
         if (!nextThingValue) {
           return;
         }
+
+        
+  if (!isHeathrowRoute()) {
+    nextThingValue.textContent = "Test route active";
+    return;
+  }
 
         const nextThing = getNextThingAhead(userPoint);
 
