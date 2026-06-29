@@ -153,48 +153,48 @@
       .topbar p {
         transform: translateY(15px);
       }
-.route-test-switcher {
-  position: fixed;
-  top: calc(92px + env(safe-area-inset-top));
-  left: 16px;
-  z-index: 21;
+      .route-test-switcher {
+        position: fixed;
+        top: calc(92px + env(safe-area-inset-top));
+        left: 16px;
+        z-index: 21;
 
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
 
-  padding: 3px;
-  border-radius: 999px;
+        padding: 3px;
+        border-radius: 999px;
 
-  background: rgba(6, 11, 24, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(6, 11, 24, 0.52);
+        border: 1px solid rgba(255, 255, 255, 0.1);
 
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
 
-.route-test-switcher a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+      .route-test-switcher a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
 
-  min-height: 24px;
-  padding: 0 9px;
+        min-height: 24px;
+        padding: 0 9px;
 
-  border-radius: 999px;
+        border-radius: 999px;
 
-  color: rgba(255, 255, 255, 0.54);
-  text-decoration: none;
+        color: rgba(255, 255, 255, 0.54);
+        text-decoration: none;
 
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-}
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+      }
 
-.route-test-switcher a.active {
-  background: rgba(124, 58, 237, 0.28);
-  color: rgba(255, 255, 255, 0.92);
-}
+      .route-test-switcher a.active {
+        background: rgba(124, 58, 237, 0.28);
+        color: rgba(255, 255, 255, 0.92);
+      }
 
       .warning {
         position: fixed;
@@ -1326,10 +1326,12 @@
       <p>Infrastructure Charity Event</p>
     </div>
 
-<div class="route-test-switcher" aria-label="Test route switcher">
-  <a href="index.html" id="route-link-heathrow">Heathrow</a>
-  <a href="index.html?route=bledlow" id="route-link-bledlow">Bledlow test</a>
-</div>
+    <div class="route-test-switcher" aria-label="Test route switcher">
+      <a href="index.html" id="route-link-heathrow">Heathrow</a>
+      <a href="index.html?route=bledlow" id="route-link-bledlow"
+        >Bledlow test</a
+      >
+    </div>
 
     <div class="warning" id="warning">You may be off the official route</div>
 
@@ -1574,27 +1576,34 @@
         return ROUTES[activeRouteKey] || ROUTES.heathrow;
       }
 
+      function isHeathrowRoute() {
+        return activeRouteKey === "heathrow";
+      }
       const routeGeoJsonUrl = getActiveRoute().geojsonUrl;
 
-window.routeDebug = {
-  search: window.location.search,
-  requestedRouteKey,
-  activeRouteKey,
-  routeGeoJsonUrl,
-  activeRoute: getActiveRoute(),
-};
+      window.routeDebug = {
+        search: window.location.search,
+        requestedRouteKey,
+        activeRouteKey,
+        routeGeoJsonUrl,
+        activeRoute: getActiveRoute(),
+      };
 
       console.log("Route debug:", window.routeDebug);
 
-      
-const heathrowRouteLink = document.getElementById("route-link-heathrow");
-const bledlowRouteLink = document.getElementById("route-link-bledlow");
+      const heathrowRouteLink = document.getElementById("route-link-heathrow");
+      const bledlowRouteLink = document.getElementById("route-link-bledlow");
 
-if (heathrowRouteLink && bledlowRouteLink) {
-  heathrowRouteLink.classList.toggle("active", activeRouteKey === "heathrow");
-  bledlowRouteLink.classList.toggle("active", activeRouteKey === "bledlow");
-}
-
+      if (heathrowRouteLink && bledlowRouteLink) {
+        heathrowRouteLink.classList.toggle(
+          "active",
+          activeRouteKey === "heathrow",
+        );
+        bledlowRouteLink.classList.toggle(
+          "active",
+          activeRouteKey === "bledlow",
+        );
+      }
 
       const fallbackRouteCoordinates = [
         [-0.4543, 51.47],
@@ -1904,38 +1913,44 @@ if (heathrowRouteLink && bledlowRouteLink) {
         },
       ];
 
-      // HAZARDS
-      hazards.forEach((h) => {
-        const marker = new mapboxgl.Marker({ color: "#ef4444" })
-          .setLngLat([h.lng, h.lat])
-          .setPopup(
-            new mapboxgl.Popup().setHTML(
-              `<strong>${h.type}</strong><p>${h.message}</p>`,
-            ),
-          )
-          .addTo(map);
+      // HAZARDS — Heathrow only
+      if (isHeathrowRoute()) {
+        hazards.forEach((h) => {
+          const marker = new mapboxgl.Marker({ color: "#ef4444" })
+            .setLngLat([h.lng, h.lat])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(
+                `<strong>${h.type}</strong><p>${h.message}</p>`,
+              ),
+            )
+            .addTo(map);
 
-        marker.getElement().style.display = showHazards ? "block" : "none";
+          marker.getElement().style.display = showHazards ? "block" : "none";
 
-        hazardMarkers.push(marker);
-      });
+          hazardMarkers.push(marker);
+        });
+      }
 
-      // REST STOPS
       const restStops = [
         { lng: -0.458, lat: 51.4715, label: "Water + Toilets" },
         { lng: -0.4665, lat: 51.475, label: "Rest Area" },
       ];
 
-      restStops.forEach((r) => {
-        const marker = new mapboxgl.Marker({ color: "#3b82f6" })
-          .setLngLat([r.lng, r.lat])
-          .setPopup(new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`))
-          .addTo(map);
+      // REST STOPS — Heathrow only
+      if (isHeathrowRoute()) {
+        restStops.forEach((r) => {
+          const marker = new mapboxgl.Marker({ color: "#3b82f6" })
+            .setLngLat([r.lng, r.lat])
+            .setPopup(
+              new mapboxgl.Popup().setHTML(`<strong>${r.label}</strong>`),
+            )
+            .addTo(map);
 
-        marker.getElement().style.display = showRest ? "block" : "none";
+          marker.getElement().style.display = showRest ? "block" : "none";
 
-        restMarkers.push(marker);
-      });
+          restMarkers.push(marker);
+        });
+      }
 
       function toRadians(value) {
         return value * (Math.PI / 180);
@@ -2766,6 +2781,46 @@ if (heathrowRouteLink && bledlowRouteLink) {
         }, 2500);
       }
 
+      function applyRouteAwareMarkerControls() {
+  const hazardsButton = document.getElementById("hazards-button");
+  const restButton = document.getElementById("rest-button");
+
+  if (!hazardsButton || !restButton) {
+    return;
+  }
+
+  if (!isHeathrowRoute()) {
+    showHazards = false;
+    showRest = false;
+
+    hazardsButton.classList.remove("on");
+    restButton.classList.remove("on");
+
+    hazardsButton.style.opacity = "0.42";
+    restButton.style.opacity = "0.42";
+
+    hazardsButton.style.pointerEvents = "none";
+    restButton.style.pointerEvents = "none";
+
+    hazardsButton.setAttribute("title", "Heathrow-only marker layer");
+    restButton.setAttribute("title", "Heathrow-only marker layer");
+
+    return;
+  }
+
+  hazardsButton.classList.toggle("on", showHazards);
+  restButton.classList.toggle("on", showRest);
+
+  hazardsButton.style.opacity = "";
+  restButton.style.opacity = "";
+
+  hazardsButton.style.pointerEvents = "";
+  restButton.style.pointerEvents = "";
+
+  hazardsButton.removeAttribute("title");
+  restButton.removeAttribute("title");
+}
+
       window.addEventListener("offline", () => {
         const offlineNotice = document.getElementById("offline-notice");
         if (offlineNotice) {
@@ -3240,7 +3295,10 @@ if (heathrowRouteLink && bledlowRouteLink) {
             addRouteToMap(
               buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
             );
-            showWarning(`Using fallback route preview for ${getActiveRoute().fullName}`, "warning");
+            showWarning(
+              `Using fallback route preview for ${getActiveRoute().fullName}`,
+              "warning",
+            );
           });
       }
 
@@ -3333,31 +3391,44 @@ if (heathrowRouteLink && bledlowRouteLink) {
         });
       }
 
-      // Hazards button
-      const hazardsButton = document.getElementById("hazards-button");
+// Hazards button
+const hazardsButton = document.getElementById("hazards-button");
 
-      hazardsButton.addEventListener("click", () => {
-        showHazards = !showHazards;
+hazardsButton.addEventListener("click", () => {
+  if (!isHeathrowRoute()) {
+    showToast("Hazards are Heathrow-only");
+    return;
+  }
 
-        hazardMarkers.forEach((marker) => {
-          marker.getElement().style.display = showHazards ? "block" : "none";
-        });
+  showHazards = !showHazards;
 
-        hazardsButton.classList.toggle("on", showHazards);
-      });
+  hazardMarkers.forEach((marker) => {
+    marker.getElement().style.display = showHazards ? "block" : "none";
+  });
 
-      // Rest button
-      const restButton = document.getElementById("rest-button");
+  hazardsButton.classList.toggle("on", showHazards);
+});
 
-      restButton.addEventListener("click", () => {
-        showRest = !showRest;
+// Rest button
+const restButton = document.getElementById("rest-button");
 
-        restMarkers.forEach((marker) => {
-          marker.getElement().style.display = showRest ? "block" : "none";
-        });
+restButton.addEventListener("click", () => {
+  if (!isHeathrowRoute()) {
+    showToast("Rest stops are Heathrow-only");
+    return;
+  }
 
-        restButton.classList.toggle("on", showRest);
-      });
+  showRest = !showRest;
+
+  restMarkers.forEach((marker) => {
+    marker.getElement().style.display = showRest ? "block" : "none";
+  });
+
+  restButton.classList.toggle("on", showRest);
+});
+
+applyRouteAwareMarkerControls();
+
 
       // Help button
       const helpButton = document.getElementById("help-button");
@@ -3447,8 +3518,6 @@ if (heathrowRouteLink && bledlowRouteLink) {
         }
       });
 
-      hazardsButton.classList.toggle("on", showHazards);
-      restButton.classList.toggle("on", showRest);
       setHelpPanel(false);
 
       // Center map on route start point while waiting for GPS
@@ -3489,8 +3558,7 @@ if (heathrowRouteLink && bledlowRouteLink) {
           loadRouteGeoJson();
           loadRouteSurfaceSummary();
 
-          hazardsButton.classList.toggle("on", showHazards);
-          restButton.classList.toggle("on", showRest);
+          applyRouteAwareMarkerControls();
           setHelpPanel(false);
           updateCompassButton();
           updateRouteCenterButtonLabel();
