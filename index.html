@@ -3168,6 +3168,13 @@ const fallbackRouteCoordinates = [
             }
 
             addRouteToMap(routeFeature);
+            addRouteToMap(routeFeature);
+
+const routeSourceLabel = document.querySelector(".route-card__source");
+
+if (routeSourceLabel) {
+  routeSourceLabel.textContent = `Route source: ${getActiveRoute().sourceLabel}`;
+}
           })
           .catch((error) => {
             console.error(error);
