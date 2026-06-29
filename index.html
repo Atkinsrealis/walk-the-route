@@ -3226,7 +3226,6 @@ if (heathrowRouteLink && bledlowRouteLink) {
             }
 
             addRouteToMap(routeFeature);
-            addRouteToMap(routeFeature);
 
             const routeSourceLabel = document.querySelector(
               ".route-card__source",
@@ -3241,7 +3240,7 @@ if (heathrowRouteLink && bledlowRouteLink) {
             addRouteToMap(
               buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
             );
-            showWarning("Using fallback route preview", "warning");
+            showWarning(`Using fallback route preview for ${getActiveRoute().fullName}`, "warning");
           });
       }
 
