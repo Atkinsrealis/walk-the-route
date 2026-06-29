@@ -1706,8 +1706,10 @@ bledlow: {
       let routeCoordinates = [];
       let routeStartMarker = null;
       let routeFinishMarker = null;
+      let hasRouteLoaded = false
       let isAppVisible = true;
       let geolocationWatchId = null;
+      
 
       // Load cached position to restore previous map state
       function loadCachedPosition() {
@@ -3395,6 +3397,34 @@ localStorage.setItem(
         }
       }
 
+function runRouteIntroAfterLoad() {
+  if (!map || !routeCoordinates.length || hasRouteLoaded) {
+    return;
+  }
+
+  hasRouteLoaded = true;
+
+  centerMapOnRoute({ duration: 3200 });
+
+  setTimeout(() => {
+    if (!lastActualPosition && routeCoordinates.length > 0) {
+      map.easeTo({
+        center: routeCoordinates[0],
+        zoom: 15.8,
+        duration: 2600,
+        easing: (t) => 1 - Math.pow(1 - t, 3),
+      });
+
+      lastViewCenter = routeCoordinates[0];
+    }
+
+    setTimeout(() => {
+      isIntro = false;
+    }, 2600);
+  }, 3300);
+}
+
+
       function loadRouteGeoJson() {
         if (window.location.protocol === "file:") {
           addRouteToMap(
@@ -3453,11 +3483,12 @@ localStorage.setItem(
               throw new Error("GeoJSON must contain a LineString geometry.");
             }
 
-            addRouteToMap(routeFeature);
+addRouteToMap(routeFeature);
+runRouteIntroAfterLoad();
 
-            const routeSourceLabel = document.querySelector(
-              ".route-card__source",
-            );
+const routeSourceLabel = document.querySelector(
+  ".route-card__source",
+);
 
             if (routeSourceLabel) {
               routeSourceLabel.textContent = `Route source: ${getActiveRoute().sourceLabel}`;
@@ -3465,13 +3496,15 @@ localStorage.setItem(
           })
           .catch((error) => {
             console.error(error);
-            addRouteToMap(
-              buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
-            );
-            showWarning(
-              `Using fallback route preview for ${getActiveRoute().fullName}`,
-              "warning",
-            );
+addRouteToMap(
+  buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+);
+runRouteIntroAfterLoad();
+
+showWarning(
+  `Using fallback route preview for ${getActiveRoute().fullName}`,
+  "warning",
+);
           });
       }
 
@@ -3726,40 +3759,16 @@ localStorage.setItem(
 
       // Only set up map events if map is available
       if (map) {
-        map.on("load", () => {
-          loadRouteGeoJson();
-          loadRouteSurfaceSummary();
+map.on("load", () => {
+  loadRouteGeoJson();
+  loadRouteSurfaceSummary();
 
-          applyRouteAwareMarkerControls();
-          setHelpPanel(false);
-          updateCompassButton();
-          updateRouteCenterButtonLabel();
-
-          // Wait for route to exist (important)
-          setTimeout(() => {
-            if (!routeCoordinates.length) return;
-
-            // Intro sequence: ultra-smooth, slow zoom from UK view to route overview
-            centerMapOnRoute({ duration: 3200 }); // luxurious 3.2s zoom to route bounds
-
-            setTimeout(() => {
-              if (!lastActualPosition) {
-                map.easeTo({
-                  center: routeCoordinates[0],
-                  zoom: 15.8,
-                  duration: 2600,
-                  easing: (t) => 1 - Math.pow(1 - t, 3), // smooth cubic ease-out
-                });
-                lastViewCenter = routeCoordinates[0];
-              }
-
-              // End intro after animation completes
-              setTimeout(() => {
-                isIntro = false;
-              }, 2600);
-            }, 3300); // wait for fitBounds to finish, then start ease to start
-          }, 100); // small delay for route load
-        });
+  applyRouteAwareMarkerControls();
+  setHelpPanel(false);
+  updateCompassButton();
+  updateRouteCenterButtonLabel();
+  runRouteIntroAfterLoad();
+});
 
         map.on("movestart", () => {
           isMapInteracting = true;
