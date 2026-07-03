@@ -2307,6 +2307,7 @@ localStorage.setItem(
       let hazardMarkers = [];
       let showRest = false;
       let restMarkers = [];
+      let hasHeathrowMarkers = false;
       let showHelp = false;
       let surfaceTooltipMarker = null;
       let surfaceTooltipElement = null;
@@ -2358,8 +2359,21 @@ localStorage.setItem(
         },
       ];
 
-      // HAZARDS — Heathrow only
-      if (isHeathrowRoute()) {
+      const restStops = [
+        { lng: -0.458, lat: 51.4715, label: "Water + Toilets" },
+        { lng: -0.4665, lat: 51.475, label: "Rest Area" },
+      ];
+
+      function createHeathrowMarkersIfNeeded() {
+        if (
+          hasHeathrowMarkers ||
+          !isHeathrowRoute() ||
+          !map ||
+          typeof mapboxgl === "undefined"
+        ) {
+          return;
+        }
+
         hazards.forEach((h) => {
           const marker = new mapboxgl.Marker({ color: "#ef4444" })
             .setLngLat([h.lng, h.lat])
@@ -2371,18 +2385,9 @@ localStorage.setItem(
             .addTo(map);
 
           marker.getElement().style.display = showHazards ? "block" : "none";
-
           hazardMarkers.push(marker);
         });
-      }
 
-      const restStops = [
-        { lng: -0.458, lat: 51.4715, label: "Water + Toilets" },
-        { lng: -0.4665, lat: 51.475, label: "Rest Area" },
-      ];
-
-      // REST STOPS — Heathrow only
-      if (isHeathrowRoute()) {
         restStops.forEach((r) => {
           const marker = new mapboxgl.Marker({ color: "#3b82f6" })
             .setLngLat([r.lng, r.lat])
@@ -2392,9 +2397,10 @@ localStorage.setItem(
             .addTo(map);
 
           marker.getElement().style.display = showRest ? "block" : "none";
-
           restMarkers.push(marker);
         });
+
+        hasHeathrowMarkers = true;
       }
 
       function toRadians(value) {
@@ -3844,6 +3850,7 @@ function runRouteIntroAfterLoad() {
           }
 
           loadRouteSurfaceSummary();
+          createHeathrowMarkersIfNeeded();
 
           applyRouteAwareMarkerControls();
           setHelpPanel(false);
@@ -3999,6 +4006,7 @@ function runRouteIntroAfterLoad() {
             }
 
             loadRouteSurfaceSummary();
+            createHeathrowMarkersIfNeeded();
             updateRouteCenterButtonLabel();
             updateCompassButton();
           }
@@ -4439,7 +4447,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-06-25-1";
+          const SERVICE_WORKER_VERSION = "2026-07-03-2";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
