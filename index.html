@@ -50,6 +50,18 @@
         --floating-button-gap: 14px;
         --floating-button-right: 16px;
         --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
+
+        /* Heathrow-aligned palette (dark mode tuned) */
+        --bg-base: #0f172a;               /* softer than current dark */
+        --bg-surface: rgba(15, 23, 42, 0.85);
+        --bg-surface-strong: rgba(15, 23, 42, 0.95);
+
+        --purple-primary: #6d28d9;        /* less neon, more premium */
+        --purple-soft: rgba(109, 40, 217, 0.25);
+
+        --text-primary: rgba(255, 255, 255, 0.95);
+        --text-secondary: rgba(255, 255, 255, 0.72);
+        --text-muted: rgba(255, 255, 255, 0.55);
       }
 
       html {
@@ -65,7 +77,7 @@
         height: 100%;
         font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         overflow: hidden;
-        background: #0a0f1f;
+        background: var(--bg-base);
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
       }
@@ -88,10 +100,10 @@
 
         background: linear-gradient(
           to bottom,
-          rgba(5, 10, 22, 0.96) 0%,
-          rgba(5, 10, 22, 0.82) 38%,
-          rgba(5, 10, 22, 0.46) 68%,
-          rgba(5, 10, 22, 0) 100%
+          rgba(8, 12, 24, 0.96) 0%,
+          rgba(8, 12, 24, 0.82) 38%,
+          rgba(8, 12, 24, 0.46) 68%,
+          rgba(8, 12, 24, 0) 100%
         );
 
         z-index: 8;
@@ -243,7 +255,7 @@
         justify-content: space-between;
         gap: 12px;
         padding: 12px 14px;
-        background: rgba(10, 15, 31, 0.78);
+        background: var(--bg-surface);
         color: white;
         border-radius: 18px;
         backdrop-filter: blur(12px);
@@ -270,11 +282,11 @@
 
         background: conic-gradient(
           from var(--route-border-angle),
-          rgba(124, 58, 237, 0.2) 0deg,
-          rgba(124, 58, 237, 0.2) 245deg,
-          rgba(196, 181, 253, 0.95) 285deg,
-          rgba(91, 46, 255, 0.95) 315deg,
-          rgba(124, 58, 237, 0.2) 360deg
+          var(--purple-soft) 0deg,
+          var(--purple-soft) 245deg,
+          rgba(109, 40, 217, 0.95) 285deg,
+          rgba(193, 181, 255, 0.9) 315deg,
+          var(--purple-soft) 360deg
         );
 
         opacity: 0;
@@ -391,7 +403,7 @@
         height: var(--floating-button-size);
         border: 0;
         border-radius: 999px;
-        background: rgba(10, 15, 31, 0.88);
+        background: var(--bg-surface-strong);
         color: #fff;
         font-size: 22px;
         font-weight: 700;
@@ -552,7 +564,7 @@
       .help-intro {
         margin: 5px 0 6px;
         font-size: 13px;
-        opacity: 0.7;
+        color: var(--text-secondary);
       }
 
       .help-panel__close {
@@ -758,7 +770,7 @@
         text-align: center;
 
         font-size: 13px;
-        opacity: 0.7;
+        color: var(--text-secondary);
       }
 
       .help-emergency {
@@ -767,7 +779,7 @@
         border-top: 1px solid rgba(255, 255, 255, 0.12);
         text-align: center;
         font-size: 13px;
-        opacity: 0.7;
+        color: var(--text-muted);
       }
 
       .help-emergency a {
@@ -797,7 +809,7 @@
         width: 56px;
         height: 56px;
         border-radius: 999px;
-        background: rgba(10, 15, 31, 0.88);
+        background: var(--bg-surface-strong);
         color: #34d399; /* subtle green = positive action */
         display: flex;
         align-items: center;
@@ -869,7 +881,7 @@
         border: 0;
         border-radius: 999px;
 
-        background: rgba(10, 15, 31, 0.88);
+        background: var(--bg-surface-strong);
         color: #14b8a6;
 
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
@@ -986,7 +998,7 @@
 
       .help-primary::after {
         content: " →";
-        opacity: 0.7;
+        color: var(--text-muted);
       }
 
       .toast {
@@ -3399,7 +3411,7 @@ function updateRouteSummaryDisplay() {
             type: "line",
             source: "route",
             paint: {
-              "line-color": "#8b5cf6",
+              "line-color": "#7c3aed",
               "line-width": 2,
               "line-dasharray": [0, 1.5, 0.8, 1.5],
               "line-opacity": 0.75,
@@ -3411,7 +3423,7 @@ function updateRouteSummaryDisplay() {
             type: "line",
             source: "route",
             paint: {
-              "line-color": "#7c3aed",
+              "line-color": "#6d28d9",
               "line-width": 3.5,
               "line-opacity": 0.95,
             },
