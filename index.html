@@ -67,10 +67,7 @@
 
       body.mode-pre-event {
         overflow-y: auto;
-        background:
-          radial-gradient(circle at 14% 14%, rgba(14, 116, 144, 0.08), transparent 42%),
-          radial-gradient(circle at 84% 22%, rgba(109, 40, 217, 0.08), transparent 46%),
-          #f5f8fc;
+        background: #f8f7f5;
       }
 
       body.mode-pre-event::before {
@@ -84,59 +81,43 @@
 
       .landing-screen {
         min-height: 100vh;
-        padding: calc(20px + env(safe-area-inset-top)) 16px
-          calc(26px + env(safe-area-inset-bottom));
-        display: grid;
-        place-items: center;
-      }
-
-      .landing-screen__card {
-        width: min(100%, 520px);
-        padding: 24px 20px 20px;
-        border-radius: 22px;
-        background:
-          linear-gradient(165deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.97));
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        box-shadow:
-          0 20px 48px rgba(15, 23, 42, 0.12),
-          inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      }
-
-      .landing-screen__eyebrow {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 5px 10px;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.06);
-        color: #334155;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        padding: calc(20px + env(safe-area-inset-top)) 20px
+          calc(48px + env(safe-area-inset-bottom));
+        position: relative;
+        overflow: hidden;
       }
 
       .landing-screen__brand {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 12px;
-        border-radius: 999px;
-        background: #0f172a;
+        display: block;
       }
 
       .landing-screen__brand img {
-        height: 14px;
+        height: 28px;
         width: auto;
         display: block;
       }
 
+      .landing-screen__rule {
+        margin: 14px 0 16px;
+        height: 1px;
+        background: rgba(78, 49, 132, 0.18);
+      }
+
+      .landing-screen__content {
+        width: min(100%, 520px);
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
       .landing-screen h1 {
-        margin: 18px 0 4px;
-        color: #0f172a;
-        font-size: 30px;
-        line-height: 1.06;
-        letter-spacing: 0.01em;
+        margin: 0;
+        color: #5a2f91;
+        font-size: 18px;
+        line-height: 1.35;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-weight: 500;
       }
 
       .landing-screen p {
@@ -144,37 +125,51 @@
       }
 
       .landing-screen__subtitle {
-        color: #334155;
-        font-size: 15px;
-        line-height: 1.3;
+        margin-top: 12px;
+        color: #5b5565;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .landing-screen__copy {
+        margin-top: 18px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .landing-screen__copy p {
+        color: #5e5769;
+        font-size: 12px;
+        line-height: 1.62;
       }
 
       .landing-screen__meta {
         margin-top: 18px;
         display: grid;
-        gap: 10px;
-        color: #1e293b;
-        font-size: 14px;
+        gap: 14px;
       }
 
       .landing-screen__meta p {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 12px;
-        border-radius: 12px;
-        border: 1px solid rgba(15, 23, 42, 0.08);
-        background: rgba(255, 255, 255, 0.72);
+        min-height: 30px;
+        padding: 0 14px;
+        border-radius: 6px;
+        border: 1px solid rgba(126, 108, 161, 0.12);
+        background: rgba(243, 241, 245, 0.96);
+        color: #6a4ca1;
+        font-size: 13px;
       }
 
       .landing-screen__preview {
         margin-top: 16px;
-        border-radius: 16px;
-        border: 1px solid rgba(15, 23, 42, 0.1);
-        background:
-          linear-gradient(150deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.02)),
-          #f8fbff;
-        padding: 12px;
+        height: 196px;
+        border-radius: 10px;
+        border: 3px solid rgba(136, 107, 193, 0.88);
+        background: rgba(255, 255, 255, 0.44);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
       }
 
       .landing-screen__preview svg {
@@ -184,30 +179,29 @@
       }
 
       .landing-screen__preview span {
-        margin-top: 6px;
         display: block;
-        color: #475569;
+        color: #595161;
         font-size: 11px;
-        letter-spacing: 0.03em;
+        letter-spacing: 0.01em;
         text-transform: uppercase;
       }
 
       .landing-screen__start {
-        margin-top: 16px;
+        margin-top: 14px;
         width: 100%;
         border: none;
-        border-radius: 14px;
-        background: linear-gradient(150deg, #0f172a, #172554);
-        color: #fff;
-        font-size: 17px;
-        font-weight: 700;
-        padding: 14px 18px;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #ffe98a 0%, #ffd62e 100%);
+        color: #1f1b20;
+        font-size: 18px;
+        font-weight: 500;
+        padding: 13px 18px;
         cursor: pointer;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+        box-shadow: 0 8px 20px rgba(212, 170, 17, 0.18);
       }
 
       .landing-screen__start:focus-visible {
-        outline: 3px solid rgba(14, 116, 144, 0.35);
+        outline: 3px solid rgba(255, 214, 46, 0.42);
         outline-offset: 2px;
       }
 
@@ -216,10 +210,21 @@
       }
 
       .landing-screen__hint {
-        margin-top: 10px;
-        color: #475569;
-        font-size: 12px;
+        margin-top: 6px;
+        color: #68606f;
+        font-size: 11px;
         text-align: center;
+      }
+
+      .landing-screen__botanical {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 96px;
+        pointer-events: none;
+        opacity: 0.72;
+        background: url("assets/floral-footer.png") center bottom / cover no-repeat;
       }
 
       body.mode-active-walk .landing-screen {
@@ -1414,17 +1419,12 @@
           --floating-button-right: 12px;
         }
 
-        .landing-screen__card {
-          padding: 20px 16px 16px;
-          border-radius: 18px;
-        }
-
         .landing-screen h1 {
-          font-size: 26px;
+          font-size: 16px;
         }
 
-        .landing-screen__meta {
-          font-size: 13px;
+        .landing-screen__preview {
+          height: 170px;
         }
 
         .route-card {
@@ -1502,41 +1502,52 @@
 
   <body class="mode-pre-event">
     <section class="landing-screen" id="landing-screen">
-      <div class="landing-screen__card">
-        <p class="landing-screen__eyebrow">Event briefing</p>
-
+      <div class="landing-screen__content">
         <div class="landing-screen__brand" aria-label="Heathrow">
-          <img src="assets/heathrow-logo-white.svg" alt="Heathrow" />
+          <img src="assets/heathrow-logo-purple.svg" alt="Heathrow" />
         </div>
+
+        <div class="landing-screen__rule"></div>
 
         <h1 id="landing-title">Perimeter Walk</h1>
         <p class="landing-screen__subtitle" id="landing-subtitle">
           Infrastructure Charity Event
         </p>
 
+        <div class="landing-screen__copy">
+          <p id="landing-copy-lead">
+            Participants will set off in small groups, following a designated landside route around the airport perimeter.
+          </p>
+          <p id="landing-copy-middle">
+            The full route is approximately 10 miles and is expected to take between 3 and 4 hours, with shorter options available for those who prefer a different level of participation.
+          </p>
+          <p id="landing-copy-end">
+            This map provides guided navigation, highlighting key checkpoints and potential hazards to help you follow the route with confidence.
+          </p>
+        </div>
+
         <div class="landing-screen__meta">
-          <p id="landing-location-value">📍 Heathrow Perimeter</p>
-          <p id="landing-distance-time-value">🧭 Route distance calculating…</p>
+          <p id="landing-location-value">Heathrow Perimeter Walk</p>
+          <p id="landing-distance-time-value">Route distance calculating…</p>
         </div>
 
         <div class="landing-screen__preview" aria-hidden="true">
           <svg viewBox="0 0 500 168" role="presentation">
-            <rect x="6" y="6" width="488" height="156" rx="14" fill="rgba(255,255,255,0.45)" stroke="rgba(15,23,42,0.08)" />
-            <path d="M40 118 C94 28, 172 152, 238 74 S358 42, 460 104" fill="none" stroke="rgba(124,58,237,0.28)" stroke-width="10" stroke-linecap="round" />
-            <path d="M40 118 C94 28, 172 152, 238 74 S358 42, 460 104" fill="none" stroke="#6d28d9" stroke-width="4" stroke-linecap="round" />
-            <circle cx="40" cy="118" r="8" fill="#16a34a" />
-            <circle cx="460" cy="104" r="8" fill="#f97316" />
+            <path d="M46 116 C104 34, 168 142, 238 88 S368 56, 454 108" fill="none" stroke="rgba(109, 40, 217, 0.18)" stroke-width="10" stroke-linecap="round" />
+            <path d="M46 116 C104 34, 168 142, 238 88 S368 56, 454 108" fill="none" stroke="#8a70c2" stroke-width="4" stroke-linecap="round" />
           </svg>
-          <span>Small map preview (non-interactive)</span>
+          <span>Route preview (non interactive)</span>
         </div>
 
         <button class="landing-screen__start" id="start-walk-button">
-          Start walk
+          Start Walk
         </button>
         <p class="landing-screen__hint">
-          Live GPS and tracking begin after you tap Start walk.
+          Live GPS tracking will begin after you tap 'Start Walk'
         </p>
       </div>
+
+      <div class="landing-screen__botanical" aria-hidden="true"></div>
     </section>
 
     <div class="topbar">
@@ -1780,6 +1791,14 @@
   geojsonUrl: "heathrow-perimeter-route.geojson",
   title: "Perimeter Walk",
   subtitle: "Infrastructure Charity Event",
+  landingHeading: "Walking the perimeter for charity",
+    landingLead:
+      "Participants will set off in small groups, following a designated landside route around the airport perimeter.",
+    landingCopyMiddle:
+      "The full route is approximately 10 miles and is expected to take between 3 and 4 hours, with shorter options available for those who prefer a different level of participation.",
+    landingCopyEnd:
+      "This map provides guided navigation, highlighting key checkpoints and potential hazards to help you follow the route with confidence.",
+    landingRouteLabel: "Heathrow Perimeter Walk",
   helpIntro: "We’ll help you get back on track.",
   helpSummary: "Move somewhere safe, away from traffic.",
   helpSteps: [
@@ -1806,6 +1825,14 @@ bledlow: {
   geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
   title: "Bledlow Test",
   subtitle: "GPS test route",
+  landingHeading: "Walking the test route",
+  landingLead:
+    "Use this lighter pre-start screen to brief the test walk before live tracking begins.",
+  landingCopyMiddle:
+    "This shorter test route is intended for validating GPS behaviour, route snapping, and the transition into the live dark-mode map.",
+  landingCopyEnd:
+    "Start the walk when ready to enter active navigation mode and confirm route line, markers, and position updates on the move.",
+  landingRouteLabel: "Bledlow Test Route",
   walkingSpeedKmh: 4.8,
   helpIntro: "GPS test route active.",
   helpSummary: "Use this route to test GPS tracking, panning and route snapping.",
@@ -1845,6 +1872,9 @@ bledlow: {
         const landingTitle = document.getElementById("landing-title");
         const landingSubtitle = document.getElementById("landing-subtitle");
         const landingLocationValue = document.getElementById("landing-location-value");
+        const landingCopyLead = document.getElementById("landing-copy-lead");
+        const landingCopyMiddle = document.getElementById("landing-copy-middle");
+        const landingCopyEnd = document.getElementById("landing-copy-end");
 
         if (title) {
           title.textContent = activeRoute.title || "Perimeter Walk";
@@ -1856,7 +1886,8 @@ bledlow: {
         }
 
         if (landingTitle) {
-          landingTitle.textContent = activeRoute.title || "Perimeter Walk";
+          landingTitle.textContent =
+            activeRoute.landingHeading || activeRoute.title || "Perimeter Walk";
         }
 
         if (landingSubtitle) {
@@ -1865,7 +1896,20 @@ bledlow: {
         }
 
         if (landingLocationValue) {
-          landingLocationValue.textContent = `📍 ${activeRoute.fullName || "Heathrow Perimeter"}`;
+          landingLocationValue.textContent =
+            activeRoute.landingRouteLabel || activeRoute.fullName || "Heathrow Perimeter Walk";
+        }
+
+        if (landingCopyLead) {
+          landingCopyLead.textContent = activeRoute.landingLead || "";
+        }
+
+        if (landingCopyMiddle) {
+          landingCopyMiddle.textContent = activeRoute.landingCopyMiddle || "";
+        }
+
+        if (landingCopyEnd) {
+          landingCopyEnd.textContent = activeRoute.landingCopyEnd || "";
         }
 
         document.title = activeRoute.title || "Heathrow Perimeter Walk";
@@ -2855,7 +2899,7 @@ function updateRouteSummaryDisplay() {
   }
 
   if (landingDistanceTimeValue) {
-    landingDistanceTimeValue.textContent = `🧭 ${distanceText} · approx. ${timeText}`;
+    landingDistanceTimeValue.textContent = `${distanceText} • approx. ${timeText}`;
   }
 }
 
