@@ -197,12 +197,6 @@
         isolation: isolate;
       }
 
-      @property --start-button-angle {
-        syntax: "<angle>";
-        initial-value: 0deg;
-        inherits: false;
-      }
-
       .landing-button::before {
         content: "";
         position: absolute;
@@ -212,7 +206,7 @@
         border-radius: inherit;
 
         background: conic-gradient(
-          from var(--start-button-angle),
+          from 0deg,
           rgba(247, 97, 188, 0.28) 0deg,
           rgba(247, 97, 188, 0.28) 235deg,
           rgba(247, 97, 188, 0.95) 290deg,
@@ -231,17 +225,19 @@
         mask-composite: exclude;
 
         pointer-events: none;
-        animation: start-button-border-spin 4.2s cubic-bezier(0.22, 0.61, 0.36, 1)
-          infinite;
+        transform: rotate(0deg);
+        transform-origin: 50% 50%;
+        will-change: transform;
+        animation: start-button-border-spin 4.2s linear infinite;
       }
 
       @keyframes start-button-border-spin {
         from {
-          --start-button-angle: 0deg;
+          transform: rotate(0deg);
         }
 
         to {
-          --start-button-angle: 360deg;
+          transform: rotate(360deg);
         }
       }
 
