@@ -82,7 +82,7 @@
       .landing-screen {
         min-height: 100vh;
         padding: calc(20px + env(safe-area-inset-top)) 20px
-          calc(48px + env(safe-area-inset-bottom));
+          calc(112px + env(safe-area-inset-bottom));
         position: relative;
         overflow: hidden;
       }
@@ -161,31 +161,6 @@
         font-size: 13px;
       }
 
-      .landing-screen__preview {
-        margin-top: 16px;
-        height: 196px;
-        border-radius: 10px;
-        border: 3px solid rgba(136, 107, 193, 0.88);
-        background: rgba(255, 255, 255, 0.44);
-        display: grid;
-        place-items: center;
-        overflow: hidden;
-      }
-
-      .landing-screen__preview svg {
-        width: 100%;
-        height: auto;
-        display: block;
-      }
-
-      .landing-screen__preview span {
-        display: block;
-        color: #595161;
-        font-size: 11px;
-        letter-spacing: 0.01em;
-        text-transform: uppercase;
-      }
-
       .landing-screen__start {
         margin-top: 14px;
         width: 100%;
@@ -221,9 +196,9 @@
         left: 0;
         right: 0;
         bottom: 0;
-        height: 96px;
+        height: 88px;
         pointer-events: none;
-        opacity: 0.72;
+        opacity: 0.58;
         background: url("assets/floral-footer.png") center bottom / cover no-repeat;
       }
 
@@ -1422,11 +1397,6 @@
         .landing-screen h1 {
           font-size: 16px;
         }
-
-        .landing-screen__preview {
-          height: 170px;
-        }
-
         .route-card {
           flex-direction: column;
           align-items: flex-start;
@@ -1529,14 +1499,6 @@
         <div class="landing-screen__meta">
           <p id="landing-location-value">Heathrow Perimeter Walk</p>
           <p id="landing-distance-time-value">Route distance calculating…</p>
-        </div>
-
-        <div class="landing-screen__preview" aria-hidden="true">
-          <svg viewBox="0 0 500 168" role="presentation">
-            <path d="M46 116 C104 34, 168 142, 238 88 S368 56, 454 108" fill="none" stroke="rgba(109, 40, 217, 0.18)" stroke-width="10" stroke-linecap="round" />
-            <path d="M46 116 C104 34, 168 142, 238 88 S368 56, 454 108" fill="none" stroke="#8a70c2" stroke-width="4" stroke-linecap="round" />
-          </svg>
-          <span>Route preview (non interactive)</span>
         </div>
 
         <button class="landing-screen__start" id="start-walk-button">
