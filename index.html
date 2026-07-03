@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#0a0f1f" />
@@ -47,6 +47,11 @@
         height: 100%;
         -webkit-text-size-adjust: 100%;
         text-size-adjust: 100%;
+      }
+
+      a,
+      button {
+        touch-action: manipulation;
       }
 
       body {
@@ -3231,6 +3236,11 @@ function updateRouteSummaryDisplay() {
       function showSurfaceTooltip() {
         if (!surfaceTooltipElement) return;
 
+        if (isIntro) {
+          hideSurfaceTooltip();
+          return;
+        }
+
         // BLOCK: never show while user is interacting
         if (isMapInteracting) return;
 
@@ -3244,6 +3254,11 @@ function updateRouteSummaryDisplay() {
 
       function updateSurfaceTooltipVisibility() {
         if (!surfaceTooltipElement) {
+          return;
+        }
+
+        if (isIntro) {
+          hideSurfaceTooltip();
           return;
         }
 
@@ -3261,6 +3276,11 @@ function updateRouteSummaryDisplay() {
           !routeSurfaceSummary ||
           routeCoordinates.length === 0
         ) {
+          return;
+        }
+
+        if (isIntro) {
+          hideSurfaceTooltip();
           return;
         }
 
@@ -3817,6 +3837,7 @@ function runRouteIntroAfterLoad() {
 
     setTimeout(() => {
       isIntro = false;
+      updateSurfaceTooltipVisibility();
     }, 2600);
   }, 3300);
 }
