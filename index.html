@@ -17,31 +17,9 @@
 
     <title>Heathrow Perimeter Walk</title>
 
-    <link
-      href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css"
-      rel="stylesheet"
-      onerror="
-        window.MAPBOX_LOAD_FAILED = true;
-        initFallbackUI();
-      "
-    />
-
-    <script
-      src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"
-      onerror="
-        window.MAPBOX_LOAD_FAILED = true;
-        initFallbackUI();
-      "
-    ></script>
     <script>
-      // Detect if Mapbox fails to load within a timeout
+      // Mapbox is loaded lazily when the walk starts.
       window.MAPBOX_LOAD_FAILED = false;
-      setTimeout(() => {
-        if (typeof mapboxgl === "undefined") {
-          window.MAPBOX_LOAD_FAILED = true;
-          initFallbackUI();
-        }
-      }, 3000);
     </script>
 
     <style>
@@ -1789,12 +1767,6 @@
       <span>🌐 Offline – Map tiles unavailable, route data cached</span>
     </div>
     <script>
-      // Only set token if Mapbox is loaded
-      if (typeof mapboxgl !== "undefined") {
-        mapboxgl.accessToken =
-          "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
-      }
-
       const ROUTES = {
  heathrow: {
   name: "Heathrow",
@@ -1961,6 +1933,7 @@ bledlow: {
         [-0.47, 51.475],
       ];
       let routeCoordinates = [];
+      let cachedRouteFeature = null;
       let routeStartMarker = null;
       let routeFinishMarker = null;
       let hasRouteLoaded = false
@@ -1968,6 +1941,10 @@ bledlow: {
       let geolocationWatchId = null;
       let geolocationStarted = false;
       let hasMapEventsBound = false;
+      let mapboxAssetsPromise = null;
+
+      const MAPBOX_CSS_URL = "https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css";
+      const MAPBOX_JS_URL = "https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js";
 
       const APP_MODE_PRE_EVENT = "pre-event";
       const APP_MODE_ACTIVE_WALK = "active-walk";
@@ -2209,14 +2186,80 @@ localStorage.setItem(
         });
       }
 
-      function initializeMapIfNeeded() {
-        if (map) {
-          return;
+      function loadMapboxAssetsIfNeeded() {
+        if (typeof mapboxgl !== "undefined") {
+          return Promise.resolve();
         }
 
-        if (typeof mapboxgl === "undefined" || window.MAPBOX_LOAD_FAILED) {
+        if (mapboxAssetsPromise) {
+          return mapboxAssetsPromise;
+        }
+
+        mapboxAssetsPromise = new Promise((resolve, reject) => {
+          if (!document.querySelector('link[data-mapbox="css"]')) {
+            const cssLink = document.createElement("link");
+            cssLink.rel = "stylesheet";
+            cssLink.href = MAPBOX_CSS_URL;
+            cssLink.setAttribute("data-mapbox", "css");
+            document.head.appendChild(cssLink);
+          }
+
+          const existingScript = document.querySelector(
+            'script[data-mapbox="js"]',
+          );
+
+          if (existingScript && typeof mapboxgl !== "undefined") {
+            resolve();
+            return;
+          }
+
+          const script = existingScript || document.createElement("script");
+
+          if (!existingScript) {
+            script.src = MAPBOX_JS_URL;
+            script.async = true;
+            script.setAttribute("data-mapbox", "js");
+          }
+
+          const timeoutId = setTimeout(() => {
+            reject(new Error("Mapbox load timeout"));
+          }, 8000);
+
+          script.onload = () => {
+            clearTimeout(timeoutId);
+            resolve();
+          };
+
+          script.onerror = () => {
+            clearTimeout(timeoutId);
+            reject(new Error("Mapbox script failed to load"));
+          };
+
+          if (!existingScript) {
+            document.head.appendChild(script);
+          }
+        });
+
+        return mapboxAssetsPromise;
+      }
+
+      async function initializeMapIfNeeded() {
+        if (map) {
+          return true;
+        }
+
+        if (window.MAPBOX_LOAD_FAILED) {
           initFallbackUI();
-          return;
+          return false;
+        }
+
+        try {
+          await loadMapboxAssetsIfNeeded();
+        } catch (error) {
+          console.error("Mapbox assets failed to load:", error);
+          window.MAPBOX_LOAD_FAILED = true;
+          initFallbackUI();
+          return false;
         }
 
         try {
@@ -2234,11 +2277,13 @@ localStorage.setItem(
           });
 
           bindMapEventsIfNeeded();
+          return true;
         } catch (error) {
           console.error("Map initialization failed:", error);
           window.MAPBOX_LOAD_FAILED = true;
           initFallbackUI();
           map = null;
+          return false;
         }
       }
 
@@ -3790,7 +3835,14 @@ function runRouteIntroAfterLoad() {
         hasMapEventsBound = true;
 
         map.on("load", () => {
-          loadRouteGeoJson();
+          if (cachedRouteFeature) {
+            addRouteToMap(cachedRouteFeature);
+            updateRouteSummaryDisplay();
+            runRouteIntroAfterLoad();
+          } else {
+            loadRouteGeoJson();
+          }
+
           loadRouteSurfaceSummary();
 
           applyRouteAwareMarkerControls();
@@ -3926,19 +3978,26 @@ function runRouteIntroAfterLoad() {
         );
       }
 
-      function startWalkMode() {
+      async function startWalkMode() {
         if (appMode === APP_MODE_ACTIVE_WALK) {
           return;
         }
 
         setAppMode(APP_MODE_ACTIVE_WALK);
-        initializeMapIfNeeded();
+        await initializeMapIfNeeded();
 
         if (map) {
           bindMapEventsIfNeeded();
 
           if (map.loaded()) {
-            loadRouteGeoJson();
+            if (cachedRouteFeature) {
+              addRouteToMap(cachedRouteFeature);
+              updateRouteSummaryDisplay();
+              runRouteIntroAfterLoad();
+            } else {
+              loadRouteGeoJson();
+            }
+
             loadRouteSurfaceSummary();
             updateRouteCenterButtonLabel();
             updateCompassButton();
@@ -3957,9 +4016,11 @@ function runRouteIntroAfterLoad() {
 
       function loadRouteGeoJson() {
         if (window.location.protocol === "file:") {
-          addRouteToMap(
-            buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+          cachedRouteFeature = buildRouteFeatureFromCoordinates(
+            fallbackRouteCoordinates,
           );
+          addRouteToMap(cachedRouteFeature);
+          updateRouteSummaryDisplay();
           showWarning(
             "Open this page from a web server to load the exact route file",
             "warning",
@@ -4013,6 +4074,8 @@ function runRouteIntroAfterLoad() {
               throw new Error("GeoJSON must contain a LineString geometry.");
             }
 
+            cachedRouteFeature = routeFeature;
+
 addRouteToMap(routeFeature);
 updateRouteSummaryDisplay();
 runRouteIntroAfterLoad();
@@ -4027,9 +4090,10 @@ const routeSourceLabel = document.querySelector(
           })
           .catch((error) => {
             console.error(error);
-addRouteToMap(
-  buildRouteFeatureFromCoordinates(fallbackRouteCoordinates),
+cachedRouteFeature = buildRouteFeatureFromCoordinates(
+  fallbackRouteCoordinates,
 );
+addRouteToMap(cachedRouteFeature);
 updateRouteSummaryDisplay();
 runRouteIntroAfterLoad();
 
@@ -4260,10 +4324,10 @@ updateRouteSummaryDisplay();
 
       const startWalkButton = document.getElementById(START_WALK_BUTTON_ID);
       if (startWalkButton) {
-        startWalkButton.addEventListener("click", () => {
+        startWalkButton.addEventListener("click", async () => {
           startWalkButton.disabled = true;
           startWalkButton.textContent = "Starting…";
-          startWalkMode();
+          await startWalkMode();
           setTimeout(() => {
             startWalkButton.textContent = "Start walk";
             startWalkButton.disabled = false;
@@ -4305,7 +4369,6 @@ updateRouteSummaryDisplay();
 
       // Load route data for pre-event stats and preview card
       loadRouteGeoJson();
-      loadRouteSurfaceSummary();
 
       // Initialize map view once route is loaded
       // (removed - now handled in map.on('load'))
