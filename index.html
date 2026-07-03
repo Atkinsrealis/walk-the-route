@@ -81,8 +81,7 @@
 
       .landing-screen {
         min-height: 100vh;
-        padding: calc(20px + env(safe-area-inset-top)) 20px
-          calc(112px + env(safe-area-inset-bottom));
+        padding: calc(20px + env(safe-area-inset-top)) 20px 24px;
         position: relative;
         overflow: hidden;
       }
@@ -103,11 +102,13 @@
         background: rgba(78, 49, 132, 0.18);
       }
 
-      .landing-screen__content {
+      .landing-screen__content,
+      .landing-content {
         width: min(100%, 520px);
         margin: 0 auto;
         position: relative;
         z-index: 1;
+        padding-bottom: 120px;
       }
 
       .landing-screen h1 {
@@ -161,45 +162,46 @@
         font-size: 13px;
       }
 
-      .landing-screen__start {
-        margin-top: 14px;
-        width: 100%;
-        border: none;
-        border-radius: 10px;
-        background: linear-gradient(180deg, #ffe98a 0%, #ffd62e 100%);
-        color: #1f1b20;
-        font-size: 18px;
-        font-weight: 500;
-        padding: 13px 18px;
-        cursor: pointer;
-        box-shadow: 0 8px 20px rgba(212, 170, 17, 0.18);
+      .landing-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
+        z-index: 100;
       }
 
-      .landing-screen__start:focus-visible {
+      .landing-button {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #111;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+        cursor: pointer;
+        box-shadow: 0 6px 18px rgba(250, 204, 21, 0.25);
+      }
+
+      .landing-button:focus-visible {
         outline: 3px solid rgba(255, 214, 46, 0.42);
         outline-offset: 2px;
       }
 
-      .landing-screen__start:active {
+      .landing-button:active {
         transform: scale(0.99);
       }
 
-      .landing-screen__hint {
-        margin-top: 6px;
-        color: #68606f;
-        font-size: 11px;
+      .landing-footer-text {
+        margin-top: 8px;
+        font-size: 12px;
         text-align: center;
-      }
-
-      .landing-screen__botanical {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 88px;
-        pointer-events: none;
-        opacity: 0.58;
-        background: url("assets/floral-footer.png") center bottom / cover no-repeat;
+        color: rgba(0, 0, 0, 0.55);
       }
 
       body.mode-active-walk .landing-screen {
@@ -1472,7 +1474,7 @@
 
   <body class="mode-pre-event">
     <section class="landing-screen" id="landing-screen">
-      <div class="landing-screen__content">
+      <div class="landing-screen__content landing-content">
         <div class="landing-screen__brand" aria-label="Heathrow">
           <img src="assets/heathrow-logo-purple.svg" alt="Heathrow" />
         </div>
@@ -1501,15 +1503,16 @@
           <p id="landing-distance-time-value">Route distance calculating…</p>
         </div>
 
-        <button class="landing-screen__start" id="start-walk-button">
-          Start Walk
-        </button>
-        <p class="landing-screen__hint">
-          Live GPS tracking will begin after you tap 'Start Walk'
-        </p>
-      </div>
+        <div class="landing-footer">
+          <button id="start-walk-button" class="landing-button">
+            Start Walk
+          </button>
 
-      <div class="landing-screen__botanical" aria-hidden="true"></div>
+          <p class="landing-footer-text">
+            GPS tracking starts once you begin
+          </p>
+        </div>
+      </div>
     </section>
 
     <div class="topbar">
