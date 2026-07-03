@@ -82,6 +82,185 @@
         text-size-adjust: 100%;
       }
 
+      body.mode-pre-event {
+        overflow-y: auto;
+        background:
+          radial-gradient(circle at 14% 14%, rgba(14, 116, 144, 0.08), transparent 42%),
+          radial-gradient(circle at 84% 22%, rgba(109, 40, 217, 0.08), transparent 46%),
+          #f5f8fc;
+      }
+
+      body.mode-pre-event::before {
+        display: none;
+      }
+
+      body.mode-active-walk {
+        overflow: hidden;
+        background: var(--bg-base);
+      }
+
+      .landing-screen {
+        min-height: 100vh;
+        padding: calc(20px + env(safe-area-inset-top)) 16px
+          calc(26px + env(safe-area-inset-bottom));
+        display: grid;
+        place-items: center;
+      }
+
+      .landing-screen__card {
+        width: min(100%, 520px);
+        padding: 24px 20px 20px;
+        border-radius: 22px;
+        background:
+          linear-gradient(165deg, rgba(255, 255, 255, 0.98), rgba(246, 250, 255, 0.97));
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow:
+          0 20px 48px rgba(15, 23, 42, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      }
+
+      .landing-screen__eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.06);
+        color: #334155;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .landing-screen__brand {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #0f172a;
+      }
+
+      .landing-screen__brand img {
+        height: 14px;
+        width: auto;
+        display: block;
+      }
+
+      .landing-screen h1 {
+        margin: 18px 0 4px;
+        color: #0f172a;
+        font-size: 30px;
+        line-height: 1.06;
+        letter-spacing: 0.01em;
+      }
+
+      .landing-screen p {
+        margin: 0;
+      }
+
+      .landing-screen__subtitle {
+        color: #334155;
+        font-size: 15px;
+        line-height: 1.3;
+      }
+
+      .landing-screen__meta {
+        margin-top: 18px;
+        display: grid;
+        gap: 10px;
+        color: #1e293b;
+        font-size: 14px;
+      }
+
+      .landing-screen__meta p {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        background: rgba(255, 255, 255, 0.72);
+      }
+
+      .landing-screen__preview {
+        margin-top: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background:
+          linear-gradient(150deg, rgba(15, 23, 42, 0.08), rgba(15, 23, 42, 0.02)),
+          #f8fbff;
+        padding: 12px;
+      }
+
+      .landing-screen__preview svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .landing-screen__preview span {
+        margin-top: 6px;
+        display: block;
+        color: #475569;
+        font-size: 11px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+
+      .landing-screen__start {
+        margin-top: 16px;
+        width: 100%;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(150deg, #0f172a, #172554);
+        color: #fff;
+        font-size: 17px;
+        font-weight: 700;
+        padding: 14px 18px;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.22);
+      }
+
+      .landing-screen__start:focus-visible {
+        outline: 3px solid rgba(14, 116, 144, 0.35);
+        outline-offset: 2px;
+      }
+
+      .landing-screen__start:active {
+        transform: scale(0.99);
+      }
+
+      .landing-screen__hint {
+        margin-top: 10px;
+        color: #475569;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      body.mode-active-walk .landing-screen {
+        display: none;
+      }
+
+      body.mode-pre-event .topbar,
+      body.mode-pre-event .route-test-switcher,
+      body.mode-pre-event .warning,
+      body.mode-pre-event .route-card,
+      body.mode-pre-event .compass-button,
+      body.mode-pre-event .share-location-button,
+      body.mode-pre-event .follow-toggle-button,
+      body.mode-pre-event .route-center-button,
+      body.mode-pre-event .bottom-panel,
+      body.mode-pre-event .help-backdrop,
+      body.mode-pre-event .help-panel,
+      body.mode-pre-event .toast,
+      body.mode-pre-event .offline-notice,
+      body.mode-pre-event #map,
+      body.mode-pre-event #fallback-container {
+        display: none !important;
+      }
+
       #map {
         position: fixed;
         inset: 0;
@@ -1251,6 +1430,20 @@
           --floating-button-gap: 10px;
           --floating-button-right: 12px;
         }
+
+        .landing-screen__card {
+          padding: 20px 16px 16px;
+          border-radius: 18px;
+        }
+
+        .landing-screen h1 {
+          font-size: 26px;
+        }
+
+        .landing-screen__meta {
+          font-size: 13px;
+        }
+
         .route-card {
           flex-direction: column;
           align-items: flex-start;
@@ -1324,7 +1517,45 @@
     </style>
   </head>
 
-  <body>
+  <body class="mode-pre-event">
+    <section class="landing-screen" id="landing-screen">
+      <div class="landing-screen__card">
+        <p class="landing-screen__eyebrow">Event briefing</p>
+
+        <div class="landing-screen__brand" aria-label="Heathrow">
+          <img src="assets/heathrow-logo-white.svg" alt="Heathrow" />
+        </div>
+
+        <h1 id="landing-title">Perimeter Walk</h1>
+        <p class="landing-screen__subtitle" id="landing-subtitle">
+          Infrastructure Charity Event
+        </p>
+
+        <div class="landing-screen__meta">
+          <p id="landing-location-value">📍 Heathrow Perimeter</p>
+          <p id="landing-distance-time-value">🧭 Route distance calculating…</p>
+        </div>
+
+        <div class="landing-screen__preview" aria-hidden="true">
+          <svg viewBox="0 0 500 168" role="presentation">
+            <rect x="6" y="6" width="488" height="156" rx="14" fill="rgba(255,255,255,0.45)" stroke="rgba(15,23,42,0.08)" />
+            <path d="M40 118 C94 28, 172 152, 238 74 S358 42, 460 104" fill="none" stroke="rgba(124,58,237,0.28)" stroke-width="10" stroke-linecap="round" />
+            <path d="M40 118 C94 28, 172 152, 238 74 S358 42, 460 104" fill="none" stroke="#6d28d9" stroke-width="4" stroke-linecap="round" />
+            <circle cx="40" cy="118" r="8" fill="#16a34a" />
+            <circle cx="460" cy="104" r="8" fill="#f97316" />
+          </svg>
+          <span>Small map preview (non-interactive)</span>
+        </div>
+
+        <button class="landing-screen__start" id="start-walk-button">
+          Start walk
+        </button>
+        <p class="landing-screen__hint">
+          Live GPS and tracking begin after you tap Start walk.
+        </p>
+      </div>
+    </section>
+
     <div class="topbar">
       <div class="topbar__brand" aria-label="Heathrow">
         <img
@@ -1634,6 +1865,9 @@ bledlow: {
         const activeRoute = getActiveRoute();
         const title = document.getElementById("app-title");
         const subtitle = document.getElementById("app-subtitle");
+        const landingTitle = document.getElementById("landing-title");
+        const landingSubtitle = document.getElementById("landing-subtitle");
+        const landingLocationValue = document.getElementById("landing-location-value");
 
         if (title) {
           title.textContent = activeRoute.title || "Perimeter Walk";
@@ -1642,6 +1876,19 @@ bledlow: {
         if (subtitle) {
           subtitle.textContent =
             activeRoute.subtitle || "Infrastructure Charity Event";
+        }
+
+        if (landingTitle) {
+          landingTitle.textContent = activeRoute.title || "Perimeter Walk";
+        }
+
+        if (landingSubtitle) {
+          landingSubtitle.textContent =
+            activeRoute.subtitle || "Infrastructure Charity Event";
+        }
+
+        if (landingLocationValue) {
+          landingLocationValue.textContent = `📍 ${activeRoute.fullName || "Heathrow Perimeter"}`;
         }
 
         document.title = activeRoute.title || "Heathrow Perimeter Walk";
@@ -1719,6 +1966,12 @@ bledlow: {
       let hasRouteLoaded = false
       let isAppVisible = true;
       let geolocationWatchId = null;
+      let geolocationStarted = false;
+      let hasMapEventsBound = false;
+
+      const APP_MODE_PRE_EVENT = "pre-event";
+      const APP_MODE_ACTIVE_WALK = "active-walk";
+      let appMode = APP_MODE_PRE_EVENT;
       
 
       // Load cached position to restore previous map state
@@ -1780,6 +2033,7 @@ localStorage.setItem(
       const FOLLOW_TOGGLE_BUTTON_ID = "follow-toggle-button";
       const COMPASS_BUTTON_ID = "compass-button";
       const COMPASS_LABEL_ID = "compass-label";
+      const START_WALK_BUTTON_ID = "start-walk-button";
 
       const ROUTE_VIEW_ICON = `
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1955,8 +2209,16 @@ localStorage.setItem(
         });
       }
 
-      // Only initialize map if Mapbox is available
-      if (typeof mapboxgl !== "undefined" && !window.MAPBOX_LOAD_FAILED) {
+      function initializeMapIfNeeded() {
+        if (map) {
+          return;
+        }
+
+        if (typeof mapboxgl === "undefined" || window.MAPBOX_LOAD_FAILED) {
+          initFallbackUI();
+          return;
+        }
+
         try {
           mapboxgl.accessToken =
             "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
@@ -1964,20 +2226,20 @@ localStorage.setItem(
           map = new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/mapbox/dark-v11",
-            center: [-2, 54], // UK center view
-            zoom: 4, // zoomed to UK level
+            center: [-2, 54],
+            zoom: 4,
             pitch: 0,
             bearing: 0,
             attributionControl: false,
           });
+
+          bindMapEventsIfNeeded();
         } catch (error) {
           console.error("Map initialization failed:", error);
           window.MAPBOX_LOAD_FAILED = true;
           initFallbackUI();
           map = null;
         }
-      } else {
-        initFallbackUI();
       }
 
       let userMarker;
@@ -2524,16 +2786,21 @@ function formatEstimatedWalkTime(distanceMeters) {
 
 function updateRouteSummaryDisplay() {
   const routeSummaryValue = document.getElementById("route-summary-value");
-
-  if (!routeSummaryValue) {
-    return;
-  }
+  const landingDistanceTimeValue = document.getElementById(
+    "landing-distance-time-value",
+  );
 
   const distanceMeters = getRouteDistanceMeters();
   const distanceText = formatRouteDistance(distanceMeters);
   const timeText = formatEstimatedWalkTime(distanceMeters);
 
-  routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
+  if (routeSummaryValue) {
+    routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
+  }
+
+  if (landingDistanceTimeValue) {
+    landingDistanceTimeValue.textContent = `🧭 ${distanceText} · approx. ${timeText}`;
+  }
 }
 
       function getClosestPointOnRoute(userPoint) {
@@ -3503,6 +3770,190 @@ function runRouteIntroAfterLoad() {
   }, 3300);
 }
 
+      function setAppMode(nextMode) {
+        appMode = nextMode;
+        document.body.classList.toggle(
+          "mode-pre-event",
+          nextMode === APP_MODE_PRE_EVENT,
+        );
+        document.body.classList.toggle(
+          "mode-active-walk",
+          nextMode === APP_MODE_ACTIVE_WALK,
+        );
+      }
+
+      function bindMapEventsIfNeeded() {
+        if (!map || hasMapEventsBound) {
+          return;
+        }
+
+        hasMapEventsBound = true;
+
+        map.on("load", () => {
+          loadRouteGeoJson();
+          loadRouteSurfaceSummary();
+
+          applyRouteAwareMarkerControls();
+          setHelpPanel(false);
+          updateCompassButton();
+          updateRouteCenterButtonLabel();
+          runRouteIntroAfterLoad();
+        });
+
+        map.on("movestart", () => {
+          isMapInteracting = true;
+          hideSurfaceTooltip();
+        });
+
+        map.on("zoomstart", () => {
+          isMapInteracting = true;
+          hideSurfaceTooltip();
+        });
+
+        map.on("moveend", () => {
+          isMapInteracting = false;
+
+          repositionSurfaceTooltip();
+          updateCompassButton();
+        });
+
+        map.on("zoomend", () => {
+          isMapInteracting = false;
+
+          repositionSurfaceTooltip();
+          updateCompassButton();
+        });
+
+        map.on("rotate", () => {
+          updateCompassButton();
+        });
+
+        map.on("rotateend", () => {
+          updateCompassButton();
+        });
+      }
+
+      function startGeolocationTracking() {
+        if (geolocationStarted) {
+          return;
+        }
+
+        geolocationStarted = true;
+
+        if (!("geolocation" in navigator)) {
+          isWaitingForFirstLocation = false;
+          showWarning("Geolocation is not supported on this device", "alert");
+          return;
+        }
+
+        // Show waiting message if first location takes too long
+        firstLocationTimeout = setTimeout(() => {
+          if (isWaitingForFirstLocation) {
+            showWarning(
+              "📍 Acquiring GPS location... Check location permissions if stuck",
+              "help",
+            );
+          }
+        }, 8000);
+
+        geolocationWatchId = navigator.geolocation.watchPosition(
+          (position) => {
+            const lng = position.coords.longitude;
+            const lat = position.coords.latitude;
+
+            if (isWaitingForFirstLocation) {
+              isWaitingForFirstLocation = false;
+              clearTimeout(firstLocationTimeout);
+            }
+
+            cachePosition(lng, lat);
+
+            if (!shouldProcessLocationUpdate(lng, lat)) {
+              return;
+            }
+
+            updateUserMarker(lng, lat);
+            updateMapView(lng, lat);
+
+            const userPoint = [lng, lat];
+
+            if (showHelp && isAppVisible) {
+              updateHelpLocationPanel();
+            }
+
+            updateNextThingAhead(userPoint);
+
+            const distanceToRoute = getDistanceToRoute(userPoint);
+            const routeProgress = getRouteProgress(userPoint);
+            const segmentInfo = getCurrentSegment(userPoint);
+
+            const nextHazardAhead = getNextHazardAhead(userPoint);
+            let hazardWarningShown = false;
+
+            if (nextHazardAhead && nextHazardAhead.distanceAhead < 400) {
+              const d = Math.round(nextHazardAhead.distanceAhead);
+
+              showWarning(
+                `⚠️ ${nextHazardAhead.type} in ${d}m`,
+                d < 100 ? "alert" : "warning",
+              );
+
+              hazardWarningShown = true;
+            }
+
+            updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo);
+            updateFallbackDisplay(distanceToRoute, routeProgress, segmentInfo);
+
+            if (!hazardWarningShown) {
+              updateWarningState(distanceToRoute);
+            }
+          },
+          () => {
+            if (isWaitingForFirstLocation) {
+              clearTimeout(firstLocationTimeout);
+              isWaitingForFirstLocation = false;
+              showWarning(
+                "📍 Location blocked – grant permission in settings to continue",
+                "alert",
+              );
+            }
+          },
+          {
+            enableHighAccuracy: false,
+            maximumAge: 30000,
+            timeout: 30000,
+          },
+        );
+      }
+
+      function startWalkMode() {
+        if (appMode === APP_MODE_ACTIVE_WALK) {
+          return;
+        }
+
+        setAppMode(APP_MODE_ACTIVE_WALK);
+        initializeMapIfNeeded();
+
+        if (map) {
+          bindMapEventsIfNeeded();
+
+          if (map.loaded()) {
+            loadRouteGeoJson();
+            loadRouteSurfaceSummary();
+            updateRouteCenterButtonLabel();
+            updateCompassButton();
+          }
+
+          setTimeout(() => {
+            if (map) {
+              map.resize();
+            }
+          }, 120);
+        }
+
+        startGeolocationTracking();
+      }
+
 
       function loadRouteGeoJson() {
         if (window.location.protocol === "file:") {
@@ -3807,6 +4258,19 @@ updateRouteSummaryDisplay();
 
       setHelpPanel(false);
 
+      const startWalkButton = document.getElementById(START_WALK_BUTTON_ID);
+      if (startWalkButton) {
+        startWalkButton.addEventListener("click", () => {
+          startWalkButton.disabled = true;
+          startWalkButton.textContent = "Starting…";
+          startWalkMode();
+          setTimeout(() => {
+            startWalkButton.textContent = "Start walk";
+            startWalkButton.disabled = false;
+          }, 900);
+        });
+      }
+
       // Center map on route start point while waiting for GPS
       function setInitialViewToRouteStart() {
         if (!map || !routeCoordinates.length) return;
@@ -3839,143 +4303,14 @@ updateRouteSummaryDisplay();
         }
       }
 
-      // Only set up map events if map is available
-      if (map) {
-map.on("load", () => {
-  loadRouteGeoJson();
-  loadRouteSurfaceSummary();
-
-  applyRouteAwareMarkerControls();
-  setHelpPanel(false);
-  updateCompassButton();
-  updateRouteCenterButtonLabel();
-  runRouteIntroAfterLoad();
-});
-
-        map.on("movestart", () => {
-          isMapInteracting = true;
-          hideSurfaceTooltip();
-        });
-
-        map.on("zoomstart", () => {
-          isMapInteracting = true;
-          hideSurfaceTooltip();
-        });
-
-        map.on("moveend", () => {
-          isMapInteracting = false;
-
-          repositionSurfaceTooltip();
-          updateCompassButton();
-        });
-
-        map.on("zoomend", () => {
-          isMapInteracting = false;
-
-          repositionSurfaceTooltip();
-          updateCompassButton();
-        });
-
-        map.on("rotate", () => {
-          updateCompassButton();
-        });
-
-        map.on("rotateend", () => {
-          updateCompassButton();
-        });
-      } else {
-        // Load route data even without map
-        loadRouteGeoJson();
-        loadRouteSurfaceSummary();
-      }
+      // Load route data for pre-event stats and preview card
+      loadRouteGeoJson();
+      loadRouteSurfaceSummary();
 
       // Initialize map view once route is loaded
       // (removed - now handled in map.on('load'))
 
-      if ("geolocation" in navigator) {
-        // Show waiting message if first location takes too long
-        firstLocationTimeout = setTimeout(() => {
-          if (isWaitingForFirstLocation) {
-            showWarning(
-              "📍 Acquiring GPS location... Check location permissions if stuck",
-              "help",
-            );
-          }
-        }, 8000);
-
-        geolocationWatchId = navigator.geolocation.watchPosition(
-          (position) => {
-            const lng = position.coords.longitude;
-            const lat = position.coords.latitude;
-
-            // Clear waiting state on first location
-            if (isWaitingForFirstLocation) {
-              isWaitingForFirstLocation = false;
-              clearTimeout(firstLocationTimeout);
-            }
-
-            // Cache this position for session resume
-            cachePosition(lng, lat);
-
-            if (!shouldProcessLocationUpdate(lng, lat)) {
-              return;
-            }
-
-            updateUserMarker(lng, lat);
-            updateMapView(lng, lat);
-
-            const userPoint = [lng, lat];
-
-            if (showHelp && isAppVisible) {
-              updateHelpLocationPanel();
-            }
-
-            updateNextThingAhead(userPoint);
-
-            const distanceToRoute = getDistanceToRoute(userPoint);
-            const routeProgress = getRouteProgress(userPoint);
-            const segmentInfo = getCurrentSegment(userPoint);
-
-            const nextHazardAhead = getNextHazardAhead(userPoint);
-            let hazardWarningShown = false;
-
-            if (nextHazardAhead && nextHazardAhead.distanceAhead < 400) {
-              const d = Math.round(nextHazardAhead.distanceAhead);
-
-              showWarning(
-                `⚠️ ${nextHazardAhead.type} in ${d}m`,
-                d < 100 ? "alert" : "warning",
-              );
-
-              hazardWarningShown = true;
-            }
-            updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo);
-            updateFallbackDisplay(distanceToRoute, routeProgress, segmentInfo);
-
-            if (!hazardWarningShown) {
-              updateWarningState(distanceToRoute);
-            }
-          },
-          () => {
-            if (isWaitingForFirstLocation) {
-              clearTimeout(firstLocationTimeout);
-              isWaitingForFirstLocation = false;
-              showWarning(
-                "📍 Location blocked – grant permission in settings to continue",
-                "alert",
-              );
-            }
-          },
-          {
-            enableHighAccuracy: false,
-            maximumAge: 30000, // Reuse cached positions for 30 seconds
-            timeout: 30000,
-          },
-        );
-      } else {
-        isWaitingForFirstLocation = false;
-        showWarning("Geolocation is not supported on this device", "alert");
-      }
+      setAppMode(APP_MODE_PRE_EVENT);
 
       // Battery optimization: pause heavy updates when app is backgrounded
       document.addEventListener("visibilitychange", () => {
