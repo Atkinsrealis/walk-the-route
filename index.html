@@ -88,7 +88,7 @@
 
       #landing-screen {
         opacity: 1;
-        transition: opacity 0.3s ease;
+        transition: opacity 0.5s ease;
       }
 
       .landing-screen__brand {
@@ -239,11 +239,12 @@
         width: 100vw;
         height: 100vh;
         opacity: 0;
-        transition: opacity 0.35s ease;
+        transition: opacity 0.6s ease;
       }
 
       body.transitioning #landing-screen {
         opacity: 0;
+        transition-delay: 0.1s;
       }
 
       body.transitioning #map,
@@ -4427,7 +4428,9 @@ updateRouteSummaryDisplay();
           setTimeout(async () => {
             document.body.setAttribute("data-mode", "walk");
             await startWalkMode();
+          }, 300);
 
+          setTimeout(() => {
             const landing = document.getElementById("landing-screen");
             if (landing) {
               landing.style.display = "none";
@@ -4445,7 +4448,7 @@ updateRouteSummaryDisplay();
               startWalkButton.textContent = "Start walk";
               startWalkButton.disabled = false;
             }, 400);
-          }, 300);
+          }, 550);
         });
       }
 
