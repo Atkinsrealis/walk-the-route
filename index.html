@@ -1956,6 +1956,7 @@ bledlow: {
       let isAppVisible = true;
       let geolocationWatchId = null;
       let geolocationStarted = false;
+      let geolocationStartedAt = 0;
       let hasMapEventsBound = false;
       let mapboxAssetsPromise = null;
 
@@ -2012,7 +2013,8 @@ localStorage.setItem(
       const MIN_SPEED_FOR_FOLLOW = 0.4;
       const POSITION_UPDATE_MIN_METERS = 15; // Increased from 12m for battery efficiency
       const POSITION_UPDATE_MIN_MS = 10000; // Increased from 8000ms for battery efficiency
-      const GPS_LOCK_ACCURACY_METERS = 80;
+      const GPS_LOCK_ACCURACY_METERS = 30;
+      const MIN_LOCATING_ANIMATION_MS = 3000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
       const SURFACE_TOOLTIP_HIDE_ZOOM = 16.8;
@@ -3527,9 +3529,13 @@ function updateRouteSummaryDisplay() {
         const activeRoute = getActiveRoute();
 
         const hasValidDistance = Number.isFinite(distance);
+        const hasMinimumLocatingElapsed =
+          geolocationStartedAt > 0 &&
+          Date.now() - geolocationStartedAt >= MIN_LOCATING_ANIMATION_MS;
         const hasReliableGpsLock =
           Number.isFinite(lastLocationAccuracy) &&
-          lastLocationAccuracy <= GPS_LOCK_ACCURACY_METERS;
+          lastLocationAccuracy <= GPS_LOCK_ACCURACY_METERS &&
+          hasMinimumLocatingElapsed;
         if (routeCard) {
           routeCard.classList.toggle(
             "is-locating",
@@ -3948,6 +3954,7 @@ function runRouteIntroAfterLoad() {
         }
 
         geolocationStarted = true;
+        geolocationStartedAt = Date.now();
 
         if (!("geolocation" in navigator)) {
           isWaitingForFirstLocation = false;
