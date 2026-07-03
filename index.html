@@ -192,6 +192,95 @@
         background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
         cursor: pointer;
         box-shadow: 0 6px 18px rgba(250, 204, 21, 0.25);
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      @property --start-button-angle {
+        syntax: "<angle>";
+        initial-value: 0deg;
+        inherits: false;
+      }
+
+      .landing-button::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        padding: 1.5px;
+        border-radius: inherit;
+
+        background: conic-gradient(
+          from var(--start-button-angle),
+          rgba(247, 97, 188, 0.28) 0deg,
+          rgba(247, 97, 188, 0.28) 235deg,
+          rgba(247, 97, 188, 0.95) 290deg,
+          rgba(255, 255, 255, 0.95) 325deg,
+          rgba(247, 97, 188, 0.28) 360deg
+        );
+
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+
+        mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask-composite: exclude;
+
+        pointer-events: none;
+        animation: start-button-border-spin 2.6s linear infinite;
+      }
+
+      .landing-button::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background: linear-gradient(
+          120deg,
+          rgba(255, 255, 255, 0) 12%,
+          rgba(255, 255, 255, 0.5) 44%,
+          rgba(247, 97, 188, 0.35) 56%,
+          rgba(255, 255, 255, 0) 88%
+        );
+        transform: translateX(-140%);
+        animation: start-button-sheen 2.8s cubic-bezier(0.4, 0, 0.2, 1)
+          infinite;
+      }
+
+      @keyframes start-button-border-spin {
+        from {
+          --start-button-angle: 0deg;
+        }
+
+        to {
+          --start-button-angle: 360deg;
+        }
+      }
+
+      @keyframes start-button-sheen {
+        0% {
+          transform: translateX(-140%);
+        }
+
+        55% {
+          transform: translateX(140%);
+        }
+
+        100% {
+          transform: translateX(140%);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .landing-button::before,
+        .landing-button::after {
+          animation: none;
+        }
       }
 
       .landing-button:focus-visible {
