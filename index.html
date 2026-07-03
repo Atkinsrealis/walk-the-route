@@ -234,24 +234,6 @@
         animation: start-button-border-spin 2.6s linear infinite;
       }
 
-      .landing-button::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        pointer-events: none;
-        background: linear-gradient(
-          120deg,
-          rgba(255, 255, 255, 0) 12%,
-          rgba(255, 255, 255, 0.5) 44%,
-          rgba(247, 97, 188, 0.35) 56%,
-          rgba(255, 255, 255, 0) 88%
-        );
-        transform: translateX(-140%);
-        animation: start-button-sheen 2.8s cubic-bezier(0.4, 0, 0.2, 1)
-          infinite;
-      }
-
       @keyframes start-button-border-spin {
         from {
           --start-button-angle: 0deg;
@@ -262,23 +244,8 @@
         }
       }
 
-      @keyframes start-button-sheen {
-        0% {
-          transform: translateX(-140%);
-        }
-
-        55% {
-          transform: translateX(140%);
-        }
-
-        100% {
-          transform: translateX(140%);
-        }
-      }
-
       @media (prefers-reduced-motion: reduce) {
-        .landing-button::before,
-        .landing-button::after {
+        .landing-button::before {
           animation: none;
         }
       }
