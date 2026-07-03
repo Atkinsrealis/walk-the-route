@@ -2012,6 +2012,7 @@ localStorage.setItem(
       const MIN_SPEED_FOR_FOLLOW = 0.4;
       const POSITION_UPDATE_MIN_METERS = 15; // Increased from 12m for battery efficiency
       const POSITION_UPDATE_MIN_MS = 10000; // Increased from 8000ms for battery efficiency
+      const GPS_LOCK_ACCURACY_METERS = 80;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
       const SURFACE_TOOLTIP_HIDE_ZOOM = 16.8;
@@ -2317,6 +2318,7 @@ localStorage.setItem(
       let lastPositionTime = 0;
       let lastProcessedPosition = null;
       let lastProcessedPositionTime = 0;
+      let lastLocationAccuracy = null;
       let followMode = true;
       let routeCenterMode = "route";
       let showHazards = false;
@@ -3525,8 +3527,14 @@ function updateRouteSummaryDisplay() {
         const activeRoute = getActiveRoute();
 
         const hasValidDistance = Number.isFinite(distance);
+        const hasReliableGpsLock =
+          Number.isFinite(lastLocationAccuracy) &&
+          lastLocationAccuracy <= GPS_LOCK_ACCURACY_METERS;
         if (routeCard) {
-          routeCard.classList.toggle("is-locating", !hasValidDistance);
+          routeCard.classList.toggle(
+            "is-locating",
+            !hasValidDistance || !hasReliableGpsLock,
+          );
         }
         const normalizedDistance = hasValidDistance
           ? Math.max(0, distance)
@@ -3541,6 +3549,14 @@ function updateRouteSummaryDisplay() {
         if (!hasValidDistance || normalizedDistance === null) {
           progressValue.textContent = `Section 1/${getTotalSegments()}`;
           distanceValue.textContent = "Waiting for start";
+          routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
+          routeBadge.className = "route-card__badge";
+          return;
+        }
+
+        if (!hasReliableGpsLock) {
+          progressValue.textContent = "Locating…";
+          distanceValue.textContent = "Refining GPS position";
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           routeBadge.className = "route-card__badge";
           return;
@@ -3953,6 +3969,9 @@ function runRouteIntroAfterLoad() {
           (position) => {
             const lng = position.coords.longitude;
             const lat = position.coords.latitude;
+            lastLocationAccuracy = Number.isFinite(position.coords.accuracy)
+              ? position.coords.accuracy
+              : null;
 
             if (isWaitingForFirstLocation) {
               isWaitingForFirstLocation = false;
