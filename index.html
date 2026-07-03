@@ -2003,7 +2003,7 @@ localStorage.setItem(
       const POSITION_UPDATE_MIN_MS = 10000; // Increased from 8000ms for battery efficiency
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
-      const SURFACE_TOOLTIP_HIDE_ZOOM = 13.8;
+      const SURFACE_TOOLTIP_HIDE_ZOOM = 16.8;
       const COMPASS_SHOW_BEARING = 4;
       const COMPASS_HIDE_BEARING = 0.5;
       const WARNING_ID = "warning";
@@ -3837,6 +3837,8 @@ function runRouteIntroAfterLoad() {
 
     setTimeout(() => {
       isIntro = false;
+      isMapInteracting = false;
+      repositionSurfaceTooltip();
       updateSurfaceTooltipVisibility();
     }, 2600);
   }, 3300);
