@@ -88,7 +88,7 @@
 
       #landing-screen {
         opacity: 1;
-        transition: opacity 0.5s ease;
+        transition: opacity 0.55s ease;
       }
 
       .landing-screen__brand {
@@ -239,12 +239,11 @@
         width: 100vw;
         height: 100vh;
         opacity: 0;
-        transition: opacity 0.6s ease;
+        transition: opacity 0.75s ease-out;
       }
 
       body.transitioning #landing-screen {
         opacity: 0;
-        transition-delay: 0.1s;
       }
 
       body.transitioning #map,
@@ -4425,13 +4424,16 @@ updateRouteSummaryDisplay();
 
           document.body.classList.add("transitioning");
 
-          setTimeout(async () => {
-            document.body.setAttribute("data-mode", "walk");
-            await startWalkMode();
-          }, 300);
+          const landing = document.getElementById("landing-screen");
+          let didFinishTransition = false;
 
-          setTimeout(() => {
-            const landing = document.getElementById("landing-screen");
+          const finishLandingTransition = () => {
+            if (didFinishTransition) {
+              return;
+            }
+
+            didFinishTransition = true;
+
             if (landing) {
               landing.style.display = "none";
             }
@@ -4448,7 +4450,27 @@ updateRouteSummaryDisplay();
               startWalkButton.textContent = "Start walk";
               startWalkButton.disabled = false;
             }, 400);
-          }, 550);
+          };
+
+          if (landing) {
+            const onLandingFadeEnd = (event) => {
+              if (event.target !== landing || event.propertyName !== "opacity") {
+                return;
+              }
+
+              landing.removeEventListener("transitionend", onLandingFadeEnd);
+              finishLandingTransition();
+            };
+
+            landing.addEventListener("transitionend", onLandingFadeEnd);
+          }
+
+          setTimeout(async () => {
+            document.body.setAttribute("data-mode", "walk");
+            await startWalkMode();
+          }, 300);
+
+          setTimeout(finishLandingTransition, 1200);
         });
       }
 
