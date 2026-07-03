@@ -80,7 +80,7 @@
       }
 
       .landing-screen {
-        min-height: 100vh;
+        min-height: 100dvh;
         padding: calc(20px + env(safe-area-inset-top)) 20px 24px;
         position: relative;
         overflow: hidden;
@@ -164,7 +164,7 @@
 
       .landing-footer {
         position: fixed;
-        bottom: 0;
+        bottom: max(env(safe-area-inset-bottom), calc(100vh - 100dvh));
         left: 0;
         right: 0;
         padding: 16px;
