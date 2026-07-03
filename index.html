@@ -184,65 +184,48 @@
       .landing-button {
         width: 100%;
         padding: 16px;
-        border: none;
+        border: 1.5px solid transparent;
         border-radius: 14px;
         font-size: 16px;
         font-weight: 700;
         color: #111;
-        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+        background:
+          linear-gradient(180deg, #fde047 0%, #facc15 100%) padding-box,
+          conic-gradient(
+              from var(--start-button-angle),
+              rgba(247, 97, 188, 0.28) 0deg,
+              rgba(247, 97, 188, 0.28) 235deg,
+              rgba(247, 97, 188, 0.95) 290deg,
+              rgba(255, 255, 255, 0.95) 325deg,
+              rgba(247, 97, 188, 0.28) 360deg
+            )
+            border-box;
         cursor: pointer;
         box-shadow: 0 6px 18px rgba(250, 204, 21, 0.25);
         position: relative;
         overflow: hidden;
         isolation: isolate;
+        animation: start-button-border-spin 4.2s linear infinite;
       }
 
-      .landing-button::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: -1;
-        padding: 1.5px;
-        border-radius: inherit;
-
-        background: conic-gradient(
-          from 0deg,
-          rgba(247, 97, 188, 0.28) 0deg,
-          rgba(247, 97, 188, 0.28) 235deg,
-          rgba(247, 97, 188, 0.95) 290deg,
-          rgba(255, 255, 255, 0.95) 325deg,
-          rgba(247, 97, 188, 0.28) 360deg
-        );
-
-        -webkit-mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-        -webkit-mask-composite: xor;
-
-        mask:
-          linear-gradient(#000 0 0) content-box,
-          linear-gradient(#000 0 0);
-        mask-composite: exclude;
-
-        pointer-events: none;
-        transform: rotate(0deg);
-        transform-origin: 50% 50%;
-        will-change: transform;
-        animation: start-button-border-spin 4.2s linear infinite;
+      @property --start-button-angle {
+        syntax: "<angle>";
+        initial-value: 0deg;
+        inherits: false;
       }
 
       @keyframes start-button-border-spin {
         from {
-          transform: rotate(0deg);
+          --start-button-angle: 0deg;
         }
 
         to {
-          transform: rotate(360deg);
+          --start-button-angle: 360deg;
         }
       }
 
       @media (prefers-reduced-motion: reduce) {
-        .landing-button::before {
+        .landing-button {
           animation: none;
         }
       }
