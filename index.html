@@ -88,7 +88,7 @@
 
       #landing-screen {
         opacity: 1;
-        transition: opacity 1.05s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: opacity 1.25s cubic-bezier(0.16, 1, 0.3, 1);
       }
 
       .landing-screen__brand {
@@ -239,7 +239,7 @@
         width: 100vw;
         height: 100vh;
         opacity: 0;
-        transition: opacity 1.25s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: opacity 1.55s cubic-bezier(0.16, 1, 0.3, 1);
       }
 
       body.transitioning #landing-screen {
@@ -258,7 +258,7 @@
       }
 
       body.transitioning #map {
-        transition-delay: 0.12s;
+        transition-delay: 0.18s;
       }
 
       body.transitioning.mode-pre-event #map,
@@ -4477,9 +4477,9 @@ updateRouteSummaryDisplay();
           setTimeout(async () => {
             document.body.setAttribute("data-mode", "walk");
             await startWalkMode();
-          }, 380);
+          }, 450);
 
-          setTimeout(finishLandingTransition, 1900);
+          setTimeout(finishLandingTransition, 2300);
         });
       }
 
