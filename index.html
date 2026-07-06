@@ -519,6 +519,21 @@
         border-left: 5px solid #14b8a6;
       }
 
+      .warning.gps-weak {
+        background: #ffd000;
+        color: #2a1f00;
+      }
+
+      .warning.gps-cached {
+        background: #f5b920;
+        color: #2a1f00;
+      }
+
+      .warning.gps-lost {
+        background: #f76b1c;
+        color: #1f1208;
+      }
+
       .route-card {
         position: fixed;
         top: calc(180px + env(safe-area-inset-top));
@@ -3914,12 +3929,14 @@ function updateRouteSummaryDisplay() {
         ) {
           if (gpsState === GPS_CONFIDENCE_WEAK) {
             nextState = "GPS weak - route judgement paused";
+            nextLevel = "gps-weak";
           } else if (gpsState === GPS_CONFIDENCE_CACHED) {
             nextState = "Using cached location - route judgement paused";
+            nextLevel = "gps-cached";
           } else {
             nextState = "GPS lost - route judgement paused";
+            nextLevel = "gps-lost";
           }
-          nextLevel = "help";
         } else if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
           nextState = "You are far from the official route";
           nextLevel = "alert";
