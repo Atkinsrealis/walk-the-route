@@ -2090,6 +2090,7 @@ localStorage.setItem(
       const POSITION_UPDATE_MIN_METERS = 15; // Increased from 12m for battery efficiency
       const POSITION_UPDATE_MIN_MS = 10000; // Increased from 8000ms for battery efficiency
       const GPS_LOCK_ACCURACY_METERS = 30;
+      const GPS_WEAK_ACCURACY_METERS = 65;
       const MIN_LOCATING_ANIMATION_MS = 3000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
@@ -2106,6 +2107,10 @@ localStorage.setItem(
       const COMPASS_BUTTON_ID = "compass-button";
       const COMPASS_LABEL_ID = "compass-label";
       const START_WALK_BUTTON_ID = "start-walk-button";
+      const GPS_CONFIDENCE_LOCKED = "locked";
+      const GPS_CONFIDENCE_WEAK = "weak";
+      const GPS_CONFIDENCE_LOST = "lost";
+      const GPS_CONFIDENCE_CACHED = "cached";
 
       const ROUTE_VIEW_ICON = `
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2255,6 +2260,9 @@ localStorage.setItem(
         const distanceEl = document.getElementById("fallback-distance");
         const progressEl = document.getElementById("fallback-progress");
         const segmentEl = document.getElementById("fallback-segment");
+        const safeRouteProgress = Number.isFinite(routeProgress)
+          ? routeProgress
+          : 0;
 
         if (distanceEl) {
           distanceEl.textContent =
@@ -2262,18 +2270,24 @@ localStorage.setItem(
         }
 
         if (progressEl) {
-          const percent = (routeProgress * 100).toFixed(0);
+          const percent = (safeRouteProgress * 100).toFixed(0);
           progressEl.textContent = `${percent}%`;
         }
 
         if (segmentEl) {
-          segmentEl.textContent = segmentInfo.segment.name || "—";
+          segmentEl.textContent =
+            segmentInfo && segmentInfo.segment
+              ? segmentInfo.segment.name || "—"
+              : "—";
         }
 
         // Highlight active segment
         const segments = document.querySelectorAll(".fallback-segment-item");
         segments.forEach((el, idx) => {
-          if (idx === segmentInfo.currentSegmentNumber - 1) {
+          if (
+            segmentInfo &&
+            idx === segmentInfo.currentSegmentNumber - 1
+          ) {
             el.classList.add("active");
           } else {
             el.classList.remove("active");
@@ -2397,6 +2411,10 @@ localStorage.setItem(
       let lastProcessedPosition = null;
       let lastProcessedPositionTime = 0;
       let lastLocationAccuracy = null;
+      let gpsConfidenceState = GPS_CONFIDENCE_LOST;
+      let lastStableDistanceToRoute = null;
+      let lastStableRouteProgress = 0;
+      let lastStableSegmentInfo = null;
       let followMode = true;
       let routeCenterMode = "route";
       let showHazards = false;
@@ -3597,7 +3615,39 @@ function updateRouteSummaryDisplay() {
         return Math.min(100, Math.max(0, progress));
       }
 
-      function updateDistanceDisplay(distance, progress, segmentInfo = null) {
+      function setGpsConfidenceState(nextState) {
+        gpsConfidenceState = nextState;
+      }
+
+      function deriveGpsConfidenceState(accuracy) {
+        const hasMinimumLocatingElapsed =
+          geolocationStartedAt > 0 &&
+          Date.now() - geolocationStartedAt >= MIN_LOCATING_ANIMATION_MS;
+
+        if (!Number.isFinite(accuracy)) {
+          return GPS_CONFIDENCE_LOST;
+        }
+
+        if (
+          accuracy <= GPS_LOCK_ACCURACY_METERS &&
+          hasMinimumLocatingElapsed
+        ) {
+          return GPS_CONFIDENCE_LOCKED;
+        }
+
+        if (accuracy <= GPS_WEAK_ACCURACY_METERS) {
+          return GPS_CONFIDENCE_WEAK;
+        }
+
+        return GPS_CONFIDENCE_LOST;
+      }
+
+      function updateDistanceDisplay(
+        distance,
+        progress,
+        segmentInfo = null,
+        gpsState = GPS_CONFIDENCE_LOST,
+      ) {
         const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
@@ -3605,13 +3655,7 @@ function updateRouteSummaryDisplay() {
         const activeRoute = getActiveRoute();
 
         const hasValidDistance = Number.isFinite(distance);
-        const hasMinimumLocatingElapsed =
-          geolocationStartedAt > 0 &&
-          Date.now() - geolocationStartedAt >= MIN_LOCATING_ANIMATION_MS;
-        const hasReliableGpsLock =
-          Number.isFinite(lastLocationAccuracy) &&
-          lastLocationAccuracy <= GPS_LOCK_ACCURACY_METERS &&
-          hasMinimumLocatingElapsed;
+        const hasReliableGpsLock = gpsState === GPS_CONFIDENCE_LOCKED;
         if (routeCard) {
           routeCard.classList.toggle(
             "is-locating",
@@ -3637,9 +3681,26 @@ function updateRouteSummaryDisplay() {
         }
 
         if (!hasReliableGpsLock) {
-          progressValue.textContent = "Locating…";
-          distanceValue.textContent = "Refining GPS position";
-          routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
+          if (
+            lastStableSegmentInfo &&
+            Number.isFinite(lastStableDistanceToRoute)
+          ) {
+            progressValue.textContent = `Section ${lastStableSegmentInfo.currentSegmentNumber}/${lastStableSegmentInfo.totalSegments}`;
+          } else {
+            progressValue.textContent = "Locating…";
+          }
+
+          if (gpsState === GPS_CONFIDENCE_WEAK) {
+            distanceValue.textContent = "GPS weak - holding last confident position";
+            routeBadge.textContent = "GPS weak";
+          } else if (gpsState === GPS_CONFIDENCE_CACHED) {
+            distanceValue.textContent = "Using last known position";
+            routeBadge.textContent = "Cached";
+          } else {
+            distanceValue.textContent = "GPS lost - waiting to recover";
+            routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
+          }
+
           routeBadge.className = "route-card__badge";
           return;
         }
@@ -3675,12 +3736,27 @@ function updateRouteSummaryDisplay() {
         }
       }
 
-      function updateWarningState(distanceToRoute) {
+      function updateWarningState(
+        distanceToRoute,
+        gpsState = GPS_CONFIDENCE_LOST,
+      ) {
         const now = Date.now();
         let nextState = "";
         let nextLevel = "";
 
-        if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
+        if (
+          gpsState !== GPS_CONFIDENCE_LOCKED ||
+          !Number.isFinite(distanceToRoute)
+        ) {
+          if (gpsState === GPS_CONFIDENCE_WEAK) {
+            nextState = "GPS weak - route judgement paused";
+          } else if (gpsState === GPS_CONFIDENCE_CACHED) {
+            nextState = "Using cached location - route judgement paused";
+          } else {
+            nextState = "GPS lost - route judgement paused";
+          }
+          nextLevel = "help";
+        } else if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
           nextState = "You are far from the official route";
           nextLevel = "alert";
         } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
@@ -4055,6 +4131,8 @@ function runRouteIntroAfterLoad() {
             lastLocationAccuracy = Number.isFinite(position.coords.accuracy)
               ? position.coords.accuracy
               : null;
+            const gpsState = deriveGpsConfidenceState(lastLocationAccuracy);
+            setGpsConfidenceState(gpsState);
 
             if (isWaitingForFirstLocation) {
               isWaitingForFirstLocation = false;
@@ -4082,10 +4160,43 @@ function runRouteIntroAfterLoad() {
             const routeProgress = getRouteProgress(userPoint);
             const segmentInfo = getCurrentSegment(userPoint);
 
+            if (gpsState === GPS_CONFIDENCE_LOCKED) {
+              lastStableDistanceToRoute = distanceToRoute;
+              lastStableRouteProgress = routeProgress;
+              lastStableSegmentInfo = segmentInfo;
+            }
+
+            const displayDistanceToRoute =
+              gpsState === GPS_CONFIDENCE_LOCKED
+                ? distanceToRoute
+                : lastStableDistanceToRoute;
+
+            const displayRouteProgress =
+              gpsState === GPS_CONFIDENCE_LOCKED
+                ? routeProgress
+                : lastStableRouteProgress;
+
+            const displaySegmentInfo =
+              gpsState === GPS_CONFIDENCE_LOCKED
+                ? segmentInfo
+                : lastStableSegmentInfo;
+
+            const fallbackSegmentInfo = displaySegmentInfo || {
+              segment: { name: "—" },
+              currentSegmentNumber: 1,
+              totalSegments: getTotalSegments(),
+              distanceToMilestone: 0,
+              nextMilestone: "next point",
+            };
+
             const nextHazardAhead = getNextHazardAhead(userPoint);
             let hazardWarningShown = false;
 
-            if (nextHazardAhead && nextHazardAhead.distanceAhead < 400) {
+            if (
+              gpsState === GPS_CONFIDENCE_LOCKED &&
+              nextHazardAhead &&
+              nextHazardAhead.distanceAhead < 400
+            ) {
               const d = Math.round(nextHazardAhead.distanceAhead);
 
               showWarning(
@@ -4096,14 +4207,28 @@ function runRouteIntroAfterLoad() {
               hazardWarningShown = true;
             }
 
-            updateDistanceDisplay(distanceToRoute, routeProgress, segmentInfo);
-            updateFallbackDisplay(distanceToRoute, routeProgress, segmentInfo);
+            updateDistanceDisplay(
+              displayDistanceToRoute,
+              displayRouteProgress,
+              displaySegmentInfo,
+              gpsState,
+            );
+            updateFallbackDisplay(
+              displayDistanceToRoute,
+              displayRouteProgress,
+              fallbackSegmentInfo,
+            );
 
             if (!hazardWarningShown) {
-              updateWarningState(distanceToRoute);
+              updateWarningState(displayDistanceToRoute, gpsState);
             }
           },
           () => {
+            const cachedPos = loadCachedPosition();
+            setGpsConfidenceState(
+              cachedPos ? GPS_CONFIDENCE_CACHED : GPS_CONFIDENCE_LOST,
+            );
+
             if (isWaitingForFirstLocation) {
               clearTimeout(firstLocationTimeout);
               isWaitingForFirstLocation = false;
@@ -4111,6 +4236,16 @@ function runRouteIntroAfterLoad() {
                 "📍 Location blocked – grant permission in settings to continue",
                 "alert",
               );
+              return;
+            }
+
+            if (cachedPos) {
+              showWarning(
+                "GPS signal lost - using last known position",
+                "help",
+              );
+            } else {
+              showWarning("GPS signal lost - waiting to recover", "help");
             }
           },
           {
