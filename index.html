@@ -663,6 +663,47 @@
         fill: currentColor;
       }
 
+      .user-location-marker {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: #00aeef;
+        border: 3px solid #ffffff;
+        box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.36);
+        position: relative;
+      }
+
+      .user-location-marker::after {
+        content: "";
+        position: absolute;
+        inset: -7px;
+        border-radius: 999px;
+        border: 2px solid rgba(0, 174, 239, 0.55);
+        animation: user-marker-pulse 1.8s ease-out infinite;
+      }
+
+      .user-location-marker.is-weak {
+        background: #f5b920;
+        box-shadow: 0 0 0 2px rgba(245, 185, 32, 0.36);
+      }
+
+      .user-location-marker.is-cached {
+        background: #94a3b8;
+        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.36);
+      }
+
+      @keyframes user-marker-pulse {
+        0% {
+          transform: scale(0.8);
+          opacity: 0.9;
+        }
+
+        100% {
+          transform: scale(1.25);
+          opacity: 0;
+        }
+      }
+
       .route-center-button:active,
       .follow-toggle-button:active,
       .share-location-button:active {
@@ -2434,6 +2475,7 @@ localStorage.setItem(
       }
 
       let userMarker;
+      let userMarkerElement = null;
       let lastActualPosition = null;
       let lastSnappedPosition = null;
       let hasInitialPosition = false;
@@ -3814,7 +3856,11 @@ function updateRouteSummaryDisplay() {
         }
       }
 
-      function updateUserMarker(lng, lat) {
+      function updateUserMarker(
+        lng,
+        lat,
+        gpsState = GPS_CONFIDENCE_LOCKED,
+      ) {
         const actualPosition = [lng, lat];
         lastActualPosition = actualPosition;
 
@@ -3824,11 +3870,28 @@ function updateRouteSummaryDisplay() {
 
         if (map) {
           if (!userMarker) {
-            userMarker = new mapboxgl.Marker({ color: "#00AEEF" })
-              .setLngLat(routeSnapshot.point)
+            userMarkerElement = document.createElement("div");
+            userMarkerElement.className = "user-location-marker";
+
+            userMarker = new mapboxgl.Marker({
+              element: userMarkerElement,
+              anchor: "center",
+            })
+              .setLngLat(actualPosition)
               .addTo(map);
           } else {
-            userMarker.setLngLat(routeSnapshot.point);
+            userMarker.setLngLat(actualPosition);
+          }
+
+          if (userMarkerElement) {
+            userMarkerElement.classList.toggle(
+              "is-weak",
+              gpsState === GPS_CONFIDENCE_WEAK,
+            );
+            userMarkerElement.classList.toggle(
+              "is-cached",
+              gpsState === GPS_CONFIDENCE_CACHED,
+            );
           }
         }
 
@@ -4182,7 +4245,7 @@ function runRouteIntroAfterLoad() {
               return;
             }
 
-            updateUserMarker(lng, lat);
+            updateUserMarker(lng, lat, gpsState);
             updateMapView(lng, lat);
 
             const userPoint = [lng, lat];
