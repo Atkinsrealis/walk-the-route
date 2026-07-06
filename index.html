@@ -931,18 +931,21 @@
         position: absolute;
         left: 50%;
         top: 50%;
-        width: 0;
-        height: 0;
-        border-left: 8px solid transparent;
-        border-right: 8px solid transparent;
-        border-bottom: 24px solid rgba(0, 174, 239, 0.34);
-        transform: translate(-50%, -78%) rotate(calc(var(--direction-heading) * 1deg));
+        width: 34px;
+        height: 40px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 174, 239, 0.34),
+          rgba(0, 174, 239, 0.04)
+        );
+        clip-path: polygon(50% 100%, 8% 0, 92% 0);
+        transform: translate(-50%, -86%) rotate(calc(var(--direction-heading) * 1deg));
         transform-origin: 50% calc(100% - 2px);
         opacity: 0;
         pointer-events: none;
         transition:
           opacity 0.18s ease,
-          border-bottom-color 0.18s ease;
+          background 0.18s ease;
       }
 
       .user-location-marker.has-direction::before {
@@ -964,7 +967,11 @@
       }
 
       .user-location-marker.is-weak::before {
-        border-bottom-color: rgba(245, 185, 32, 0.34);
+        background: linear-gradient(
+          to top,
+          rgba(245, 185, 32, 0.34),
+          rgba(245, 185, 32, 0.05)
+        );
       }
 
       .user-location-marker.is-cached {
