@@ -596,12 +596,20 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
-        padding: 12px 14px;
-        background: var(--bg-surface);
+        padding: 13px 14px 12px;
+        background:
+          linear-gradient(
+            158deg,
+            rgba(28, 36, 70, 0.76) 0%,
+            rgba(15, 23, 42, 0.95) 72%
+          );
         color: white;
         border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
         backdrop-filter: blur(12px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        box-shadow:
+          0 12px 26px rgba(2, 6, 23, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
         overflow: hidden;
         isolation: isolate;
@@ -664,7 +672,7 @@
       .route-card__main {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 5px;
         flex: 1;
         min-width: 0;
       }
@@ -672,7 +680,7 @@
       .route-card__text {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 3px;
         min-width: 0;
       }
 
@@ -680,11 +688,11 @@
         font-size: 12px;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        opacity: 0.68;
+        opacity: 0.74;
       }
 
       .route-card__value {
-        font-size: 22px;
+        font-size: 23px;
         font-weight: 700;
         line-height: 1;
       }
@@ -692,23 +700,24 @@
       .route-card__meta {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 3px;
         font-size: 12px;
-        color: rgba(255, 255, 255, 0.78);
+        line-height: 1.35;
+        color: rgba(255, 255, 255, 0.84);
       }
 
       .route-card__source {
         font-size: 11px;
-        opacity: 0.58;
+        opacity: 0.68;
       }
 
       .route-card__gps-status {
         flex: 0 0 100%;
         width: 100%;
-        margin-top: 8px;
+        margin-top: 7px;
         padding-top: 8px;
-        border-top: 1px solid rgba(255, 255, 255, 0.14);
-        font-size: 13px;
+        border-top: 1px solid rgba(148, 163, 184, 0.26);
+        font-size: 12px;
         font-weight: 700;
         line-height: 1.35;
         color: rgba(255, 255, 255, 0.92);
@@ -746,28 +755,33 @@
 
       .route-card__badge {
         flex-shrink: 0;
-        padding: 8px 12px;
+        padding: 7px 12px;
         border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        background: rgba(17, 170, 98, 0.18);
-        color: #7ef0b3;
+        border: 1px solid rgba(34, 197, 94, 0.22);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        background: rgba(17, 170, 98, 0.2);
+        color: #9cf7c6;
         white-space: nowrap;
       }
 
       .route-card__badge.preparing {
-        background: rgba(245, 185, 32, 0.18);
-        color: #ffe680;
+        border-color: rgba(245, 185, 32, 0.3);
+        background: rgba(245, 185, 32, 0.2);
+        color: #ffef9a;
       }
 
       .route-card__badge.warning {
-        background: rgba(245, 185, 32, 0.18);
-        color: #ffe680;
+        border-color: rgba(245, 185, 32, 0.3);
+        background: rgba(245, 185, 32, 0.2);
+        color: #ffef9a;
       }
 
       .route-card__badge.alert {
-        background: rgba(232, 70, 70, 0.18);
-        color: #ffb088;
+        border-color: rgba(248, 113, 113, 0.28);
+        background: rgba(232, 70, 70, 0.2);
+        color: #ffb29a;
       }
 
       .bottom-panel {
