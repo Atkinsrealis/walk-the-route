@@ -28,6 +28,16 @@
         --floating-button-gap: 14px;
         --floating-button-right: 16px;
         --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
+        --route-switcher-top: 92px;
+        --route-switcher-shell-height: 32px;
+        --status-stack-gap-below-switcher: 8px;
+        --status-stack-top: calc(
+          var(--route-switcher-top) +
+          var(--route-switcher-shell-height) +
+          var(--status-stack-gap-below-switcher)
+        );
+        --route-card-stack-height: 136px;
+        --status-stack-gap: 2px;
 
         /* Heathrow-aligned palette (dark mode tuned) */
         --bg-base: #0f172a;               /* softer than current dark */
@@ -165,6 +175,59 @@
         background: rgba(243, 241, 245, 0.96);
         color: #6a4ca1;
         font-size: 13px;
+      }
+
+      .landing-marker-guide {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(126, 108, 161, 0.12);
+        background: rgba(243, 241, 245, 0.9);
+      }
+
+      .landing-marker-guide__title {
+        margin: 0;
+        color: #5e5769;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .landing-marker-guide__items {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+      }
+
+      .landing-marker-guide__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #5e5769;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .landing-marker-guide__dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+      }
+
+      .landing-marker-guide__dot--live {
+        background: #00aeef;
+      }
+
+      .landing-marker-guide__dot--weak {
+        background: #f5b920;
+      }
+
+      .landing-marker-guide__dot--cached {
+        background: #94a3b8;
       }
 
       .landing-footer {
@@ -389,7 +452,7 @@
       }
       .route-test-switcher {
         position: fixed;
-        top: calc(92px + env(safe-area-inset-top));
+        top: calc(var(--route-switcher-top) + env(safe-area-inset-top));
         left: 16px;
         z-index: 21;
 
@@ -432,13 +495,18 @@
 
       .warning {
         position: fixed;
-        top: calc(126px + env(safe-area-inset-top));
+        top: calc(
+          var(--status-stack-top) +
+            var(--route-card-stack-height) +
+            var(--status-stack-gap) +
+            env(safe-area-inset-top)
+        );
         left: 16px;
         right: 16px;
         color: white;
         padding: 12px 14px;
         border-radius: 8px;
-        z-index: 20;
+        z-index: 18;
         display: none;
         box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
         font-size: 14px;
@@ -466,14 +534,33 @@
         border-left: 5px solid #14b8a6;
       }
 
+      .warning.gps-weak {
+        background: rgba(6, 17, 31, 0.96);
+        color: white;
+        border-left: 5px solid #ffd000;
+      }
+
+      .warning.gps-cached {
+        background: rgba(6, 17, 31, 0.96);
+        color: white;
+        border-left: 5px solid #f5b920;
+      }
+
+      .warning.gps-lost {
+        background: rgba(6, 17, 31, 0.96);
+        color: white;
+        border-left: 5px solid #f76b1c;
+      }
+
       .route-card {
         position: fixed;
-        top: calc(180px + env(safe-area-inset-top));
+        top: calc(var(--status-stack-top) + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         z-index: 19;
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
         padding: 12px 14px;
@@ -582,6 +669,48 @@
         opacity: 0.58;
       }
 
+      .route-card__gps-status {
+        flex: 0 0 100%;
+        width: 100%;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: rgba(255, 255, 255, 0.92);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .route-card__gps-status[hidden] {
+        display: none;
+      }
+
+      .route-card__gps-status::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #14b8a6;
+        flex-shrink: 0;
+      }
+
+      .route-card__gps-status.is-gps-weak::before,
+      .route-card__gps-status.is-warning::before {
+        background: #ffd000;
+      }
+
+      .route-card__gps-status.is-gps-cached::before {
+        background: #f5b920;
+      }
+
+      .route-card__gps-status.is-gps-lost::before,
+      .route-card__gps-status.is-alert::before {
+        background: #f76b1c;
+      }
+
       .route-card__badge {
         flex-shrink: 0;
         padding: 8px 12px;
@@ -591,6 +720,11 @@
         background: rgba(17, 170, 98, 0.18);
         color: #7ef0b3;
         white-space: nowrap;
+      }
+
+      .route-card__badge.preparing {
+        background: rgba(245, 185, 32, 0.18);
+        color: #ffe680;
       }
 
       .route-card__badge.warning {
@@ -661,6 +795,48 @@
         height: 26px;
         display: block;
         fill: currentColor;
+      }
+
+      .user-location-marker {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        background: #00aeef;
+        border: 3px solid #ffffff;
+        box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.36);
+        position: relative;
+        z-index: 999;
+      }
+
+      .user-location-marker::after {
+        content: "";
+        position: absolute;
+        inset: -7px;
+        border-radius: 999px;
+        border: 2px solid rgba(0, 174, 239, 0.55);
+        animation: user-marker-pulse 1.8s ease-out infinite;
+      }
+
+      .user-location-marker.is-weak {
+        background: #f5b920;
+        box-shadow: 0 0 0 2px rgba(245, 185, 32, 0.36);
+      }
+
+      .user-location-marker.is-cached {
+        background: #94a3b8;
+        box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.36);
+      }
+
+      @keyframes user-marker-pulse {
+        0% {
+          transform: scale(0.8);
+          opacity: 0.9;
+        }
+
+        100% {
+          transform: scale(1.25);
+          opacity: 0;
+        }
       }
 
       .route-center-button:active,
@@ -1168,6 +1344,9 @@
         :root {
           --floating-button-gap: 12px;
           --floating-button-right: 14px;
+          --status-stack-gap-below-switcher: 9px;
+          --route-card-stack-height: 132px;
+          --status-stack-gap: 2px;
         }
 
         .help-panel {
@@ -1250,6 +1429,217 @@
       .toast.show {
         opacity: 1;
         transform: translate(-50%, -4px);
+      }
+
+      .field-log-button {
+        position: fixed;
+        left: 14px;
+        bottom: calc(94px + env(safe-area-inset-bottom));
+        z-index: 45;
+        border: none;
+        border-radius: 999px;
+        padding: 11px 14px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: #dbeafe;
+        background: rgba(2, 6, 23, 0.92);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32);
+        cursor: pointer;
+      }
+
+      .field-log-button:active {
+        transform: scale(0.97);
+      }
+
+      .field-log-panel {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(82px + env(safe-area-inset-bottom));
+        z-index: 47;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        background: rgba(2, 6, 23, 0.96);
+        color: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 22px 44px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+        padding: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(16px);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .field-log-panel.open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .field-log-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .field-log-panel__title {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .field-log-panel__subtitle {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .field-log-panel__close {
+        border: none;
+        border-radius: 10px;
+        width: 30px;
+        height: 30px;
+        font-size: 22px;
+        line-height: 1;
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(15, 23, 42, 0.95);
+        cursor: pointer;
+      }
+
+      .field-log-panel__meta {
+        margin-top: 8px;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.68);
+      }
+
+      .field-log-panel__issues {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .field-log-chip {
+        border: 1px solid rgba(251, 191, 36, 0.4);
+        border-radius: 10px;
+        background: rgba(251, 191, 36, 0.12);
+        color: #fde68a;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 8px 9px;
+        cursor: pointer;
+      }
+
+      .field-log-note {
+        width: 100%;
+        margin-top: 10px;
+        min-height: 58px;
+        resize: vertical;
+        box-sizing: border-box;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        background: rgba(15, 23, 42, 0.92);
+        color: rgba(255, 255, 255, 0.94);
+        font-size: 13px;
+        padding: 9px 10px;
+      }
+
+      .field-log-panel__actions {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .field-log-action {
+        border: none;
+        border-radius: 12px;
+        padding: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .field-log-action--save {
+        background: #14b8a6;
+        color: #06291f;
+      }
+
+      .field-log-action--export {
+        background: #1d4ed8;
+        color: #dbeafe;
+      }
+
+      .field-log-action--clear {
+        margin-top: 8px;
+        width: 100%;
+        background: rgba(239, 68, 68, 0.15);
+        color: #fecaca;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+      }
+
+      .field-log-first-run {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        background: rgba(2, 6, 23, 0.62);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .field-log-first-run.open {
+        display: flex;
+      }
+
+      .field-log-first-run__card {
+        width: min(100%, 430px);
+        border-radius: 18px;
+        background: rgba(2, 6, 23, 0.97);
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        box-shadow: 0 24px 44px rgba(0, 0, 0, 0.45);
+        padding: 16px;
+        color: rgba(255, 255, 255, 0.94);
+      }
+
+      .field-log-first-run__card h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .field-log-first-run__card p {
+        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .field-log-first-run__list {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.86);
+      }
+
+      .field-log-first-run__ok {
+        margin-top: 14px;
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 800;
+        background: #14b8a6;
+        color: #052821;
+        cursor: pointer;
       }
 
       .offline-notice {
@@ -1428,7 +1818,6 @@
         }
 
         .warning {
-          top: calc(126px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -1436,7 +1825,6 @@
         }
 
         .route-card {
-          top: calc(176px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -1472,6 +1860,9 @@
         :root {
           --floating-button-gap: 10px;
           --floating-button-right: 12px;
+          --status-stack-gap-below-switcher: 10px;
+          --route-card-stack-height: 142px;
+          --status-stack-gap: 2px;
         }
 
         .landing-screen h1 {
@@ -1581,6 +1972,25 @@
           <p id="landing-distance-time-value">Route distance calculating…</p>
         </div>
 
+        <div class="landing-marker-guide" aria-label="Marker legend">
+          <p class="landing-marker-guide__title">Marker guide</p>
+
+          <div class="landing-marker-guide__items">
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--live"></span>
+              Live GPS
+            </span>
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--weak"></span>
+              GPS weak
+            </span>
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--cached"></span>
+              Cached
+            </span>
+          </div>
+        </div>
+
         <div class="landing-footer">
           <button id="start-walk-button" class="landing-button">
             Start Walk
@@ -1635,7 +2045,11 @@
         </div>
       </div>
 
-      <span class="route-card__badge" id="route-badge">Preparing</span>
+      <span class="route-card__badge preparing" id="route-badge">Preparing</span>
+
+      <div class="route-card__gps-status" id="route-gps-status" hidden>
+        <span id="route-gps-status-text"></span>
+      </div>
     </div>
 
     <button
@@ -1826,7 +2240,71 @@
     </div>
     <div id="toast" class="toast"></div>
     <div id="offline-notice" class="offline-notice" hidden>
-      <span>🌐 Offline – Map tiles unavailable, route data cached</span>
+      <span>Offline - Map tiles unavailable, route data cached</span>
+    </div>
+
+    <button
+      class="field-log-button"
+      id="field-log-button"
+      aria-label="Open field test log"
+      title="Field test log"
+    >
+      Log issues
+    </button>
+
+    <div class="field-log-panel" id="field-log-panel" aria-hidden="true">
+      <div class="field-log-panel__header">
+        <div>
+          <h3 class="field-log-panel__title">Field test log</h3>
+          <p class="field-log-panel__subtitle">
+            Auto events are captured in the background.
+          </p>
+        </div>
+        <button class="field-log-panel__close" id="field-log-close-button">&times;</button>
+      </div>
+
+      <div class="field-log-panel__meta" id="field-log-meta">0 entries captured</div>
+
+      <div class="field-log-panel__issues">
+        <button class="field-log-chip" data-field-issue="GPS weak">GPS weak</button>
+        <button class="field-log-chip" data-field-issue="Marker missing">Marker missing</button>
+        <button class="field-log-chip" data-field-issue="Route jump">Route jump</button>
+        <button class="field-log-chip" data-field-issue="UI unclear">UI unclear</button>
+      </div>
+
+      <textarea
+        class="field-log-note"
+        id="field-log-note-input"
+        placeholder="Optional note..."
+      ></textarea>
+
+      <div class="field-log-panel__actions">
+        <button class="field-log-action field-log-action--save" id="field-log-save-button">
+          Save note
+        </button>
+        <button class="field-log-action field-log-action--export" id="field-log-export-button">
+          Export JSON
+        </button>
+      </div>
+
+      <button class="field-log-action field-log-action--clear" id="field-log-clear-button">
+        Clear local log
+      </button>
+    </div>
+
+    <div class="field-log-first-run" id="field-log-first-run">
+      <div class="field-log-first-run__card">
+        <h3>Field logging is active</h3>
+        <p>
+          Keep your normal routine: press Start Walk, put the phone away, and this app will capture best-effort GPS and warning events.
+        </p>
+        <ul class="field-log-first-run__list">
+          <li>If the phone locks, iOS can pause web GPS updates.</li>
+          <li>The app flags long gaps as possible lock/background suspension.</li>
+          <li>Use Log issues for quick notes and Export JSON after your walk.</li>
+        </ul>
+        <button class="field-log-first-run__ok" id="field-log-first-run-ok">Got it</button>
+      </div>
     </div>
     <script>
       const ROUTES = {
@@ -1899,6 +2377,7 @@ dogwalk: {
   fullName: "Local Dog Walk",
   sourceLabel: "Local dog walk route",
   geojsonUrl: "dog-walk/dog-walk-route.geojson",
+  gpsLockAccuracyMeters: 45,
   title: "Dog Walk",
   subtitle: "Local route test",
   landingHeading: "Walking the local dog route",
@@ -2148,6 +2627,14 @@ localStorage.setItem(
       const GPS_CONFIDENCE_WEAK = "weak";
       const GPS_CONFIDENCE_LOST = "lost";
       const GPS_CONFIDENCE_CACHED = "cached";
+      const FIELD_LOG_GAP_MS = 45000;
+      const FIELD_LOG_MAX_ENTRIES = 800;
+      const FIELD_LOG_ENTRIES_STORAGE_KEY = getRouteStorageKey("fieldLogEntries");
+      const FIELD_LOG_FIRST_USE_STORAGE_KEY = getRouteStorageKey("fieldLogFirstUseSeen");
+      const ROUTE_TOAST_COOLDOWN_MS = 25000;
+      const ROUTE_STATE_REPEAT_COOLDOWN_MS = 180000;
+      const POINT_ALERT_RESET_AHEAD_METERS = 220;
+      const POINT_ALERT_RESET_BEHIND_METERS = -80;
 
       const ROUTE_VIEW_ICON = `
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2410,7 +2897,7 @@ localStorage.setItem(
 
         try {
           mapboxgl.accessToken =
-            "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcXBiYzh6ejA0dGoyc3FxYmg5YXFxMWQifQ.zHEWJan_S5xHS62DsK_SyQ";
+            "pk.eyJ1IjoicmljaGFyZC1iYWlsZXkyIiwiYSI6ImNtcjk5NnZ6NzAzYWYyeHNpMWZhazM3Y2kifQ.Cgs8Ian56eBCUUAy4RojFw";
 
           map = new mapboxgl.Map({
             container: "map",
@@ -2434,6 +2921,7 @@ localStorage.setItem(
       }
 
       let userMarker;
+      let userMarkerElement = null;
       let lastActualPosition = null;
       let lastSnappedPosition = null;
       let hasInitialPosition = false;
@@ -2466,6 +2954,14 @@ localStorage.setItem(
       let surfaceTooltipMoveTimer = null;
       let isMapInteracting = false;
       let isCompassVisible = false;
+      let fieldLogEntries = [];
+      let fieldLogSessionStartedAt = 0;
+      let fieldLogLastHiddenAt = 0;
+      let fieldLogLastSegmentNumber = null;
+      let lastOperationalToastAt = 0;
+      let lastRouteStatusToastState = "";
+      let routeStatusToastByState = {};
+      let pointAlertState = {};
 
       const hazards = [
         {
@@ -3263,6 +3759,138 @@ function updateRouteSummaryDisplay() {
         return upcomingHazards[0] || null;
       }
 
+      function getNextRestAhead(userPoint) {
+        if (!isHeathrowRoute()) {
+          return null;
+        }
+
+        if (routeCoordinates.length < 2) {
+          return null;
+        }
+
+        const userMeasure = getRouteMeasure(userPoint);
+
+        const upcomingRestStops = restStops
+          .map((r, index) => {
+            const restPoint = [r.lng, r.lat];
+            const restMeasure = getRouteMeasure(restPoint);
+
+            return {
+              ...r,
+              id: `rest-${index + 1}`,
+              distanceAhead:
+                restMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
+              distanceFromRoute: restMeasure.distanceFromRoute,
+            };
+          })
+          .filter((r) => r.distanceAhead > 25)
+          .sort((a, b) => a.distanceAhead - b.distanceAhead);
+
+        return upcomingRestStops[0] || null;
+      }
+
+      function showOperationalToast(message, options = {}) {
+        const now = Date.now();
+        const bypassCooldown = Boolean(options.bypassCooldown);
+
+        if (!bypassCooldown && now - lastOperationalToastAt < ROUTE_TOAST_COOLDOWN_MS) {
+          return false;
+        }
+
+        lastOperationalToastAt = now;
+        showToast(message);
+        return true;
+      }
+
+      function notifyRouteState(distanceToRoute, gpsState) {
+        if (gpsState !== GPS_CONFIDENCE_LOCKED || !Number.isFinite(distanceToRoute)) {
+          return;
+        }
+
+        let routeState = "";
+        let message = "";
+
+        if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
+          routeState = "far";
+          message = "Far from route";
+        } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
+          routeState = "near";
+          message = "Near route edge";
+        } else {
+          routeState = "on";
+          message = "Staying on route";
+        }
+
+        const now = Date.now();
+        const lastStateAt = routeStatusToastByState[routeState] || 0;
+        const stateChanged = routeState !== lastRouteStatusToastState;
+
+        if (!stateChanged && now - lastStateAt < ROUTE_STATE_REPEAT_COOLDOWN_MS) {
+          return;
+        }
+
+        if (showOperationalToast(message, { bypassCooldown: routeState === "far" })) {
+          lastRouteStatusToastState = routeState;
+          routeStatusToastByState[routeState] = now;
+        }
+      }
+
+      function shouldFirePointAlert(alertKey, distanceAhead, thresholdMeters) {
+        const existingState = pointAlertState[alertKey] || { fired: false };
+
+        if (
+          distanceAhead > thresholdMeters + POINT_ALERT_RESET_AHEAD_METERS ||
+          distanceAhead < POINT_ALERT_RESET_BEHIND_METERS
+        ) {
+          existingState.fired = false;
+        }
+
+        if (!existingState.fired && distanceAhead > 0 && distanceAhead <= thresholdMeters) {
+          existingState.fired = true;
+          pointAlertState[alertKey] = existingState;
+          return true;
+        }
+
+        pointAlertState[alertKey] = existingState;
+        return false;
+      }
+
+      function notifyPointAheadAlerts(userPoint, gpsState) {
+        if (!isHeathrowRoute() || gpsState !== GPS_CONFIDENCE_LOCKED) {
+          return;
+        }
+
+        const hazardAhead = getNextHazardAhead(userPoint);
+        if (hazardAhead) {
+          const hazardThresholds = [400, 150];
+
+          hazardThresholds.forEach((threshold) => {
+            const alertKey = `hazard-${hazardAhead.id}-${threshold}`;
+            if (shouldFirePointAlert(alertKey, hazardAhead.distanceAhead, threshold)) {
+              const meters = Math.round(hazardAhead.distanceAhead);
+              showOperationalToast(`Hazard ahead: ${hazardAhead.type} in ${meters}m`, {
+                bypassCooldown: threshold === 150,
+              });
+            }
+          });
+        }
+
+        const restAhead = getNextRestAhead(userPoint);
+        if (restAhead) {
+          const hasWater = /water/i.test(restAhead.label || "");
+          const restThresholds = [300, 100];
+
+          restThresholds.forEach((threshold) => {
+            const alertKey = `${restAhead.id}-${threshold}`;
+            if (shouldFirePointAlert(alertKey, restAhead.distanceAhead, threshold)) {
+              const meters = Math.round(restAhead.distanceAhead);
+              const prefix = hasWater ? "Water/rest ahead" : "Rest area ahead";
+              showOperationalToast(`${prefix}: ${restAhead.label} in ${meters}m`);
+            }
+          });
+        }
+      }
+
       function updateNextThingAhead(userPoint) {
         const nextThingValue = document.getElementById(NEXT_THING_VALUE_ID);
 
@@ -3289,17 +3917,30 @@ function updateRouteSummaryDisplay() {
           return;
         }
 
-        const icon = nextThing.type === "hazard" ? "⚠️" : "☕";
+        const icon = nextThing.type === "hazard" ? "Hazard" : "Rest";
         const distance = formatDistance(nextThing.distanceAhead);
 
         nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
       }
 
       function showWarning(message, level = "") {
-        const warning = document.getElementById(WARNING_ID);
-        warning.textContent = message;
-        warning.className = `warning ${level}`.trim();
-        warning.style.display = message ? "block" : "none";
+        const routeGpsStatus = document.getElementById("route-gps-status");
+        const routeGpsStatusText = document.getElementById(
+          "route-gps-status-text",
+        );
+
+        if (!routeGpsStatus || !routeGpsStatusText) {
+          return;
+        }
+
+        routeGpsStatusText.textContent = message || "";
+        routeGpsStatus.className = "route-card__gps-status";
+
+        if (level) {
+          routeGpsStatus.classList.add(`is-${level}`);
+        }
+
+        routeGpsStatus.hidden = !message;
       }
 
       function getSurfaceDisplayText(surface) {
@@ -3540,6 +4181,7 @@ function updateRouteSummaryDisplay() {
           offlineNotice.removeAttribute("hidden");
         }
         showToast("Signal lost — route still available");
+        logFieldEvent("network-offline", {});
       });
 
       window.addEventListener("online", () => {
@@ -3548,6 +4190,7 @@ function updateRouteSummaryDisplay() {
           offlineNotice.setAttribute("hidden", "");
         }
         showToast("Back online");
+        logFieldEvent("network-online", {});
       });
 
       // Check initial online status
@@ -3653,10 +4296,32 @@ function updateRouteSummaryDisplay() {
       }
 
       function setGpsConfidenceState(nextState) {
+        const previousState = gpsConfidenceState;
         gpsConfidenceState = nextState;
+
+        if (previousState !== nextState) {
+          logFieldEvent("gps-state-change", {
+            from: previousState,
+            to: nextState,
+            accuracyMeters: Number.isFinite(lastLocationAccuracy)
+              ? Math.round(lastLocationAccuracy)
+              : null,
+          });
+        }
       }
 
       function deriveGpsConfidenceState(accuracy) {
+        const activeRoute = getActiveRoute();
+        const gpsLockAccuracyMeters = Number.isFinite(
+          activeRoute.gpsLockAccuracyMeters,
+        )
+          ? activeRoute.gpsLockAccuracyMeters
+          : GPS_LOCK_ACCURACY_METERS;
+        const gpsWeakAccuracyMeters = Math.max(
+          GPS_WEAK_ACCURACY_METERS,
+          gpsLockAccuracyMeters + 20,
+        );
+
         const hasMinimumLocatingElapsed =
           geolocationStartedAt > 0 &&
           Date.now() - geolocationStartedAt >= MIN_LOCATING_ANIMATION_MS;
@@ -3666,13 +4331,13 @@ function updateRouteSummaryDisplay() {
         }
 
         if (
-          accuracy <= GPS_LOCK_ACCURACY_METERS &&
+          accuracy <= gpsLockAccuracyMeters &&
           hasMinimumLocatingElapsed
         ) {
           return GPS_CONFIDENCE_LOCKED;
         }
 
-        if (accuracy <= GPS_WEAK_ACCURACY_METERS) {
+        if (accuracy <= gpsWeakAccuracyMeters) {
           return GPS_CONFIDENCE_WEAK;
         }
 
@@ -3713,7 +4378,7 @@ function updateRouteSummaryDisplay() {
           progressValue.textContent = `Section 1/${getTotalSegments()}`;
           distanceValue.textContent = "Waiting for start";
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
-          routeBadge.className = "route-card__badge";
+          routeBadge.className = "route-card__badge preparing";
           return;
         }
 
@@ -3738,7 +4403,7 @@ function updateRouteSummaryDisplay() {
             routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           }
 
-          routeBadge.className = "route-card__badge";
+          routeBadge.className = "route-card__badge preparing";
           return;
         }
 
@@ -3781,27 +4446,18 @@ function updateRouteSummaryDisplay() {
         let nextState = "";
         let nextLevel = "";
 
-        if (
-          gpsState !== GPS_CONFIDENCE_LOCKED ||
-          !Number.isFinite(distanceToRoute)
-        ) {
-          if (gpsState === GPS_CONFIDENCE_WEAK) {
-            nextState = "GPS weak - route judgement paused";
-          } else if (gpsState === GPS_CONFIDENCE_CACHED) {
-            nextState = "Using cached location - route judgement paused";
-          } else {
-            nextState = "GPS lost - route judgement paused";
-          }
-          nextLevel = "help";
-        } else if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
-          nextState = "You are far from the official route";
-          nextLevel = "alert";
-        } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
-          nextState = "You may be off the official route";
-          nextLevel = "warning";
+        if (gpsState === GPS_CONFIDENCE_WEAK) {
+          nextState = "GPS weak - route judgement paused";
+          nextLevel = "gps-weak";
+        } else if (gpsState === GPS_CONFIDENCE_CACHED) {
+          nextState = "Using cached location - route judgement paused";
+          nextLevel = "gps-cached";
+        } else if (gpsState !== GPS_CONFIDENCE_LOCKED || !Number.isFinite(distanceToRoute)) {
+          nextState = "GPS lost - route judgement paused";
+          nextLevel = "gps-lost";
         } else {
-          nextState = "You are staying on the route";
-          nextLevel = "safe";
+          nextState = "";
+          nextLevel = "";
         }
 
         if (
@@ -3809,26 +4465,70 @@ function updateRouteSummaryDisplay() {
           nextLevel !== lastWarningState
         ) {
           showWarning(nextState, nextLevel);
+          if (nextLevel !== lastWarningState) {
+            logFieldEvent("warning-state-change", {
+              level: nextLevel,
+              message: nextState,
+            });
+          }
           lastWarningUpdate = now;
           lastWarningState = nextLevel;
         }
       }
 
-      function updateUserMarker(lng, lat) {
+      function updateUserMarker(
+        lng,
+        lat,
+        gpsState = GPS_CONFIDENCE_LOCKED,
+      ) {
         const actualPosition = [lng, lat];
         lastActualPosition = actualPosition;
 
         const routeSnapshot = getClosestPointOnRoute(actualPosition);
+        const previousSnappedPosition = lastSnappedPosition;
 
         lastSnappedPosition = routeSnapshot.point;
 
+        if (previousSnappedPosition) {
+          const snappedJumpMeters = haversineDistanceMeters(
+            previousSnappedPosition,
+            routeSnapshot.point,
+          );
+
+          if (snappedJumpMeters > 120) {
+            logFieldEvent("route-snap-jump", {
+              jumpMeters: Math.round(snappedJumpMeters),
+            });
+          }
+        }
+
         if (map) {
           if (!userMarker) {
-            userMarker = new mapboxgl.Marker({ color: "#00AEEF" })
-              .setLngLat(routeSnapshot.point)
+            userMarkerElement = document.createElement("div");
+            userMarkerElement.className = "user-location-marker";
+
+            userMarker = new mapboxgl.Marker({
+              element: userMarkerElement,
+              anchor: "center",
+            })
+              .setLngLat(actualPosition)
               .addTo(map);
+
+            userMarker.getElement().style.zIndex = "999";
           } else {
-            userMarker.setLngLat(routeSnapshot.point);
+            userMarker.setLngLat(actualPosition);
+            userMarker.getElement().style.zIndex = "999";
+          }
+
+          if (userMarkerElement) {
+            userMarkerElement.classList.toggle(
+              "is-weak",
+              gpsState === GPS_CONFIDENCE_WEAK,
+            );
+            userMarkerElement.classList.toggle(
+              "is-cached",
+              gpsState === GPS_CONFIDENCE_CACHED,
+            );
           }
         }
 
@@ -3900,6 +4600,20 @@ function updateRouteSummaryDisplay() {
 
       function shouldProcessLocationUpdate(lng, lat) {
         const now = Date.now();
+
+        if (lastProcessedPositionTime > 0) {
+          const gapMs = now - lastProcessedPositionTime;
+
+          if (gapMs >= FIELD_LOG_GAP_MS) {
+            logFieldEvent("location-update-gap", {
+              gapMs,
+              whileHidden: Boolean(document.hidden),
+              reason: document.hidden
+                ? "app-hidden-or-screen-locked"
+                : "gps-update-gap",
+            });
+          }
+        }
 
         if (!lastProcessedPosition) {
           lastProcessedPosition = [lng, lat];
@@ -4025,6 +4739,8 @@ function updateRouteSummaryDisplay() {
             .setPopup(new mapboxgl.Popup().setHTML(startPopupHtml))
             .addTo(map);
 
+          routeStartMarker.getElement().style.zIndex = "20";
+
           if (!routeFinishMarker) {
             routeFinishMarker = new mapboxgl.Marker({ color: "#f97316" });
           }
@@ -4033,6 +4749,8 @@ function updateRouteSummaryDisplay() {
             .setLngLat(finishCoordinate)
             .setPopup(new mapboxgl.Popup().setHTML(finishPopupHtml))
             .addTo(map);
+
+          routeFinishMarker.getElement().style.zIndex = "20";
         }
       }
 
@@ -4065,6 +4783,174 @@ function runRouteIntroAfterLoad() {
     }, 2000);
   }, 3300);
 }
+
+      function loadFieldLogEntries() {
+        try {
+          const raw = localStorage.getItem(FIELD_LOG_ENTRIES_STORAGE_KEY);
+          fieldLogEntries = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(fieldLogEntries)) {
+            fieldLogEntries = [];
+          }
+        } catch (error) {
+          console.warn("Failed to load field log entries:", error);
+          fieldLogEntries = [];
+        }
+      }
+
+      function saveFieldLogEntries() {
+        try {
+          localStorage.setItem(
+            FIELD_LOG_ENTRIES_STORAGE_KEY,
+            JSON.stringify(fieldLogEntries),
+          );
+        } catch (error) {
+          console.warn("Failed to save field log entries:", error);
+        }
+      }
+
+      function updateFieldLogMeta() {
+        const fieldLogMeta = document.getElementById("field-log-meta");
+        if (!fieldLogMeta) {
+          return;
+        }
+
+        const count = fieldLogEntries.length;
+        fieldLogMeta.textContent = `${count} entr${count === 1 ? "y" : "ies"} captured`;
+      }
+
+      function logFieldEvent(type, detail = {}) {
+        const now = Date.now();
+        const entry = {
+          id: `${now}-${Math.floor(Math.random() * 10000)}`,
+          timestamp: new Date(now).toISOString(),
+          eventType: type,
+          route: activeRouteKey,
+          appMode,
+          gpsState: gpsConfidenceState,
+          accuracyMeters: Number.isFinite(lastLocationAccuracy)
+            ? Math.round(lastLocationAccuracy)
+            : null,
+          appVisible: !document.hidden,
+          position: Array.isArray(lastActualPosition)
+            ? {
+                lng: Number(lastActualPosition[0].toFixed(6)),
+                lat: Number(lastActualPosition[1].toFixed(6)),
+              }
+            : null,
+          detail,
+        };
+
+        fieldLogEntries.push(entry);
+        if (fieldLogEntries.length > FIELD_LOG_MAX_ENTRIES) {
+          fieldLogEntries = fieldLogEntries.slice(-FIELD_LOG_MAX_ENTRIES);
+        }
+
+        saveFieldLogEntries();
+        updateFieldLogMeta();
+      }
+
+      function setFieldLogPanel(open) {
+        const panel = document.getElementById("field-log-panel");
+        if (!panel) {
+          return;
+        }
+
+        panel.classList.toggle("open", open);
+        panel.setAttribute("aria-hidden", open ? "false" : "true");
+      }
+
+      function showFieldLogFirstRunIfNeeded() {
+        const firstRun = document.getElementById("field-log-first-run");
+        if (!firstRun) {
+          return;
+        }
+
+        let seen = false;
+        try {
+          seen = localStorage.getItem(FIELD_LOG_FIRST_USE_STORAGE_KEY) === "1";
+        } catch (error) {
+          seen = false;
+        }
+
+        if (!seen) {
+          firstRun.classList.add("open");
+        }
+      }
+
+      function dismissFieldLogFirstRun() {
+        const firstRun = document.getElementById("field-log-first-run");
+        if (firstRun) {
+          firstRun.classList.remove("open");
+        }
+
+        try {
+          localStorage.setItem(FIELD_LOG_FIRST_USE_STORAGE_KEY, "1");
+        } catch (error) {
+          console.warn("Failed to persist first-run hint:", error);
+        }
+      }
+
+      function addQuickIssue(issueLabel) {
+        logFieldEvent("manual-issue", { issue: issueLabel });
+        showToast("Issue saved");
+      }
+
+      function saveManualFieldNote() {
+        const noteInput = document.getElementById("field-log-note-input");
+        if (!noteInput) {
+          return;
+        }
+
+        const note = noteInput.value.trim();
+        if (!note) {
+          showToast("Add a note first");
+          return;
+        }
+
+        logFieldEvent("manual-note", { note });
+        noteInput.value = "";
+        showToast("Note saved");
+      }
+
+      function exportFieldLogJson() {
+        if (!fieldLogEntries.length) {
+          showToast("No log entries yet");
+          return;
+        }
+
+        const payload = {
+          exportedAt: new Date().toISOString(),
+          route: activeRouteKey,
+          entries: fieldLogEntries,
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = `field-log-${activeRouteKey}-${timestamp}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showToast("Field log exported");
+      }
+
+      function clearFieldLogEntries() {
+        if (!window.confirm("Clear all saved field log entries for this route?")) {
+          return;
+        }
+
+        fieldLogEntries = [];
+        saveFieldLogEntries();
+        updateFieldLogMeta();
+        showToast("Field log cleared");
+      }
 
       function setAppMode(nextMode) {
         appMode = nextMode;
@@ -4144,6 +5030,12 @@ function runRouteIntroAfterLoad() {
 
         geolocationStarted = true;
         geolocationStartedAt = Date.now();
+        setGpsConfidenceState(GPS_CONFIDENCE_LOST);
+        lastStableDistanceToRoute = null;
+        lastStableRouteProgress = 0;
+        lastStableSegmentInfo = null;
+        lastWarningUpdate = 0;
+        lastWarningState = "";
 
         if (!("geolocation" in navigator)) {
           isWaitingForFirstLocation = false;
@@ -4155,7 +5047,7 @@ function runRouteIntroAfterLoad() {
         firstLocationTimeout = setTimeout(() => {
           if (isWaitingForFirstLocation) {
             showWarning(
-              "📍 Acquiring GPS location... Check location permissions if stuck",
+              "Acquiring GPS location... Check location permissions if stuck",
               "help",
             );
           }
@@ -4182,7 +5074,7 @@ function runRouteIntroAfterLoad() {
               return;
             }
 
-            updateUserMarker(lng, lat);
+            updateUserMarker(lng, lat, gpsState);
             updateMapView(lng, lat);
 
             const userPoint = [lng, lat];
@@ -4196,6 +5088,18 @@ function runRouteIntroAfterLoad() {
             const distanceToRoute = getDistanceToRoute(userPoint);
             const routeProgress = getRouteProgress(userPoint);
             const segmentInfo = getCurrentSegment(userPoint);
+
+            if (
+              segmentInfo &&
+              segmentInfo.currentSegmentNumber !== fieldLogLastSegmentNumber
+            ) {
+              fieldLogLastSegmentNumber = segmentInfo.currentSegmentNumber;
+              logFieldEvent("segment-change", {
+                currentSegmentNumber: segmentInfo.currentSegmentNumber,
+                totalSegments: segmentInfo.totalSegments,
+                nextMilestone: segmentInfo.nextMilestone,
+              });
+            }
 
             if (gpsState === GPS_CONFIDENCE_LOCKED) {
               lastStableDistanceToRoute = distanceToRoute;
@@ -4226,23 +5130,7 @@ function runRouteIntroAfterLoad() {
               nextMilestone: "next point",
             };
 
-            const nextHazardAhead = getNextHazardAhead(userPoint);
-            let hazardWarningShown = false;
-
-            if (
-              gpsState === GPS_CONFIDENCE_LOCKED &&
-              nextHazardAhead &&
-              nextHazardAhead.distanceAhead < 400
-            ) {
-              const d = Math.round(nextHazardAhead.distanceAhead);
-
-              showWarning(
-                `⚠️ ${nextHazardAhead.type} in ${d}m`,
-                d < 100 ? "alert" : "warning",
-              );
-
-              hazardWarningShown = true;
-            }
+            notifyPointAheadAlerts(userPoint, gpsState);
 
             updateDistanceDisplay(
               displayDistanceToRoute,
@@ -4256,21 +5144,27 @@ function runRouteIntroAfterLoad() {
               fallbackSegmentInfo,
             );
 
-            if (!hazardWarningShown) {
-              updateWarningState(displayDistanceToRoute, gpsState);
-            }
+            updateWarningState(displayDistanceToRoute, gpsState);
+            notifyRouteState(displayDistanceToRoute, gpsState);
           },
-          () => {
+          (error) => {
             const cachedPos = loadCachedPosition();
             setGpsConfidenceState(
               cachedPos ? GPS_CONFIDENCE_CACHED : GPS_CONFIDENCE_LOST,
             );
 
+            logFieldEvent("geolocation-error", {
+              code: error && Number.isFinite(error.code) ? error.code : null,
+              message:
+                error && error.message ? error.message : "Unknown geolocation error",
+              hasCachedPosition: Boolean(cachedPos),
+            });
+
             if (isWaitingForFirstLocation) {
               clearTimeout(firstLocationTimeout);
               isWaitingForFirstLocation = false;
               showWarning(
-                "📍 Location blocked – grant permission in settings to continue",
+                "Location blocked - grant permission in settings to continue",
                 "alert",
               );
               return;
@@ -4299,6 +5193,13 @@ function runRouteIntroAfterLoad() {
         }
 
         setAppMode(APP_MODE_ACTIVE_WALK);
+        if (!fieldLogSessionStartedAt) {
+          fieldLogSessionStartedAt = Date.now();
+          logFieldEvent("walk-start", {
+            routeName: getActiveRoute().fullName || getActiveRoute().name,
+          });
+          showFieldLogFirstRunIfNeeded();
+        }
         await initializeMapIfNeeded();
 
         if (map) {
@@ -4509,6 +5410,53 @@ updateRouteSummaryDisplay();
           }
         });
       }
+
+      const fieldLogButton = document.getElementById("field-log-button");
+      const fieldLogCloseButton = document.getElementById("field-log-close-button");
+      const fieldLogSaveButton = document.getElementById("field-log-save-button");
+      const fieldLogExportButton = document.getElementById("field-log-export-button");
+      const fieldLogClearButton = document.getElementById("field-log-clear-button");
+      const fieldLogFirstRunOkButton = document.getElementById("field-log-first-run-ok");
+      const fieldIssueButtons = document.querySelectorAll("[data-field-issue]");
+
+      loadFieldLogEntries();
+      updateFieldLogMeta();
+
+      if (fieldLogButton) {
+        fieldLogButton.addEventListener("click", () => {
+          const panel = document.getElementById("field-log-panel");
+          setFieldLogPanel(!(panel && panel.classList.contains("open")));
+        });
+      }
+
+      if (fieldLogCloseButton) {
+        fieldLogCloseButton.addEventListener("click", () => {
+          setFieldLogPanel(false);
+        });
+      }
+
+      if (fieldLogSaveButton) {
+        fieldLogSaveButton.addEventListener("click", saveManualFieldNote);
+      }
+
+      if (fieldLogExportButton) {
+        fieldLogExportButton.addEventListener("click", exportFieldLogJson);
+      }
+
+      if (fieldLogClearButton) {
+        fieldLogClearButton.addEventListener("click", clearFieldLogEntries);
+      }
+
+      if (fieldLogFirstRunOkButton) {
+        fieldLogFirstRunOkButton.addEventListener("click", dismissFieldLogFirstRun);
+      }
+
+      fieldIssueButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const issueLabel = button.getAttribute("data-field-issue") || "Issue";
+          addQuickIssue(issueLabel);
+        });
+      });
 
       // Hazards button
       const hazardsButton = document.getElementById("hazards-button");
@@ -4743,6 +5691,28 @@ updateRouteSummaryDisplay();
       // Battery optimization: pause heavy updates when app is backgrounded
       document.addEventListener("visibilitychange", () => {
         isAppVisible = !document.hidden;
+        if (document.hidden) {
+          fieldLogLastHiddenAt = Date.now();
+          logFieldEvent("app-hidden", {});
+          return;
+        }
+
+        if (fieldLogLastHiddenAt > 0) {
+          const hiddenDurationMs = Date.now() - fieldLogLastHiddenAt;
+          logFieldEvent("app-resumed", {
+            hiddenDurationMs,
+          });
+
+          if (hiddenDurationMs >= FIELD_LOG_GAP_MS) {
+            logFieldEvent("tracking-gap", {
+              gapMs: hiddenDurationMs,
+              reason: "app-hidden-or-screen-locked",
+            });
+          }
+
+          fieldLogLastHiddenAt = 0;
+        }
+
         if (isAppVisible) {
           showToast("App resumed");
         }
@@ -4804,7 +5774,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-06-1";
+          const SERVICE_WORKER_VERSION = "2026-07-06-2";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
