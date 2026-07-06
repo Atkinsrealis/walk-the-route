@@ -2224,7 +2224,7 @@
     </div>
     <div id="toast" class="toast"></div>
     <div id="offline-notice" class="offline-notice" hidden>
-      <span>🌐 Offline – Map tiles unavailable, route data cached</span>
+      <span>Offline - Map tiles unavailable, route data cached</span>
     </div>
 
     <button
@@ -3901,7 +3901,7 @@ function updateRouteSummaryDisplay() {
           return;
         }
 
-        const icon = nextThing.type === "hazard" ? "⚠️" : "☕";
+        const icon = nextThing.type === "hazard" ? "Hazard" : "Rest";
         const distance = formatDistance(nextThing.distanceAhead);
 
         nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
@@ -5031,7 +5031,7 @@ function runRouteIntroAfterLoad() {
         firstLocationTimeout = setTimeout(() => {
           if (isWaitingForFirstLocation) {
             showWarning(
-              "📍 Acquiring GPS location... Check location permissions if stuck",
+              "Acquiring GPS location... Check location permissions if stuck",
               "help",
             );
           }
@@ -5148,7 +5148,7 @@ function runRouteIntroAfterLoad() {
               clearTimeout(firstLocationTimeout);
               isWaitingForFirstLocation = false;
               showWarning(
-                "📍 Location blocked – grant permission in settings to continue",
+                "Location blocked - grant permission in settings to continue",
                 "alert",
               );
               return;
