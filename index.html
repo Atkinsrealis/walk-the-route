@@ -28,6 +28,9 @@
         --floating-button-gap: 14px;
         --floating-button-right: 16px;
         --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
+        --status-stack-top: 126px;
+        --route-card-stack-height: 182px;
+        --status-stack-gap: 10px;
 
         /* Heathrow-aligned palette (dark mode tuned) */
         --bg-base: #0f172a;               /* softer than current dark */
@@ -485,7 +488,12 @@
 
       .warning {
         position: fixed;
-        top: calc(272px + env(safe-area-inset-top));
+        top: calc(
+          var(--status-stack-top) +
+            var(--route-card-stack-height) +
+            var(--status-stack-gap) +
+            env(safe-area-inset-top)
+        );
         left: 16px;
         right: 16px;
         color: white;
@@ -539,7 +547,7 @@
 
       .route-card {
         position: fixed;
-        top: calc(126px + env(safe-area-inset-top));
+        top: calc(var(--status-stack-top) + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         z-index: 19;
@@ -1281,6 +1289,9 @@
         :root {
           --floating-button-gap: 12px;
           --floating-button-right: 14px;
+          --status-stack-top: 126px;
+          --route-card-stack-height: 170px;
+          --status-stack-gap: 8px;
         }
 
         .help-panel {
@@ -1752,7 +1763,6 @@
         }
 
         .warning {
-          top: calc(246px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -1760,7 +1770,6 @@
         }
 
         .route-card {
-          top: calc(126px + env(safe-area-inset-top));
           left: 12px;
           right: 12px;
           padding: 11px 12px;
@@ -1796,6 +1805,8 @@
         :root {
           --floating-button-gap: 10px;
           --floating-button-right: 12px;
+          --route-card-stack-height: 194px;
+          --status-stack-gap: 8px;
         }
 
         .landing-screen h1 {
