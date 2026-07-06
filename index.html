@@ -2474,6 +2474,8 @@
   geojsonUrl: "heathrow-perimeter-route.geojson",
   title: "Perimeter Walk",
   subtitle: "Infrastructure Charity Event",
+    routePreviewZoom: 16.5,
+    liveFollowZoom: 16,
   landingHeading: "Walking the perimeter for charity",
     landingLead:
       "Participants will set off in small groups, following a designated landside route around the airport perimeter.",
@@ -2508,6 +2510,8 @@ bledlow: {
   geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
   title: "Bledlow Test",
   subtitle: "GPS test route",
+  routePreviewZoom: 16.5,
+  liveFollowZoom: 16,
   landingHeading: "Walking the test route",
   landingLead:
     "Use this lighter pre-start screen to brief the test walk before live tracking begins.",
@@ -2539,6 +2543,8 @@ dogwalk: {
   gpsLockAccuracyMeters: 45,
   title: "Dog Walk",
   subtitle: "Local route test",
+  routePreviewZoom: 17,
+  liveFollowZoom: 16.6,
   landingHeading: "Walking the local dog route",
   landingLead:
     "Use this local route for quick confidence checks on GPS lock, recovery, and follow behaviour.",
@@ -4795,6 +4801,10 @@ function updateRouteSummaryDisplay() {
       function updateMapView(lng, lat) {
         if (!map) return; // Map unavailable in fallback mode
         if (isIntro) return; // Skip updates during intro sequence
+        const activeRoute = getActiveRoute();
+        const liveFollowZoom = Number.isFinite(activeRoute.liveFollowZoom)
+          ? activeRoute.liveFollowZoom
+          : 16;
 
         // Use snapped position to keep route centered
         const displayPosition = lastSnappedPosition || [lng, lat];
@@ -4805,7 +4815,7 @@ function updateRouteSummaryDisplay() {
           map.flyTo({
             center: newCenter,
             speed: 0.8,
-            zoom: 16,
+            zoom: liveFollowZoom,
           });
           hasInitialPosition = true;
           lastViewCenter = newCenter;
@@ -5638,9 +5648,13 @@ updateRouteSummaryDisplay();
           updateFollowButtonState();
 
           if (followMode && lastSnappedPosition) {
+            const activeRoute = getActiveRoute();
+            const liveFollowZoom = Number.isFinite(activeRoute.liveFollowZoom)
+              ? activeRoute.liveFollowZoom
+              : 16;
             map.easeTo({
               center: lastSnappedPosition,
-              zoom: 16,
+              zoom: liveFollowZoom,
               duration: 600,
             });
           }
@@ -5941,10 +5955,14 @@ updateRouteSummaryDisplay();
       function setInitialViewToRouteStart() {
         if (!map || !routeCoordinates.length) return;
 
+        const activeRoute = getActiveRoute();
+        const routePreviewZoom = Number.isFinite(activeRoute.routePreviewZoom)
+          ? activeRoute.routePreviewZoom
+          : 16.5;
         const startPoint = routeCoordinates[0];
         map.flyTo({
           center: startPoint,
-          zoom: 16.5,
+          zoom: routePreviewZoom,
           speed: 1.2,
           duration: 1500,
         });
@@ -5957,9 +5975,13 @@ updateRouteSummaryDisplay();
 
         const cachedPos = loadCachedPosition();
         if (cachedPos) {
+          const activeRoute = getActiveRoute();
+          const liveFollowZoom = Number.isFinite(activeRoute.liveFollowZoom)
+            ? activeRoute.liveFollowZoom
+            : 16;
           map.easeTo({
             center: [cachedPos.lng, cachedPos.lat],
-            zoom: 16,
+            zoom: liveFollowZoom,
             duration: 800,
           });
           lastViewCenter = [cachedPos.lng, cachedPos.lat];
