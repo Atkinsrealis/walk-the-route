@@ -2560,6 +2560,10 @@ localStorage.setItem(
       const FIELD_LOG_MAX_ENTRIES = 800;
       const FIELD_LOG_ENTRIES_STORAGE_KEY = getRouteStorageKey("fieldLogEntries");
       const FIELD_LOG_FIRST_USE_STORAGE_KEY = getRouteStorageKey("fieldLogFirstUseSeen");
+      const ROUTE_TOAST_COOLDOWN_MS = 25000;
+      const ROUTE_STATE_REPEAT_COOLDOWN_MS = 180000;
+      const POINT_ALERT_RESET_AHEAD_METERS = 220;
+      const POINT_ALERT_RESET_BEHIND_METERS = -80;
 
       const ROUTE_VIEW_ICON = `
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2883,6 +2887,10 @@ localStorage.setItem(
       let fieldLogSessionStartedAt = 0;
       let fieldLogLastHiddenAt = 0;
       let fieldLogLastSegmentNumber = null;
+      let lastOperationalToastAt = 0;
+      let lastRouteStatusToastState = "";
+      let routeStatusToastByState = {};
+      let pointAlertState = {};
 
       const hazards = [
         {
@@ -3680,6 +3688,138 @@ function updateRouteSummaryDisplay() {
         return upcomingHazards[0] || null;
       }
 
+      function getNextRestAhead(userPoint) {
+        if (!isHeathrowRoute()) {
+          return null;
+        }
+
+        if (routeCoordinates.length < 2) {
+          return null;
+        }
+
+        const userMeasure = getRouteMeasure(userPoint);
+
+        const upcomingRestStops = restStops
+          .map((r, index) => {
+            const restPoint = [r.lng, r.lat];
+            const restMeasure = getRouteMeasure(restPoint);
+
+            return {
+              ...r,
+              id: `rest-${index + 1}`,
+              distanceAhead:
+                restMeasure.distanceAlongRoute - userMeasure.distanceAlongRoute,
+              distanceFromRoute: restMeasure.distanceFromRoute,
+            };
+          })
+          .filter((r) => r.distanceAhead > 25)
+          .sort((a, b) => a.distanceAhead - b.distanceAhead);
+
+        return upcomingRestStops[0] || null;
+      }
+
+      function showOperationalToast(message, options = {}) {
+        const now = Date.now();
+        const bypassCooldown = Boolean(options.bypassCooldown);
+
+        if (!bypassCooldown && now - lastOperationalToastAt < ROUTE_TOAST_COOLDOWN_MS) {
+          return false;
+        }
+
+        lastOperationalToastAt = now;
+        showToast(message);
+        return true;
+      }
+
+      function notifyRouteState(distanceToRoute, gpsState) {
+        if (gpsState !== GPS_CONFIDENCE_LOCKED || !Number.isFinite(distanceToRoute)) {
+          return;
+        }
+
+        let routeState = "";
+        let message = "";
+
+        if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
+          routeState = "far";
+          message = "Far from route";
+        } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
+          routeState = "near";
+          message = "Near route edge";
+        } else {
+          routeState = "on";
+          message = "Staying on route";
+        }
+
+        const now = Date.now();
+        const lastStateAt = routeStatusToastByState[routeState] || 0;
+        const stateChanged = routeState !== lastRouteStatusToastState;
+
+        if (!stateChanged && now - lastStateAt < ROUTE_STATE_REPEAT_COOLDOWN_MS) {
+          return;
+        }
+
+        if (showOperationalToast(message, { bypassCooldown: routeState === "far" })) {
+          lastRouteStatusToastState = routeState;
+          routeStatusToastByState[routeState] = now;
+        }
+      }
+
+      function shouldFirePointAlert(alertKey, distanceAhead, thresholdMeters) {
+        const existingState = pointAlertState[alertKey] || { fired: false };
+
+        if (
+          distanceAhead > thresholdMeters + POINT_ALERT_RESET_AHEAD_METERS ||
+          distanceAhead < POINT_ALERT_RESET_BEHIND_METERS
+        ) {
+          existingState.fired = false;
+        }
+
+        if (!existingState.fired && distanceAhead > 0 && distanceAhead <= thresholdMeters) {
+          existingState.fired = true;
+          pointAlertState[alertKey] = existingState;
+          return true;
+        }
+
+        pointAlertState[alertKey] = existingState;
+        return false;
+      }
+
+      function notifyPointAheadAlerts(userPoint, gpsState) {
+        if (!isHeathrowRoute() || gpsState !== GPS_CONFIDENCE_LOCKED) {
+          return;
+        }
+
+        const hazardAhead = getNextHazardAhead(userPoint);
+        if (hazardAhead) {
+          const hazardThresholds = [400, 150];
+
+          hazardThresholds.forEach((threshold) => {
+            const alertKey = `hazard-${hazardAhead.id}-${threshold}`;
+            if (shouldFirePointAlert(alertKey, hazardAhead.distanceAhead, threshold)) {
+              const meters = Math.round(hazardAhead.distanceAhead);
+              showOperationalToast(`Hazard ahead: ${hazardAhead.type} in ${meters}m`, {
+                bypassCooldown: threshold === 150,
+              });
+            }
+          });
+        }
+
+        const restAhead = getNextRestAhead(userPoint);
+        if (restAhead) {
+          const hasWater = /water/i.test(restAhead.label || "");
+          const restThresholds = [300, 100];
+
+          restThresholds.forEach((threshold) => {
+            const alertKey = `${restAhead.id}-${threshold}`;
+            if (shouldFirePointAlert(alertKey, restAhead.distanceAhead, threshold)) {
+              const meters = Math.round(restAhead.distanceAhead);
+              const prefix = hasWater ? "Water/rest ahead" : "Rest area ahead";
+              showOperationalToast(`${prefix}: ${restAhead.label} in ${meters}m`);
+            }
+          });
+        }
+      }
+
       function updateNextThingAhead(userPoint) {
         const nextThingValue = document.getElementById(NEXT_THING_VALUE_ID);
 
@@ -4222,29 +4362,18 @@ function updateRouteSummaryDisplay() {
         let nextState = "";
         let nextLevel = "";
 
-        if (
-          gpsState !== GPS_CONFIDENCE_LOCKED ||
-          !Number.isFinite(distanceToRoute)
-        ) {
-          if (gpsState === GPS_CONFIDENCE_WEAK) {
-            nextState = "GPS weak - route judgement paused";
-            nextLevel = "gps-weak";
-          } else if (gpsState === GPS_CONFIDENCE_CACHED) {
-            nextState = "Using cached location - route judgement paused";
-            nextLevel = "gps-cached";
-          } else {
-            nextState = "GPS lost - route judgement paused";
-            nextLevel = "gps-lost";
-          }
-        } else if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
-          nextState = "You are far from the official route";
-          nextLevel = "alert";
-        } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
-          nextState = "You may be off the official route";
-          nextLevel = "warning";
+        if (gpsState === GPS_CONFIDENCE_WEAK) {
+          nextState = "GPS weak - route judgement paused";
+          nextLevel = "gps-weak";
+        } else if (gpsState === GPS_CONFIDENCE_CACHED) {
+          nextState = "Using cached location - route judgement paused";
+          nextLevel = "gps-cached";
+        } else if (gpsState !== GPS_CONFIDENCE_LOCKED || !Number.isFinite(distanceToRoute)) {
+          nextState = "GPS lost - route judgement paused";
+          nextLevel = "gps-lost";
         } else {
-          nextState = "You are staying on the route";
-          nextLevel = "safe";
+          nextState = "";
+          nextLevel = "";
         }
 
         if (
@@ -4917,23 +5046,7 @@ function runRouteIntroAfterLoad() {
               nextMilestone: "next point",
             };
 
-            const nextHazardAhead = getNextHazardAhead(userPoint);
-            let hazardWarningShown = false;
-
-            if (
-              gpsState === GPS_CONFIDENCE_LOCKED &&
-              nextHazardAhead &&
-              nextHazardAhead.distanceAhead < 400
-            ) {
-              const d = Math.round(nextHazardAhead.distanceAhead);
-
-              showWarning(
-                `⚠️ ${nextHazardAhead.type} in ${d}m`,
-                d < 100 ? "alert" : "warning",
-              );
-
-              hazardWarningShown = true;
-            }
+            notifyPointAheadAlerts(userPoint, gpsState);
 
             updateDistanceDisplay(
               displayDistanceToRoute,
@@ -4947,9 +5060,8 @@ function runRouteIntroAfterLoad() {
               fallbackSegmentInfo,
             );
 
-            if (!hazardWarningShown) {
-              updateWarningState(displayDistanceToRoute, gpsState);
-            }
+            updateWarningState(displayDistanceToRoute, gpsState);
+            notifyRouteState(displayDistanceToRoute, gpsState);
           },
           (error) => {
             const cachedPos = loadCachedPosition();
