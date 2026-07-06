@@ -935,8 +935,8 @@
         height: 40px;
         background: linear-gradient(
           to top,
-          rgba(0, 174, 239, 0.34),
-          rgba(0, 174, 239, 0.04)
+          rgba(0, 174, 239, 0.48),
+          rgba(0, 174, 239, 0.16)
         );
         clip-path: polygon(50% 100%, 8% 0, 92% 0);
         transform: translate(-50%, -86%) rotate(calc(var(--direction-heading) * 1deg));
@@ -969,8 +969,8 @@
       .user-location-marker.is-weak::before {
         background: linear-gradient(
           to top,
-          rgba(245, 185, 32, 0.34),
-          rgba(245, 185, 32, 0.05)
+          rgba(245, 185, 32, 0.5),
+          rgba(245, 185, 32, 0.18)
         );
       }
 
@@ -4749,18 +4749,20 @@ function updateRouteSummaryDisplay() {
           }
 
           if (userMarkerElement) {
+            const canShowDirection =
+              gpsState === GPS_CONFIDENCE_LOCKED ||
+              gpsState === GPS_CONFIDENCE_WEAK;
+
             const headingForDisplay = Number.isFinite(directionHeading)
               ? directionHeading
               : Number.isFinite(lastDirectionHeading)
                 ? lastDirectionHeading
-                : gpsState === GPS_CONFIDENCE_WEAK
+                : canShowDirection
                   ? 0
                   : null;
 
             const hasDirection =
-              Number.isFinite(headingForDisplay) &&
-              gpsState !== GPS_CONFIDENCE_CACHED &&
-              gpsState !== GPS_CONFIDENCE_LOST;
+              Number.isFinite(headingForDisplay) && canShowDirection;
 
             userMarkerElement.classList.toggle(
               "is-weak",
