@@ -715,6 +715,11 @@
         white-space: nowrap;
       }
 
+      .route-card__badge.preparing {
+        background: rgba(245, 185, 32, 0.18);
+        color: #ffe680;
+      }
+
       .route-card__badge.warning {
         background: rgba(245, 185, 32, 0.18);
         color: #ffe680;
@@ -2032,7 +2037,7 @@
         </div>
       </div>
 
-      <span class="route-card__badge" id="route-badge">Preparing</span>
+      <span class="route-card__badge preparing" id="route-badge">Preparing</span>
 
       <div class="route-card__gps-status" id="route-gps-status" hidden>
         <span id="route-gps-status-text"></span>
@@ -4365,7 +4370,7 @@ function updateRouteSummaryDisplay() {
           progressValue.textContent = `Section 1/${getTotalSegments()}`;
           distanceValue.textContent = "Waiting for start";
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
-          routeBadge.className = "route-card__badge";
+          routeBadge.className = "route-card__badge preparing";
           return;
         }
 
@@ -4390,7 +4395,7 @@ function updateRouteSummaryDisplay() {
             routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           }
 
-          routeBadge.className = "route-card__badge";
+          routeBadge.className = "route-card__badge preparing";
           return;
         }
 
