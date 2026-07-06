@@ -167,6 +167,67 @@
         font-size: 13px;
       }
 
+      .landing-marker-guide {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(126, 108, 161, 0.12);
+        background: rgba(243, 241, 245, 0.9);
+      }
+
+      .landing-marker-guide__title {
+        margin: 0;
+        color: #5e5769;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .landing-marker-guide__items {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 10px;
+      }
+
+      .landing-marker-guide__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #5e5769;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .landing-marker-guide__dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+      }
+
+      .landing-marker-guide__dot--live {
+        background: #00aeef;
+      }
+
+      .landing-marker-guide__dot--weak {
+        background: #f5b920;
+      }
+
+      .landing-marker-guide__dot--cached {
+        background: #94a3b8;
+      }
+
+      .landing-marker-guide__dot--start {
+        background: #22c55e;
+      }
+
+      .landing-marker-guide__dot--finish {
+        background: #f97316;
+      }
+
       .landing-footer {
         position: fixed;
         bottom: 0;
@@ -1621,6 +1682,33 @@
         <div class="landing-screen__meta">
           <p id="landing-location-value">Heathrow Perimeter Walk</p>
           <p id="landing-distance-time-value">Route distance calculating…</p>
+        </div>
+
+        <div class="landing-marker-guide" aria-label="Marker legend">
+          <p class="landing-marker-guide__title">Marker guide</p>
+
+          <div class="landing-marker-guide__items">
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--live"></span>
+              Live GPS
+            </span>
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--weak"></span>
+              GPS weak
+            </span>
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--cached"></span>
+              Cached
+            </span>
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--start"></span>
+              Start
+            </span>
+            <span class="landing-marker-guide__item">
+              <span class="landing-marker-guide__dot landing-marker-guide__dot--finish"></span>
+              Finish
+            </span>
+          </div>
         </div>
 
         <div class="landing-footer">
