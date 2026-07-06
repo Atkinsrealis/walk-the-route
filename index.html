@@ -4742,8 +4742,16 @@ function updateRouteSummaryDisplay() {
           }
 
           if (userMarkerElement) {
+            const headingForDisplay = Number.isFinite(directionHeading)
+              ? directionHeading
+              : Number.isFinite(lastDirectionHeading)
+                ? lastDirectionHeading
+                : gpsState === GPS_CONFIDENCE_WEAK
+                  ? 0
+                  : null;
+
             const hasDirection =
-              Number.isFinite(directionHeading) &&
+              Number.isFinite(headingForDisplay) &&
               gpsState !== GPS_CONFIDENCE_CACHED &&
               gpsState !== GPS_CONFIDENCE_LOST;
 
@@ -4760,7 +4768,7 @@ function updateRouteSummaryDisplay() {
             if (hasDirection) {
               userMarkerElement.style.setProperty(
                 "--direction-heading",
-                `${Math.round(directionHeading)}`,
+                `${Math.round(headingForDisplay)}`,
               );
             } else {
               userMarkerElement.style.removeProperty("--direction-heading");
