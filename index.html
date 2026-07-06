@@ -786,6 +786,42 @@
         color: #c4b5fd;
         font-size: 20px;
         line-height: 1;
+        position: fixed;
+      }
+
+      .follow-toggle-button.is-on {
+        color: #5eead4;
+        box-shadow:
+          0 10px 24px rgba(0, 0, 0, 0.28),
+          0 0 0 1px rgba(94, 234, 212, 0.45);
+      }
+
+      .follow-toggle-button.is-off {
+        color: #94a3b8;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+      }
+
+      .follow-toggle-button::after {
+        content: attr(data-state-label);
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        min-width: 26px;
+        padding: 2px 5px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        line-height: 1.1;
+        text-align: center;
+        color: #052821;
+        background: #5eead4;
+        border: 1px solid rgba(2, 6, 23, 0.45);
+      }
+
+      .follow-toggle-button.is-off::after {
+        color: #e2e8f0;
+        background: #475569;
       }
 
       .route-center-button svg,
@@ -3263,7 +3299,7 @@ localStorage.setItem(
         const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
 
         if (followButton) {
-          followButton.style.opacity = "1";
+          updateFollowButtonState();
         }
 
         map.easeTo({
@@ -5341,6 +5377,29 @@ updateRouteSummaryDisplay();
       const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
       const compassButton = document.getElementById(COMPASS_BUTTON_ID);
       const compassLabel = document.getElementById(COMPASS_LABEL_ID);
+
+      function updateFollowButtonState() {
+        const button = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
+
+        if (!button) {
+          return;
+        }
+
+        button.classList.toggle("is-on", followMode);
+        button.classList.toggle("is-off", !followMode);
+        button.setAttribute("data-state-label", followMode ? "ON" : "OFF");
+        button.setAttribute(
+          "aria-label",
+          followMode ? "Follow mode on" : "Follow mode off",
+        );
+        button.setAttribute(
+          "title",
+          followMode ? "Follow mode on" : "Follow mode off",
+        );
+      }
+
+      updateFollowButtonState();
+
       document
         .getElementById(FOLLOW_TOGGLE_BUTTON_ID)
         .addEventListener("click", () => {
@@ -5352,7 +5411,7 @@ updateRouteSummaryDisplay();
               : "Follow off - map stays where you place it",
           );
 
-          followButton.style.opacity = followMode ? "1" : "0.5";
+          updateFollowButtonState();
 
           if (followMode && lastSnappedPosition) {
             map.easeTo({
