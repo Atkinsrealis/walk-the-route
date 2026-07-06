@@ -1940,6 +1940,7 @@ dogwalk: {
   fullName: "Local Dog Walk",
   sourceLabel: "Local dog walk route",
   geojsonUrl: "dog-walk/dog-walk-route.geojson",
+  gpsLockAccuracyMeters: 45,
   title: "Dog Walk",
   subtitle: "Local route test",
   landingHeading: "Walking the local dog route",
@@ -3699,6 +3700,17 @@ function updateRouteSummaryDisplay() {
       }
 
       function deriveGpsConfidenceState(accuracy) {
+        const activeRoute = getActiveRoute();
+        const gpsLockAccuracyMeters = Number.isFinite(
+          activeRoute.gpsLockAccuracyMeters,
+        )
+          ? activeRoute.gpsLockAccuracyMeters
+          : GPS_LOCK_ACCURACY_METERS;
+        const gpsWeakAccuracyMeters = Math.max(
+          GPS_WEAK_ACCURACY_METERS,
+          gpsLockAccuracyMeters + 20,
+        );
+
         const hasMinimumLocatingElapsed =
           geolocationStartedAt > 0 &&
           Date.now() - geolocationStartedAt >= MIN_LOCATING_ANIMATION_MS;
@@ -3708,13 +3720,13 @@ function updateRouteSummaryDisplay() {
         }
 
         if (
-          accuracy <= GPS_LOCK_ACCURACY_METERS &&
+          accuracy <= gpsLockAccuracyMeters &&
           hasMinimumLocatingElapsed
         ) {
           return GPS_CONFIDENCE_LOCKED;
         }
 
-        if (accuracy <= GPS_WEAK_ACCURACY_METERS) {
+        if (accuracy <= gpsWeakAccuracyMeters) {
           return GPS_CONFIDENCE_WEAK;
         }
 
@@ -4207,6 +4219,12 @@ function runRouteIntroAfterLoad() {
 
         geolocationStarted = true;
         geolocationStartedAt = Date.now();
+        setGpsConfidenceState(GPS_CONFIDENCE_LOST);
+        lastStableDistanceToRoute = null;
+        lastStableRouteProgress = 0;
+        lastStableSegmentInfo = null;
+        lastWarningUpdate = 0;
+        lastWarningState = "";
 
         if (!("geolocation" in navigator)) {
           isWaitingForFirstLocation = false;
