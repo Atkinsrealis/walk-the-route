@@ -28,7 +28,14 @@
         --floating-button-gap: 14px;
         --floating-button-right: 16px;
         --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
-        --status-stack-top: 126px;
+        --route-switcher-top: 92px;
+        --route-switcher-shell-height: 32px;
+        --status-stack-gap-below-switcher: 8px;
+        --status-stack-top: calc(
+          var(--route-switcher-top) +
+          var(--route-switcher-shell-height) +
+          var(--status-stack-gap-below-switcher)
+        );
         --route-card-stack-height: 136px;
         --status-stack-gap: 2px;
 
@@ -445,7 +452,7 @@
       }
       .route-test-switcher {
         position: fixed;
-        top: calc(92px + env(safe-area-inset-top));
+        top: calc(var(--route-switcher-top) + env(safe-area-inset-top));
         left: 16px;
         z-index: 21;
 
@@ -1337,7 +1344,7 @@
         :root {
           --floating-button-gap: 12px;
           --floating-button-right: 14px;
-          --status-stack-top: 126px;
+          --status-stack-gap-below-switcher: 9px;
           --route-card-stack-height: 132px;
           --status-stack-gap: 2px;
         }
@@ -1853,6 +1860,7 @@
         :root {
           --floating-button-gap: 10px;
           --floating-button-right: 12px;
+          --status-stack-gap-below-switcher: 10px;
           --route-card-stack-height: 142px;
           --status-stack-gap: 2px;
         }
