@@ -2931,8 +2931,11 @@ localStorage.setItem(
       const GPS_CONFIDENCE_CACHED = "cached";
       const FIELD_LOG_GAP_MS = 45000;
       const FIELD_LOG_MAX_ENTRIES = 800;
+      const FIELD_LOG_SESSION_RESUME_WINDOW_MS = 45 * 60 * 1000;
       const FIELD_LOG_ENTRIES_STORAGE_KEY = getRouteStorageKey("fieldLogEntries");
       const FIELD_LOG_FIRST_USE_STORAGE_KEY = getRouteStorageKey("fieldLogFirstUseSeen");
+      const FIELD_LOG_SESSION_ID_STORAGE_KEY = getRouteStorageKey("fieldLogSessionId");
+      const FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY = getRouteStorageKey("fieldLogSessionStartedAt");
       const ROUTE_TOAST_COOLDOWN_MS = 25000;
       const ROUTE_STATE_REPEAT_COOLDOWN_MS = 180000;
       const POINT_ALERT_RESET_AHEAD_METERS = 220;
@@ -3260,7 +3263,9 @@ localStorage.setItem(
       let isMapInteracting = false;
       let isCompassVisible = false;
       let fieldLogEntries = [];
+      let fieldLogSessionId = "";
       let fieldLogSessionStartedAt = 0;
+      let fieldLogSessionSequence = 0;
       let fieldLogLastHiddenAt = 0;
       let fieldLogLastSegmentNumber = null;
       let lastOperationalToastAt = 0;
@@ -5253,6 +5258,147 @@ function runRouteIntroAfterLoad() {
         }
       }
 
+      function loadFieldLogSessionState() {
+        try {
+          const storedSessionId = localStorage.getItem(
+            FIELD_LOG_SESSION_ID_STORAGE_KEY,
+          );
+          const storedStartedAt = Number(
+            localStorage.getItem(FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY),
+          );
+
+          fieldLogSessionId = storedSessionId || "";
+          fieldLogSessionStartedAt = Number.isFinite(storedStartedAt)
+            ? storedStartedAt
+            : 0;
+        } catch (error) {
+          fieldLogSessionId = "";
+          fieldLogSessionStartedAt = 0;
+        }
+
+        if (fieldLogSessionId) {
+          let lastSequence = 0;
+          for (const entry of fieldLogEntries) {
+            if (
+              entry &&
+              entry.sessionId === fieldLogSessionId &&
+              Number.isFinite(entry.sessionSequence)
+            ) {
+              lastSequence = Math.max(lastSequence, entry.sessionSequence);
+            }
+          }
+          fieldLogSessionSequence = lastSequence;
+        } else {
+          fieldLogSessionSequence = 0;
+        }
+      }
+
+      function saveFieldLogSessionState() {
+        try {
+          if (fieldLogSessionId) {
+            localStorage.setItem(FIELD_LOG_SESSION_ID_STORAGE_KEY, fieldLogSessionId);
+            localStorage.setItem(
+              FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY,
+              String(fieldLogSessionStartedAt || Date.now()),
+            );
+          } else {
+            localStorage.removeItem(FIELD_LOG_SESSION_ID_STORAGE_KEY);
+            localStorage.removeItem(FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY);
+          }
+        } catch (error) {
+          console.warn("Failed to persist field log session state:", error);
+        }
+      }
+
+      function createFieldLogSessionId() {
+        const randomSuffix = Math.random().toString(36).slice(2, 8);
+        return `walk-${Date.now().toString(36)}-${randomSuffix}`;
+      }
+
+      function ensureFieldLogSession() {
+        if (fieldLogSessionId) {
+          return fieldLogSessionId;
+        }
+
+        fieldLogSessionId = createFieldLogSessionId();
+        fieldLogSessionStartedAt = Date.now();
+        fieldLogSessionSequence = 0;
+        saveFieldLogSessionState();
+        return fieldLogSessionId;
+      }
+
+      function startNewFieldLogSession() {
+        fieldLogSessionId = createFieldLogSessionId();
+        fieldLogSessionStartedAt = Date.now();
+        fieldLogSessionSequence = 0;
+        saveFieldLogSessionState();
+        return fieldLogSessionId;
+      }
+
+      function getLastFieldLogEntryForSession(sessionId) {
+        if (!sessionId) {
+          return null;
+        }
+
+        for (let i = fieldLogEntries.length - 1; i >= 0; i -= 1) {
+          const entry = fieldLogEntries[i];
+          if (entry && entry.sessionId === sessionId) {
+            return entry;
+          }
+        }
+
+        return null;
+      }
+
+      function beginFieldLogSessionForWalk() {
+        if (!fieldLogSessionId) {
+          return startNewFieldLogSession();
+        }
+
+        const hasWalkStart = hasWalkStartForCurrentSession();
+        if (!hasWalkStart) {
+          return ensureFieldLogSession();
+        }
+
+        const now = Date.now();
+        const lastEntry = getLastFieldLogEntryForSession(fieldLogSessionId);
+        const lastEntryTime = lastEntry ? Date.parse(lastEntry.timestamp) : NaN;
+        const lastEntryAgeMs = Number.isFinite(lastEntryTime)
+          ? now - lastEntryTime
+          : Number.POSITIVE_INFINITY;
+
+        if (lastEntryAgeMs <= FIELD_LOG_SESSION_RESUME_WINDOW_MS) {
+          return ensureFieldLogSession();
+        }
+
+        return startNewFieldLogSession();
+      }
+
+      function hasWalkStartForCurrentSession() {
+        if (!fieldLogSessionId) {
+          return false;
+        }
+
+        return fieldLogEntries.some(
+          (entry) =>
+            entry &&
+            entry.sessionId === fieldLogSessionId &&
+            entry.eventType === "walk-start",
+        );
+      }
+
+      function logWalkStartIfNeeded() {
+        ensureFieldLogSession();
+
+        if (hasWalkStartForCurrentSession()) {
+          return;
+        }
+
+        logFieldEvent("walk-start", {
+          routeName: getActiveRoute().fullName || getActiveRoute().name,
+        });
+      }
+
       function saveFieldLogEntries() {
         try {
           localStorage.setItem(
@@ -5276,10 +5422,23 @@ function runRouteIntroAfterLoad() {
 
       function logFieldEvent(type, detail = {}) {
         const now = Date.now();
+        const sessionId =
+          appMode === APP_MODE_ACTIVE_WALK ? ensureFieldLogSession() : fieldLogSessionId;
+
+        if (sessionId) {
+          fieldLogSessionSequence += 1;
+        }
+
         const entry = {
           id: `${now}-${Math.floor(Math.random() * 10000)}`,
           timestamp: new Date(now).toISOString(),
           eventType: type,
+          sessionId: sessionId || null,
+          sessionSequence: sessionId ? fieldLogSessionSequence : null,
+          sessionStartedAt:
+            sessionId && Number.isFinite(fieldLogSessionStartedAt)
+              ? new Date(fieldLogSessionStartedAt).toISOString()
+              : null,
           route: activeRouteKey,
           appMode,
           gpsState: gpsConfidenceState,
@@ -5302,7 +5461,144 @@ function runRouteIntroAfterLoad() {
         }
 
         saveFieldLogEntries();
+        saveFieldLogSessionState();
         updateFieldLogMeta();
+      }
+
+      function buildFieldLogSummary(entries) {
+        if (!Array.isArray(entries) || entries.length === 0) {
+          return {
+            totalEntries: 0,
+          };
+        }
+
+        const eventCounts = {};
+        const gpsTransitionCounts = {};
+        const geolocationErrorCodes = {};
+        const sessionIds = new Set();
+        const hiddenDurationsMs = [];
+        const gapDurationsMs = [];
+        const pendingResumeTimes = [];
+        const relockDurationsMs = [];
+
+        let firstTimestamp = null;
+        let lastTimestamp = null;
+
+        for (const entry of entries) {
+          if (!entry || typeof entry !== "object") {
+            continue;
+          }
+
+          const entryTime = Date.parse(entry.timestamp);
+          if (Number.isFinite(entryTime)) {
+            if (!Number.isFinite(firstTimestamp) || entryTime < firstTimestamp) {
+              firstTimestamp = entryTime;
+            }
+            if (!Number.isFinite(lastTimestamp) || entryTime > lastTimestamp) {
+              lastTimestamp = entryTime;
+            }
+          }
+
+          if (entry.sessionId) {
+            sessionIds.add(entry.sessionId);
+          }
+
+          const eventType = entry.eventType || "unknown";
+          eventCounts[eventType] = (eventCounts[eventType] || 0) + 1;
+
+          if (eventType === "gps-state-change") {
+            const fromState = entry.detail && entry.detail.from ? entry.detail.from : "unknown";
+            const toState = entry.detail && entry.detail.to ? entry.detail.to : "unknown";
+            const key = `${fromState}->${toState}`;
+            gpsTransitionCounts[key] = (gpsTransitionCounts[key] || 0) + 1;
+
+            if (toState === GPS_CONFIDENCE_LOCKED && Number.isFinite(entryTime)) {
+              while (pendingResumeTimes.length && pendingResumeTimes[0] <= entryTime) {
+                const resumeTime = pendingResumeTimes.shift();
+                relockDurationsMs.push(entryTime - resumeTime);
+              }
+            }
+          }
+
+          if (eventType === "geolocation-error") {
+            const code =
+              entry.detail && Number.isFinite(entry.detail.code)
+                ? String(entry.detail.code)
+                : "unknown";
+            geolocationErrorCodes[code] = (geolocationErrorCodes[code] || 0) + 1;
+          }
+
+          if (eventType === "app-resumed") {
+            const hiddenDuration = entry.detail && Number.isFinite(entry.detail.hiddenDurationMs)
+              ? entry.detail.hiddenDurationMs
+              : null;
+
+            if (Number.isFinite(hiddenDuration)) {
+              hiddenDurationsMs.push(hiddenDuration);
+            }
+
+            if (Number.isFinite(entryTime)) {
+              pendingResumeTimes.push(entryTime);
+            }
+          }
+
+          if (eventType === "tracking-gap" || eventType === "location-update-gap") {
+            const gapMs = entry.detail && Number.isFinite(entry.detail.gapMs)
+              ? entry.detail.gapMs
+              : null;
+            if (Number.isFinite(gapMs)) {
+              gapDurationsMs.push(gapMs);
+            }
+          }
+        }
+
+        const sum = (values) => values.reduce((total, value) => total + value, 0);
+        const average = (values) =>
+          values.length ? Math.round(sum(values) / values.length) : null;
+        const maximum = (values) =>
+          values.length ? Math.max(...values) : null;
+
+        return {
+          generatedAt: new Date().toISOString(),
+          totalEntries: entries.length,
+          timeRange:
+            Number.isFinite(firstTimestamp) && Number.isFinite(lastTimestamp)
+              ? {
+                  start: new Date(firstTimestamp).toISOString(),
+                  end: new Date(lastTimestamp).toISOString(),
+                  durationMs: Math.max(0, lastTimestamp - firstTimestamp),
+                }
+              : null,
+          sessions: {
+            count: sessionIds.size,
+            currentSessionId: fieldLogSessionId || null,
+          },
+          visibility: {
+            hiddenEventCount: eventCounts["app-hidden"] || 0,
+            resumedEventCount: eventCounts["app-resumed"] || 0,
+            totalHiddenDurationMs: sum(hiddenDurationsMs),
+            averageHiddenDurationMs: average(hiddenDurationsMs),
+            maxHiddenDurationMs: maximum(hiddenDurationsMs),
+          },
+          gps: {
+            stateChangeCount: eventCounts["gps-state-change"] || 0,
+            transitions: gpsTransitionCounts,
+            geolocationErrorCount: eventCounts["geolocation-error"] || 0,
+            geolocationErrorCodes,
+            relockAfterResumeCount: relockDurationsMs.length,
+            averageRelockAfterResumeMs: average(relockDurationsMs),
+            maxRelockAfterResumeMs: maximum(relockDurationsMs),
+            resumesWithoutRelock: pendingResumeTimes.length,
+          },
+          gaps: {
+            trackingGapCount: eventCounts["tracking-gap"] || 0,
+            locationUpdateGapCount: eventCounts["location-update-gap"] || 0,
+            totalGapDurationMs: sum(gapDurationsMs),
+            averageGapDurationMs: average(gapDurationsMs),
+            maxGapDurationMs: maximum(gapDurationsMs),
+          },
+          events: eventCounts,
+        };
       }
 
       function setFieldLogPanel(open) {
@@ -5377,6 +5673,7 @@ function runRouteIntroAfterLoad() {
         const payload = {
           exportedAt: new Date().toISOString(),
           route: activeRouteKey,
+          summary: buildFieldLogSummary(fieldLogEntries),
           entries: fieldLogEntries,
         };
 
@@ -5455,7 +5752,11 @@ function runRouteIntroAfterLoad() {
         }
 
         fieldLogEntries = [];
+        fieldLogSessionId = "";
+        fieldLogSessionStartedAt = 0;
+        fieldLogSessionSequence = 0;
         saveFieldLogEntries();
+        saveFieldLogSessionState();
         updateFieldLogMeta();
         showToast("Field log cleared");
       }
@@ -5711,13 +6012,9 @@ function runRouteIntroAfterLoad() {
         }
 
         setAppMode(APP_MODE_ACTIVE_WALK);
-        if (!fieldLogSessionStartedAt) {
-          fieldLogSessionStartedAt = Date.now();
-          logFieldEvent("walk-start", {
-            routeName: getActiveRoute().fullName || getActiveRoute().name,
-          });
-          showFieldLogFirstRunIfNeeded();
-        }
+        beginFieldLogSessionForWalk();
+        logWalkStartIfNeeded();
+        showFieldLogFirstRunIfNeeded();
         await initializeMapIfNeeded();
 
         if (map) {
@@ -5971,6 +6268,7 @@ updateRouteSummaryDisplay();
       const fieldIssueButtons = document.querySelectorAll("[data-field-issue]");
 
       loadFieldLogEntries();
+      loadFieldLogSessionState();
       updateFieldLogMeta();
 
       if (fieldLogButton) {
