@@ -671,6 +671,7 @@
         border: 3px solid #ffffff;
         box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.36);
         position: relative;
+        z-index: 999;
       }
 
       .user-location-marker::after {
@@ -3891,8 +3892,11 @@ function updateRouteSummaryDisplay() {
             })
               .setLngLat(actualPosition)
               .addTo(map);
+
+            userMarker.getElement().style.zIndex = "999";
           } else {
             userMarker.setLngLat(actualPosition);
+            userMarker.getElement().style.zIndex = "999";
           }
 
           if (userMarkerElement) {
@@ -4100,6 +4104,8 @@ function updateRouteSummaryDisplay() {
             .setPopup(new mapboxgl.Popup().setHTML(startPopupHtml))
             .addTo(map);
 
+          routeStartMarker.getElement().style.zIndex = "20";
+
           if (!routeFinishMarker) {
             routeFinishMarker = new mapboxgl.Marker({ color: "#f97316" });
           }
@@ -4108,6 +4114,8 @@ function updateRouteSummaryDisplay() {
             .setLngLat(finishCoordinate)
             .setPopup(new mapboxgl.Popup().setHTML(finishPopupHtml))
             .addTo(map);
+
+          routeFinishMarker.getElement().style.zIndex = "20";
         }
       }
 
