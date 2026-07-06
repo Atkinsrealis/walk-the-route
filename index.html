@@ -752,29 +752,63 @@
 
       .route-center-button,
       .follow-toggle-button,
-      .share-location-button {
+      .share-location-button,
+      .compass-button {
         position: fixed;
         z-index: 12;
         width: var(--floating-button-size);
         height: var(--floating-button-size);
-        border: 0;
+        border: 1px solid rgba(148, 163, 184, 0.28);
         border-radius: 999px;
-        background: var(--bg-surface-strong);
+        background:
+          linear-gradient(
+            160deg,
+            rgba(51, 65, 85, 0.58) 0%,
+            rgba(15, 23, 42, 0.94) 72%
+          );
         color: #fff;
         font-size: 22px;
         font-weight: 700;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        box-shadow:
+          0 12px 28px rgba(2, 6, 23, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 0;
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.22s ease,
+          border-color 0.22s ease,
+          background 0.22s ease,
+          color 0.22s ease;
+      }
+
+      .route-center-button:focus-visible,
+      .follow-toggle-button:focus-visible,
+      .share-location-button:focus-visible,
+      .compass-button:focus-visible {
+        outline: none;
+        border-color: rgba(226, 232, 240, 0.72);
+        box-shadow:
+          0 0 0 3px rgba(148, 163, 184, 0.24),
+          0 12px 28px rgba(2, 6, 23, 0.42),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
       }
 
       .route-center-button {
         right: var(--floating-button-right);
         bottom: var(--floating-button-bottom);
-        color: #c4b5fd;
+        color: #c7d2fe;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(99, 102, 241, 0.3) 0%,
+            rgba(30, 41, 59, 0.95) 75%
+          );
+        border-color: rgba(129, 140, 248, 0.46);
       }
 
       .follow-toggle-button {
@@ -791,14 +825,28 @@
 
       .follow-toggle-button.is-on {
         color: #5eead4;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(15, 118, 110, 0.5) 0%,
+            rgba(15, 23, 42, 0.96) 76%
+          );
+        border-color: rgba(94, 234, 212, 0.48);
         box-shadow:
-          0 10px 24px rgba(0, 0, 0, 0.28),
+          0 12px 28px rgba(2, 6, 23, 0.4),
           0 0 0 1px rgba(94, 234, 212, 0.45);
       }
 
       .follow-toggle-button.is-off {
         color: #94a3b8;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+        background:
+          linear-gradient(
+            160deg,
+            rgba(51, 65, 85, 0.54) 0%,
+            rgba(15, 23, 42, 0.96) 74%
+          );
+        border-color: rgba(100, 116, 139, 0.36);
+        box-shadow: 0 12px 26px rgba(2, 6, 23, 0.34);
       }
 
       .follow-toggle-button::after {
@@ -1234,24 +1282,19 @@
       }
 
       .share-location-button {
-        position: fixed;
         right: var(--floating-button-right);
         bottom: calc(
           var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
             (var(--floating-button-gap) * 2)
         );
-        width: 56px;
-        height: 56px;
-        border-radius: 999px;
-        background: var(--bg-surface-strong);
-        color: #34d399; /* subtle green = positive action */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 22px;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        color: #6ee7b7;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(5, 150, 105, 0.34) 0%,
+            rgba(15, 23, 42, 0.95) 76%
+          );
+        border-color: rgba(52, 211, 153, 0.44);
       }
 
       .share-location-button:active {
@@ -1300,7 +1343,6 @@
       }
 
       .compass-button {
-        position: fixed;
         right: var(--floating-button-right);
         bottom: calc(
           var(--floating-button-bottom) + (var(--floating-button-size) * 3) +
@@ -1308,24 +1350,14 @@
         );
 
         z-index: 40;
-
-        width: var(--floating-button-size);
-        height: var(--floating-button-size);
-
-        border: 0;
-        border-radius: 999px;
-
-        background: var(--bg-surface-strong);
-        color: #14b8a6;
-
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-
-        cursor: pointer;
-        padding: 0;
+        color: #67e8f9;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(8, 145, 178, 0.34) 0%,
+            rgba(15, 23, 42, 0.95) 76%
+          );
+        border-color: rgba(103, 232, 249, 0.42);
       }
 
       .compass-button[hidden] {
@@ -1353,7 +1385,7 @@
 
         display: block;
 
-        color: #14b8a6;
+        color: currentColor;
 
         transform-origin: center;
         transition: transform 0.12s linear;
