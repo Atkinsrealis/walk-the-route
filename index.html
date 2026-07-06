@@ -983,6 +983,106 @@
         box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.36);
       }
 
+      .route-endpoint-marker {
+        position: relative;
+        width: 50px;
+        height: 62px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        pointer-events: auto;
+      }
+
+      .route-endpoint-marker__tag {
+        min-width: 44px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.84));
+        box-shadow:
+          0 10px 22px rgba(2, 6, 23, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        color: #f8fafc;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        line-height: 1;
+        text-align: center;
+      }
+
+      .route-endpoint-marker__pin {
+        position: relative;
+        margin-top: 6px;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: linear-gradient(160deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.92));
+        box-shadow:
+          0 12px 26px rgba(2, 6, 23, 0.36),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .route-endpoint-marker__pin::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -10px;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        background: inherit;
+        border-right: 1px solid rgba(255, 255, 255, 0.14);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        transform: translateX(-50%) rotate(45deg);
+        box-shadow: 8px 8px 20px rgba(2, 6, 23, 0.18);
+      }
+
+      .route-endpoint-marker__glyph {
+        position: relative;
+        width: 16px;
+        height: 16px;
+        z-index: 1;
+      }
+
+      .route-endpoint-marker--start .route-endpoint-marker__tag {
+        color: #ccfbf1;
+        border-color: rgba(45, 212, 191, 0.34);
+      }
+
+      .route-endpoint-marker--start .route-endpoint-marker__pin {
+        background: linear-gradient(160deg, rgba(15, 118, 110, 0.94), rgba(15, 23, 42, 0.94));
+        box-shadow:
+          0 12px 26px rgba(2, 6, 23, 0.36),
+          0 0 0 1px rgba(45, 212, 191, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .route-endpoint-marker--finish .route-endpoint-marker__tag {
+        color: #fef3c7;
+        border-color: rgba(251, 191, 36, 0.34);
+      }
+
+      .route-endpoint-marker--finish .route-endpoint-marker__pin {
+        background: linear-gradient(160deg, rgba(217, 119, 6, 0.94), rgba(15, 23, 42, 0.94));
+        box-shadow:
+          0 12px 26px rgba(2, 6, 23, 0.36),
+          0 0 0 1px rgba(251, 191, 36, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .route-endpoint-marker svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+        fill: currentColor;
+      }
+
       @keyframes user-marker-pulse {
         0% {
           transform: scale(0.8);
@@ -3251,6 +3351,34 @@ localStorage.setItem(
         return normalizeHeadingDegrees(toDegrees(Math.atan2(y, x)));
       }
 
+      function createRouteEndpointMarker(type) {
+        const markerElement = document.createElement("div");
+        markerElement.className = `route-endpoint-marker route-endpoint-marker--${type}`;
+
+        const tagText = type === "start" ? "START" : "FINISH";
+        const glyph =
+          type === "start"
+            ? `
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 5.5a1 1 0 0 1 1 1V18a1 1 0 1 1-2 0V6.5a1 1 0 0 1 1-1Zm3 1.2c0-.6.5-1 1-1h7.1c.8 0 1.2 1 .7 1.6l-2.2 2.6 2.2 2.6c.5.6.1 1.6-.7 1.6H10a1 1 0 0 1-1-1V6.7Z" />
+              </svg>
+            `
+            : `
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 4.5a1 1 0 0 1 1 1v13a1 1 0 1 1-2 0v-13a1 1 0 0 1 1-1Zm3 1h8a1 1 0 0 1 .9 1.4l-1.1 2.3 1.1 2.3a1 1 0 0 1-.9 1.4H9a1 1 0 0 1-1-1v-5.4a1 1 0 0 1 1-1Z" />
+              </svg>
+            `;
+
+        markerElement.innerHTML = `
+          <div class="route-endpoint-marker__tag">${tagText}</div>
+          <div class="route-endpoint-marker__pin">
+            <span class="route-endpoint-marker__glyph">${glyph}</span>
+          </div>
+        `;
+
+        return markerElement;
+      }
+
       function resolveDirectionHeading(position) {
         if (!position || !position.coords) {
           return lastDirectionHeading;
@@ -4998,7 +5126,10 @@ function updateRouteSummaryDisplay() {
             "<h3>" + finishLabel + "</h3><p>" + finishDescription + "</p>";
 
           if (!routeStartMarker) {
-            routeStartMarker = new mapboxgl.Marker({ color: "#22c55e" });
+            routeStartMarker = new mapboxgl.Marker({
+              element: createRouteEndpointMarker("start"),
+              anchor: "bottom",
+            });
           }
 
           routeStartMarker
@@ -5009,7 +5140,10 @@ function updateRouteSummaryDisplay() {
           routeStartMarker.getElement().style.zIndex = "20";
 
           if (!routeFinishMarker) {
-            routeFinishMarker = new mapboxgl.Marker({ color: "#f97316" });
+            routeFinishMarker = new mapboxgl.Marker({
+              element: createRouteEndpointMarker("finish"),
+              anchor: "bottom",
+            });
           }
 
           routeFinishMarker
