@@ -5346,6 +5346,12 @@ updateRouteSummaryDisplay();
         .addEventListener("click", () => {
           followMode = !followMode;
 
+          showToast(
+            followMode
+              ? "Follow on - map recenters as you move"
+              : "Follow off - map stays where you place it",
+          );
+
           followButton.style.opacity = followMode ? "1" : "0.5";
 
           if (followMode && lastSnappedPosition) {
