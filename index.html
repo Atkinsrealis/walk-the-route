@@ -552,7 +552,8 @@
         right: 16px;
         z-index: 19;
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
         padding: 12px 14px;
@@ -662,6 +663,8 @@
       }
 
       .route-card__gps-status {
+        flex: 0 0 100%;
+        width: 100%;
         margin-top: 8px;
         padding-top: 8px;
         border-top: 1px solid rgba(255, 255, 255, 0.14);
@@ -2027,13 +2030,13 @@
   >Route source: Heathrow perimeter</span
 >
         </div>
-
-        <div class="route-card__gps-status" id="route-gps-status" hidden>
-          <span id="route-gps-status-text"></span>
-        </div>
       </div>
 
       <span class="route-card__badge" id="route-badge">Preparing</span>
+
+      <div class="route-card__gps-status" id="route-gps-status" hidden>
+        <span id="route-gps-status-text"></span>
+      </div>
     </div>
 
     <button
