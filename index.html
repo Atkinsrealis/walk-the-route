@@ -918,11 +918,35 @@
         width: 18px;
         height: 18px;
         border-radius: 999px;
+        --direction-heading: 0;
         background: #00aeef;
         border: 3px solid #ffffff;
         box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.36);
         position: relative;
         z-index: 999;
+      }
+
+      .user-location-marker::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-bottom: 24px solid rgba(0, 174, 239, 0.34);
+        transform: translate(-50%, -78%) rotate(calc(var(--direction-heading) * 1deg));
+        transform-origin: 50% calc(100% - 2px);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.18s ease,
+          border-bottom-color 0.18s ease;
+      }
+
+      .user-location-marker.has-direction::before {
+        opacity: 1;
       }
 
       .user-location-marker::after {
@@ -937,6 +961,10 @@
       .user-location-marker.is-weak {
         background: #f5b920;
         box-shadow: 0 0 0 2px rgba(245, 185, 32, 0.36);
+      }
+
+      .user-location-marker.is-weak::before {
+        border-bottom-color: rgba(245, 185, 32, 0.34);
       }
 
       .user-location-marker.is-cached {
@@ -2725,6 +2753,7 @@ localStorage.setItem(
       const MIN_SPEED_FOR_FOLLOW = 0.4;
       const POSITION_UPDATE_MIN_METERS = 15; // Increased from 12m for battery efficiency
       const POSITION_UPDATE_MIN_MS = 10000; // Increased from 8000ms for battery efficiency
+      const DIRECTION_MIN_SAMPLE_METERS = 4;
       const GPS_LOCK_ACCURACY_METERS = 30;
       const GPS_WEAK_ACCURACY_METERS = 65;
       const MIN_LOCATING_ANIMATION_MS = 3000;
@@ -3056,6 +3085,8 @@ localStorage.setItem(
       let lastProcessedPosition = null;
       let lastProcessedPositionTime = 0;
       let lastLocationAccuracy = null;
+      let lastDirectionHeading = null;
+      let lastDirectionSamplePoint = null;
       let gpsConfidenceState = GPS_CONFIDENCE_LOST;
       let lastStableDistanceToRoute = null;
       let lastStableRouteProgress = 0;
@@ -3172,6 +3203,75 @@ localStorage.setItem(
 
       function toRadians(value) {
         return value * (Math.PI / 180);
+      }
+
+      function toDegrees(value) {
+        return value * (180 / Math.PI);
+      }
+
+      function normalizeHeadingDegrees(value) {
+        if (!Number.isFinite(value)) {
+          return null;
+        }
+
+        return ((value % 360) + 360) % 360;
+      }
+
+      function getHeadingDegreesBetweenPoints(pointA, pointB) {
+        if (!pointA || !pointB) {
+          return null;
+        }
+
+        const lat1 = toRadians(pointA[1]);
+        const lat2 = toRadians(pointB[1]);
+        const lngDelta = toRadians(pointB[0] - pointA[0]);
+
+        const y = Math.sin(lngDelta) * Math.cos(lat2);
+        const x =
+          Math.cos(lat1) * Math.sin(lat2) -
+          Math.sin(lat1) * Math.cos(lat2) * Math.cos(lngDelta);
+
+        return normalizeHeadingDegrees(toDegrees(Math.atan2(y, x)));
+      }
+
+      function resolveDirectionHeading(position) {
+        if (!position || !position.coords) {
+          return lastDirectionHeading;
+        }
+
+        const { latitude, longitude, heading } = position.coords;
+        const currentPoint = [longitude, latitude];
+        const sensorHeading = normalizeHeadingDegrees(heading);
+
+        if (Number.isFinite(sensorHeading)) {
+          lastDirectionHeading = sensorHeading;
+          lastDirectionSamplePoint = currentPoint;
+          return lastDirectionHeading;
+        }
+
+        if (lastDirectionSamplePoint) {
+          const movedMeters = haversineDistanceMeters(
+            lastDirectionSamplePoint,
+            currentPoint,
+          );
+
+          if (movedMeters >= DIRECTION_MIN_SAMPLE_METERS) {
+            const inferredHeading = getHeadingDegreesBetweenPoints(
+              lastDirectionSamplePoint,
+              currentPoint,
+            );
+
+            if (Number.isFinite(inferredHeading)) {
+              lastDirectionHeading = inferredHeading;
+            }
+
+            lastDirectionSamplePoint = currentPoint;
+          }
+        } else {
+          lastDirectionSamplePoint = currentPoint;
+        }
+
+        return lastDirectionHeading;
       }
 
       function getCurrentSegment(userPoint) {
@@ -4600,6 +4700,7 @@ function updateRouteSummaryDisplay() {
         lng,
         lat,
         gpsState = GPS_CONFIDENCE_LOCKED,
+        directionHeading = null,
       ) {
         const actualPosition = [lng, lat];
         lastActualPosition = actualPosition;
@@ -4641,6 +4742,11 @@ function updateRouteSummaryDisplay() {
           }
 
           if (userMarkerElement) {
+            const hasDirection =
+              Number.isFinite(directionHeading) &&
+              gpsState !== GPS_CONFIDENCE_CACHED &&
+              gpsState !== GPS_CONFIDENCE_LOST;
+
             userMarkerElement.classList.toggle(
               "is-weak",
               gpsState === GPS_CONFIDENCE_WEAK,
@@ -4649,6 +4755,16 @@ function updateRouteSummaryDisplay() {
               "is-cached",
               gpsState === GPS_CONFIDENCE_CACHED,
             );
+            userMarkerElement.classList.toggle("has-direction", hasDirection);
+
+            if (hasDirection) {
+              userMarkerElement.style.setProperty(
+                "--direction-heading",
+                `${Math.round(directionHeading)}`,
+              );
+            } else {
+              userMarkerElement.style.removeProperty("--direction-heading");
+            }
           }
         }
 
@@ -5151,6 +5267,8 @@ function runRouteIntroAfterLoad() {
         geolocationStarted = true;
         geolocationStartedAt = Date.now();
         setGpsConfidenceState(GPS_CONFIDENCE_LOST);
+        lastDirectionHeading = null;
+        lastDirectionSamplePoint = null;
         lastStableDistanceToRoute = null;
         lastStableRouteProgress = 0;
         lastStableSegmentInfo = null;
@@ -5181,6 +5299,7 @@ function runRouteIntroAfterLoad() {
               ? position.coords.accuracy
               : null;
             const gpsState = deriveGpsConfidenceState(lastLocationAccuracy);
+            const directionHeading = resolveDirectionHeading(position);
             setGpsConfidenceState(gpsState);
 
             if (isWaitingForFirstLocation) {
@@ -5194,7 +5313,7 @@ function runRouteIntroAfterLoad() {
               return;
             }
 
-            updateUserMarker(lng, lat, gpsState);
+            updateUserMarker(lng, lat, gpsState, directionHeading);
             updateMapView(lng, lat);
 
             const userPoint = [lng, lat];
