@@ -1,4 +1,4 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v26";
+const CACHE_NAME = "heathrow-perimeter-walk-v27";
 const MAPBOX_CACHE_NAME = "heathrow-mapbox-v1";
 
 const APP_ASSETS = [
@@ -6,6 +6,7 @@ const APP_ASSETS = [
   "/index.html",
   "/manifest.json",
   "/heathrow-perimeter-route.geojson",
+  "/dog-walk/dog-walk-route.geojson",
   "/route-surface-summary.json",
   "/assets/heathrow-logo-white.svg",
   "/Icons/icon-192.png",
