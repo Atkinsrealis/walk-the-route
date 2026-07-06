@@ -661,6 +661,46 @@
         opacity: 0.58;
       }
 
+      .route-card__gps-status {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.35;
+        color: rgba(255, 255, 255, 0.92);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .route-card__gps-status[hidden] {
+        display: none;
+      }
+
+      .route-card__gps-status::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #14b8a6;
+        flex-shrink: 0;
+      }
+
+      .route-card__gps-status.is-gps-weak::before,
+      .route-card__gps-status.is-warning::before {
+        background: #ffd000;
+      }
+
+      .route-card__gps-status.is-gps-cached::before {
+        background: #f5b920;
+      }
+
+      .route-card__gps-status.is-gps-lost::before,
+      .route-card__gps-status.is-alert::before {
+        background: #f76b1c;
+      }
+
       .route-card__badge {
         flex-shrink: 0;
         padding: 8px 12px;
@@ -1986,6 +2026,10 @@
 <span class="route-card__source"
   >Route source: Heathrow perimeter</span
 >
+        </div>
+
+        <div class="route-card__gps-status" id="route-gps-status" hidden>
+          <span id="route-gps-status-text"></span>
         </div>
       </div>
 
@@ -3864,10 +3908,23 @@ function updateRouteSummaryDisplay() {
       }
 
       function showWarning(message, level = "") {
-        const warning = document.getElementById(WARNING_ID);
-        warning.textContent = message;
-        warning.className = `warning ${level}`.trim();
-        warning.style.display = message ? "block" : "none";
+        const routeGpsStatus = document.getElementById("route-gps-status");
+        const routeGpsStatusText = document.getElementById(
+          "route-gps-status-text",
+        );
+
+        if (!routeGpsStatus || !routeGpsStatusText) {
+          return;
+        }
+
+        routeGpsStatusText.textContent = message || "";
+        routeGpsStatus.className = "route-card__gps-status";
+
+        if (level) {
+          routeGpsStatus.classList.add(`is-${level}`);
+        }
+
+        routeGpsStatus.hidden = !message;
       }
 
       function getSurfaceDisplayText(surface) {
