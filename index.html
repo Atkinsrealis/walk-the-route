@@ -2578,7 +2578,7 @@
           Save note
         </button>
         <button class="field-log-action field-log-action--export" id="field-log-export-button">
-          Export JSON
+          Share / Export
         </button>
       </div>
 
@@ -5368,7 +5368,7 @@ function runRouteIntroAfterLoad() {
         showToast("Note saved");
       }
 
-      function exportFieldLogJson() {
+      async function exportFieldLogJson() {
         if (!fieldLogEntries.length) {
           showToast("No log entries yet");
           return;
@@ -5380,15 +5380,67 @@ function runRouteIntroAfterLoad() {
           entries: fieldLogEntries,
         };
 
-        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        const jsonText = JSON.stringify(payload, null, 2);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const filename = `field-log-${activeRouteKey}-${timestamp}.json`;
+
+        // Prefer native share sheet on mobile (especially iPhone), then clipboard, then download.
+        if (navigator.share) {
+          try {
+            if (
+              typeof File !== "undefined" &&
+              typeof navigator.canShare === "function"
+            ) {
+              const file = new File([jsonText], filename, {
+                type: "application/json",
+              });
+
+              if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                  title: "Field test log",
+                  text: `Route: ${activeRouteKey} (${fieldLogEntries.length} entries)`,
+                  files: [file],
+                });
+                showToast("Field log shared");
+                return;
+              }
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(jsonText);
+              await navigator.share({
+                title: "Field test log",
+                text: `Field log copied to clipboard (${fieldLogEntries.length} entries). Paste into message/email.`,
+              });
+              showToast("Log copied and share sheet opened");
+              return;
+            }
+          } catch (error) {
+            if (error && error.name === "AbortError") {
+              showToast("Share cancelled");
+              return;
+            }
+          }
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(jsonText);
+            showToast("Field log copied to clipboard");
+            return;
+          } catch (error) {
+            // Fall through to download when clipboard is unavailable.
+          }
+        }
+
+        const blob = new Blob([jsonText], {
           type: "application/json",
         });
         const url = URL.createObjectURL(blob);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
         const link = document.createElement("a");
 
         link.href = url;
-        link.download = `field-log-${activeRouteKey}-${timestamp}.json`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
