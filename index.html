@@ -711,6 +711,10 @@
         opacity: 0.68;
       }
 
+      .route-card.route-card--compact-meta #route-summary-value {
+        display: none;
+      }
+
       .route-card__gps-status {
         flex: 0 0 100%;
         width: 100%;
@@ -3233,6 +3237,7 @@ localStorage.setItem(
       let lastPositionTime = 0;
       let lastProcessedPosition = null;
       let lastProcessedPositionTime = 0;
+      let isRouteCardMetaCompact = false;
       let lastLocationAccuracy = null;
       let lastDirectionHeading = null;
       let lastDirectionSamplePoint = null;
@@ -4984,10 +4989,6 @@ function updateRouteSummaryDisplay() {
           return;
         }
 
-        if (!followMode) {
-          return;
-        }
-
         if (!lastViewCenter) {
           lastViewCenter = newCenter;
           return;
@@ -4998,10 +4999,24 @@ function updateRouteSummaryDisplay() {
           newCenter,
         );
 
+        const routeCard = document.getElementById("route-card");
+        const setRouteCardMetaCompact = (compact) => {
+          if (!routeCard || compact === isRouteCardMetaCompact) {
+            return;
+          }
+
+          isRouteCardMetaCompact = compact;
+          routeCard.classList.toggle("route-card--compact-meta", compact);
+        };
+
+        let speedMps = 0;
+
         if (lastPosition && lastPositionTime) {
           const elapsed = Math.max(1, now - lastPositionTime);
-          const speedMps =
+          speedMps =
             haversineDistanceMeters(lastPosition, newCenter) / (elapsed / 1000);
+
+          setRouteCardMetaCompact(speedMps >= MIN_SPEED_FOR_FOLLOW);
 
           if (
             speedMps < MIN_SPEED_FOR_FOLLOW &&
@@ -5011,9 +5026,17 @@ function updateRouteSummaryDisplay() {
             lastPositionTime = now;
             return;
           }
+        } else {
+          setRouteCardMetaCompact(false);
         }
 
-        if (distanceMoved >= VIEW_UPDATE_DISTANCE) {
+        if (!followMode) {
+          lastPosition = newCenter;
+          lastPositionTime = now;
+          return;
+        }
+
+        if (distanceMoved >= VIEW_UPDATE_DISTANCE || speedMps >= MIN_SPEED_FOR_FOLLOW) {
           map.easeTo({
             center: newCenter,
             duration: 1000,
@@ -5395,6 +5418,13 @@ function runRouteIntroAfterLoad() {
           "mode-active-walk",
           nextMode === APP_MODE_ACTIVE_WALK,
         );
+
+        if (nextMode === APP_MODE_PRE_EVENT) {
+          isRouteCardMetaCompact = false;
+          document
+            .getElementById("route-card")
+            ?.classList.remove("route-card--compact-meta");
+        }
       }
 
       function bindMapEventsIfNeeded() {
