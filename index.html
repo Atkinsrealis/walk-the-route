@@ -1611,6 +1611,9 @@
       <a href="index.html?route=bledlow" id="route-link-bledlow"
         >Bledlow test</a
       >
+      <a href="index.html?route=dogwalk" id="route-link-dogwalk"
+        >Dog walk</a
+      >
     </div>
 
     <div class="warning" id="warning">You may be off the official route</div>
@@ -1890,6 +1893,35 @@ bledlow: {
   finishLabel: "Test finish",
   finishDescription: "Bledlow test route ends here",
 },
+
+dogwalk: {
+  name: "Dog Walk",
+  fullName: "Local Dog Walk",
+  sourceLabel: "Local dog walk route",
+  geojsonUrl: "dog-walk/dog-walk-route.geojson",
+  title: "Dog Walk",
+  subtitle: "Local route test",
+  landingHeading: "Walking the local dog route",
+  landingLead:
+    "Use this local route for quick confidence checks on GPS lock, recovery, and follow behaviour.",
+  landingCopyMiddle:
+    "This route is intended for frequent short tests in familiar surroundings where you can quickly repeat scenarios.",
+  landingCopyEnd:
+    "Replace the template line with your real walk route when ready.",
+  landingRouteLabel: "Local Dog Walk",
+  helpIntro: "Dog walk route active.",
+  helpSummary: "Use this route for short local GPS confidence checks.",
+  helpSteps: [
+    "Start this route before setting off",
+    "Walk your normal loop and monitor section/progress stability",
+    "If GPS drops, confirm warnings pause until confidence returns",
+    "Use this route for repeatable local testing",
+  ],
+  startLabel: "Start",
+  startDescription: "Local dog walk begins here",
+  finishLabel: "Finish",
+  finishDescription: "Local dog walk ends here",
+},
       };
       const routeParams = new URLSearchParams(window.location.search);
       const requestedRouteKey = routeParams.get("route");
@@ -1994,8 +2026,9 @@ bledlow: {
 
       const heathrowRouteLink = document.getElementById("route-link-heathrow");
       const bledlowRouteLink = document.getElementById("route-link-bledlow");
+      const dogwalkRouteLink = document.getElementById("route-link-dogwalk");
 
-      if (heathrowRouteLink && bledlowRouteLink) {
+      if (heathrowRouteLink && bledlowRouteLink && dogwalkRouteLink) {
         heathrowRouteLink.classList.toggle(
           "active",
           activeRouteKey === "heathrow",
@@ -2003,6 +2036,10 @@ bledlow: {
         bledlowRouteLink.classList.toggle(
           "active",
           activeRouteKey === "bledlow",
+        );
+        dogwalkRouteLink.classList.toggle(
+          "active",
+          activeRouteKey === "dogwalk",
         );
       }
 
