@@ -1365,6 +1365,217 @@
         transform: translate(-50%, -4px);
       }
 
+      .field-log-button {
+        position: fixed;
+        left: 14px;
+        bottom: calc(94px + env(safe-area-inset-bottom));
+        z-index: 45;
+        border: none;
+        border-radius: 999px;
+        padding: 11px 14px;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: #dbeafe;
+        background: rgba(2, 6, 23, 0.92);
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32);
+        cursor: pointer;
+      }
+
+      .field-log-button:active {
+        transform: scale(0.97);
+      }
+
+      .field-log-panel {
+        position: fixed;
+        left: 12px;
+        right: 12px;
+        bottom: calc(82px + env(safe-area-inset-bottom));
+        z-index: 47;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        background: rgba(2, 6, 23, 0.96);
+        color: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 22px 44px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+        padding: 12px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(16px);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease;
+      }
+
+      .field-log-panel.open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .field-log-panel__header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .field-log-panel__title {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .field-log-panel__subtitle {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .field-log-panel__close {
+        border: none;
+        border-radius: 10px;
+        width: 30px;
+        height: 30px;
+        font-size: 22px;
+        line-height: 1;
+        color: rgba(255, 255, 255, 0.9);
+        background: rgba(15, 23, 42, 0.95);
+        cursor: pointer;
+      }
+
+      .field-log-panel__meta {
+        margin-top: 8px;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.68);
+      }
+
+      .field-log-panel__issues {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .field-log-chip {
+        border: 1px solid rgba(251, 191, 36, 0.4);
+        border-radius: 10px;
+        background: rgba(251, 191, 36, 0.12);
+        color: #fde68a;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 8px 9px;
+        cursor: pointer;
+      }
+
+      .field-log-note {
+        width: 100%;
+        margin-top: 10px;
+        min-height: 58px;
+        resize: vertical;
+        box-sizing: border-box;
+        border-radius: 12px;
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        background: rgba(15, 23, 42, 0.92);
+        color: rgba(255, 255, 255, 0.94);
+        font-size: 13px;
+        padding: 9px 10px;
+      }
+
+      .field-log-panel__actions {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .field-log-action {
+        border: none;
+        border-radius: 12px;
+        padding: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .field-log-action--save {
+        background: #14b8a6;
+        color: #06291f;
+      }
+
+      .field-log-action--export {
+        background: #1d4ed8;
+        color: #dbeafe;
+      }
+
+      .field-log-action--clear {
+        margin-top: 8px;
+        width: 100%;
+        background: rgba(239, 68, 68, 0.15);
+        color: #fecaca;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+      }
+
+      .field-log-first-run {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        background: rgba(2, 6, 23, 0.62);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+
+      .field-log-first-run.open {
+        display: flex;
+      }
+
+      .field-log-first-run__card {
+        width: min(100%, 430px);
+        border-radius: 18px;
+        background: rgba(2, 6, 23, 0.97);
+        border: 1px solid rgba(148, 163, 184, 0.28);
+        box-shadow: 0 24px 44px rgba(0, 0, 0, 0.45);
+        padding: 16px;
+        color: rgba(255, 255, 255, 0.94);
+      }
+
+      .field-log-first-run__card h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .field-log-first-run__card p {
+        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.82);
+      }
+
+      .field-log-first-run__list {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 6px;
+        font-size: 13px;
+        line-height: 1.4;
+        color: rgba(255, 255, 255, 0.86);
+      }
+
+      .field-log-first-run__ok {
+        margin-top: 14px;
+        width: 100%;
+        border: none;
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 13px;
+        font-weight: 800;
+        background: #14b8a6;
+        color: #052821;
+        cursor: pointer;
+      }
+
       .offline-notice {
         position: fixed;
         top: calc(6px + env(safe-area-inset-top));
@@ -1960,6 +2171,70 @@
     <div id="offline-notice" class="offline-notice" hidden>
       <span>🌐 Offline – Map tiles unavailable, route data cached</span>
     </div>
+
+    <button
+      class="field-log-button"
+      id="field-log-button"
+      aria-label="Open field test log"
+      title="Field test log"
+    >
+      Log issues
+    </button>
+
+    <div class="field-log-panel" id="field-log-panel" aria-hidden="true">
+      <div class="field-log-panel__header">
+        <div>
+          <h3 class="field-log-panel__title">Field test log</h3>
+          <p class="field-log-panel__subtitle">
+            Auto events are captured in the background.
+          </p>
+        </div>
+        <button class="field-log-panel__close" id="field-log-close-button">&times;</button>
+      </div>
+
+      <div class="field-log-panel__meta" id="field-log-meta">0 entries captured</div>
+
+      <div class="field-log-panel__issues">
+        <button class="field-log-chip" data-field-issue="GPS weak">GPS weak</button>
+        <button class="field-log-chip" data-field-issue="Marker missing">Marker missing</button>
+        <button class="field-log-chip" data-field-issue="Route jump">Route jump</button>
+        <button class="field-log-chip" data-field-issue="UI unclear">UI unclear</button>
+      </div>
+
+      <textarea
+        class="field-log-note"
+        id="field-log-note-input"
+        placeholder="Optional note..."
+      ></textarea>
+
+      <div class="field-log-panel__actions">
+        <button class="field-log-action field-log-action--save" id="field-log-save-button">
+          Save note
+        </button>
+        <button class="field-log-action field-log-action--export" id="field-log-export-button">
+          Export JSON
+        </button>
+      </div>
+
+      <button class="field-log-action field-log-action--clear" id="field-log-clear-button">
+        Clear local log
+      </button>
+    </div>
+
+    <div class="field-log-first-run" id="field-log-first-run">
+      <div class="field-log-first-run__card">
+        <h3>Field logging is active</h3>
+        <p>
+          Keep your normal routine: press Start Walk, put the phone away, and this app will capture best-effort GPS and warning events.
+        </p>
+        <ul class="field-log-first-run__list">
+          <li>If the phone locks, iOS can pause web GPS updates.</li>
+          <li>The app flags long gaps as possible lock/background suspension.</li>
+          <li>Use Log issues for quick notes and Export JSON after your walk.</li>
+        </ul>
+        <button class="field-log-first-run__ok" id="field-log-first-run-ok">Got it</button>
+      </div>
+    </div>
     <script>
       const ROUTES = {
  heathrow: {
@@ -2281,6 +2556,10 @@ localStorage.setItem(
       const GPS_CONFIDENCE_WEAK = "weak";
       const GPS_CONFIDENCE_LOST = "lost";
       const GPS_CONFIDENCE_CACHED = "cached";
+      const FIELD_LOG_GAP_MS = 45000;
+      const FIELD_LOG_MAX_ENTRIES = 800;
+      const FIELD_LOG_ENTRIES_STORAGE_KEY = getRouteStorageKey("fieldLogEntries");
+      const FIELD_LOG_FIRST_USE_STORAGE_KEY = getRouteStorageKey("fieldLogFirstUseSeen");
 
       const ROUTE_VIEW_ICON = `
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2600,6 +2879,10 @@ localStorage.setItem(
       let surfaceTooltipMoveTimer = null;
       let isMapInteracting = false;
       let isCompassVisible = false;
+      let fieldLogEntries = [];
+      let fieldLogSessionStartedAt = 0;
+      let fieldLogLastHiddenAt = 0;
+      let fieldLogLastSegmentNumber = null;
 
       const hazards = [
         {
@@ -3674,6 +3957,7 @@ function updateRouteSummaryDisplay() {
           offlineNotice.removeAttribute("hidden");
         }
         showToast("Signal lost — route still available");
+        logFieldEvent("network-offline", {});
       });
 
       window.addEventListener("online", () => {
@@ -3682,6 +3966,7 @@ function updateRouteSummaryDisplay() {
           offlineNotice.setAttribute("hidden", "");
         }
         showToast("Back online");
+        logFieldEvent("network-online", {});
       });
 
       // Check initial online status
@@ -3787,7 +4072,18 @@ function updateRouteSummaryDisplay() {
       }
 
       function setGpsConfidenceState(nextState) {
+        const previousState = gpsConfidenceState;
         gpsConfidenceState = nextState;
+
+        if (previousState !== nextState) {
+          logFieldEvent("gps-state-change", {
+            from: previousState,
+            to: nextState,
+            accuracyMeters: Number.isFinite(lastLocationAccuracy)
+              ? Math.round(lastLocationAccuracy)
+              : null,
+          });
+        }
       }
 
       function deriveGpsConfidenceState(accuracy) {
@@ -3956,6 +4252,12 @@ function updateRouteSummaryDisplay() {
           nextLevel !== lastWarningState
         ) {
           showWarning(nextState, nextLevel);
+          if (nextLevel !== lastWarningState) {
+            logFieldEvent("warning-state-change", {
+              level: nextLevel,
+              message: nextState,
+            });
+          }
           lastWarningUpdate = now;
           lastWarningState = nextLevel;
         }
@@ -3970,8 +4272,22 @@ function updateRouteSummaryDisplay() {
         lastActualPosition = actualPosition;
 
         const routeSnapshot = getClosestPointOnRoute(actualPosition);
+        const previousSnappedPosition = lastSnappedPosition;
 
         lastSnappedPosition = routeSnapshot.point;
+
+        if (previousSnappedPosition) {
+          const snappedJumpMeters = haversineDistanceMeters(
+            previousSnappedPosition,
+            routeSnapshot.point,
+          );
+
+          if (snappedJumpMeters > 120) {
+            logFieldEvent("route-snap-jump", {
+              jumpMeters: Math.round(snappedJumpMeters),
+            });
+          }
+        }
 
         if (map) {
           if (!userMarker) {
@@ -4071,6 +4387,20 @@ function updateRouteSummaryDisplay() {
 
       function shouldProcessLocationUpdate(lng, lat) {
         const now = Date.now();
+
+        if (lastProcessedPositionTime > 0) {
+          const gapMs = now - lastProcessedPositionTime;
+
+          if (gapMs >= FIELD_LOG_GAP_MS) {
+            logFieldEvent("location-update-gap", {
+              gapMs,
+              whileHidden: Boolean(document.hidden),
+              reason: document.hidden
+                ? "app-hidden-or-screen-locked"
+                : "gps-update-gap",
+            });
+          }
+        }
 
         if (!lastProcessedPosition) {
           lastProcessedPosition = [lng, lat];
@@ -4241,6 +4571,174 @@ function runRouteIntroAfterLoad() {
   }, 3300);
 }
 
+      function loadFieldLogEntries() {
+        try {
+          const raw = localStorage.getItem(FIELD_LOG_ENTRIES_STORAGE_KEY);
+          fieldLogEntries = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(fieldLogEntries)) {
+            fieldLogEntries = [];
+          }
+        } catch (error) {
+          console.warn("Failed to load field log entries:", error);
+          fieldLogEntries = [];
+        }
+      }
+
+      function saveFieldLogEntries() {
+        try {
+          localStorage.setItem(
+            FIELD_LOG_ENTRIES_STORAGE_KEY,
+            JSON.stringify(fieldLogEntries),
+          );
+        } catch (error) {
+          console.warn("Failed to save field log entries:", error);
+        }
+      }
+
+      function updateFieldLogMeta() {
+        const fieldLogMeta = document.getElementById("field-log-meta");
+        if (!fieldLogMeta) {
+          return;
+        }
+
+        const count = fieldLogEntries.length;
+        fieldLogMeta.textContent = `${count} entr${count === 1 ? "y" : "ies"} captured`;
+      }
+
+      function logFieldEvent(type, detail = {}) {
+        const now = Date.now();
+        const entry = {
+          id: `${now}-${Math.floor(Math.random() * 10000)}`,
+          timestamp: new Date(now).toISOString(),
+          eventType: type,
+          route: activeRouteKey,
+          appMode,
+          gpsState: gpsConfidenceState,
+          accuracyMeters: Number.isFinite(lastLocationAccuracy)
+            ? Math.round(lastLocationAccuracy)
+            : null,
+          appVisible: !document.hidden,
+          position: Array.isArray(lastActualPosition)
+            ? {
+                lng: Number(lastActualPosition[0].toFixed(6)),
+                lat: Number(lastActualPosition[1].toFixed(6)),
+              }
+            : null,
+          detail,
+        };
+
+        fieldLogEntries.push(entry);
+        if (fieldLogEntries.length > FIELD_LOG_MAX_ENTRIES) {
+          fieldLogEntries = fieldLogEntries.slice(-FIELD_LOG_MAX_ENTRIES);
+        }
+
+        saveFieldLogEntries();
+        updateFieldLogMeta();
+      }
+
+      function setFieldLogPanel(open) {
+        const panel = document.getElementById("field-log-panel");
+        if (!panel) {
+          return;
+        }
+
+        panel.classList.toggle("open", open);
+        panel.setAttribute("aria-hidden", open ? "false" : "true");
+      }
+
+      function showFieldLogFirstRunIfNeeded() {
+        const firstRun = document.getElementById("field-log-first-run");
+        if (!firstRun) {
+          return;
+        }
+
+        let seen = false;
+        try {
+          seen = localStorage.getItem(FIELD_LOG_FIRST_USE_STORAGE_KEY) === "1";
+        } catch (error) {
+          seen = false;
+        }
+
+        if (!seen) {
+          firstRun.classList.add("open");
+        }
+      }
+
+      function dismissFieldLogFirstRun() {
+        const firstRun = document.getElementById("field-log-first-run");
+        if (firstRun) {
+          firstRun.classList.remove("open");
+        }
+
+        try {
+          localStorage.setItem(FIELD_LOG_FIRST_USE_STORAGE_KEY, "1");
+        } catch (error) {
+          console.warn("Failed to persist first-run hint:", error);
+        }
+      }
+
+      function addQuickIssue(issueLabel) {
+        logFieldEvent("manual-issue", { issue: issueLabel });
+        showToast("Issue saved");
+      }
+
+      function saveManualFieldNote() {
+        const noteInput = document.getElementById("field-log-note-input");
+        if (!noteInput) {
+          return;
+        }
+
+        const note = noteInput.value.trim();
+        if (!note) {
+          showToast("Add a note first");
+          return;
+        }
+
+        logFieldEvent("manual-note", { note });
+        noteInput.value = "";
+        showToast("Note saved");
+      }
+
+      function exportFieldLogJson() {
+        if (!fieldLogEntries.length) {
+          showToast("No log entries yet");
+          return;
+        }
+
+        const payload = {
+          exportedAt: new Date().toISOString(),
+          route: activeRouteKey,
+          entries: fieldLogEntries,
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = `field-log-${activeRouteKey}-${timestamp}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showToast("Field log exported");
+      }
+
+      function clearFieldLogEntries() {
+        if (!window.confirm("Clear all saved field log entries for this route?")) {
+          return;
+        }
+
+        fieldLogEntries = [];
+        saveFieldLogEntries();
+        updateFieldLogMeta();
+        showToast("Field log cleared");
+      }
+
       function setAppMode(nextMode) {
         appMode = nextMode;
         document.body.classList.toggle(
@@ -4378,6 +4876,18 @@ function runRouteIntroAfterLoad() {
             const routeProgress = getRouteProgress(userPoint);
             const segmentInfo = getCurrentSegment(userPoint);
 
+            if (
+              segmentInfo &&
+              segmentInfo.currentSegmentNumber !== fieldLogLastSegmentNumber
+            ) {
+              fieldLogLastSegmentNumber = segmentInfo.currentSegmentNumber;
+              logFieldEvent("segment-change", {
+                currentSegmentNumber: segmentInfo.currentSegmentNumber,
+                totalSegments: segmentInfo.totalSegments,
+                nextMilestone: segmentInfo.nextMilestone,
+              });
+            }
+
             if (gpsState === GPS_CONFIDENCE_LOCKED) {
               lastStableDistanceToRoute = distanceToRoute;
               lastStableRouteProgress = routeProgress;
@@ -4441,11 +4951,18 @@ function runRouteIntroAfterLoad() {
               updateWarningState(displayDistanceToRoute, gpsState);
             }
           },
-          () => {
+          (error) => {
             const cachedPos = loadCachedPosition();
             setGpsConfidenceState(
               cachedPos ? GPS_CONFIDENCE_CACHED : GPS_CONFIDENCE_LOST,
             );
+
+            logFieldEvent("geolocation-error", {
+              code: error && Number.isFinite(error.code) ? error.code : null,
+              message:
+                error && error.message ? error.message : "Unknown geolocation error",
+              hasCachedPosition: Boolean(cachedPos),
+            });
 
             if (isWaitingForFirstLocation) {
               clearTimeout(firstLocationTimeout);
@@ -4480,6 +4997,13 @@ function runRouteIntroAfterLoad() {
         }
 
         setAppMode(APP_MODE_ACTIVE_WALK);
+        if (!fieldLogSessionStartedAt) {
+          fieldLogSessionStartedAt = Date.now();
+          logFieldEvent("walk-start", {
+            routeName: getActiveRoute().fullName || getActiveRoute().name,
+          });
+          showFieldLogFirstRunIfNeeded();
+        }
         await initializeMapIfNeeded();
 
         if (map) {
@@ -4690,6 +5214,53 @@ updateRouteSummaryDisplay();
           }
         });
       }
+
+      const fieldLogButton = document.getElementById("field-log-button");
+      const fieldLogCloseButton = document.getElementById("field-log-close-button");
+      const fieldLogSaveButton = document.getElementById("field-log-save-button");
+      const fieldLogExportButton = document.getElementById("field-log-export-button");
+      const fieldLogClearButton = document.getElementById("field-log-clear-button");
+      const fieldLogFirstRunOkButton = document.getElementById("field-log-first-run-ok");
+      const fieldIssueButtons = document.querySelectorAll("[data-field-issue]");
+
+      loadFieldLogEntries();
+      updateFieldLogMeta();
+
+      if (fieldLogButton) {
+        fieldLogButton.addEventListener("click", () => {
+          const panel = document.getElementById("field-log-panel");
+          setFieldLogPanel(!(panel && panel.classList.contains("open")));
+        });
+      }
+
+      if (fieldLogCloseButton) {
+        fieldLogCloseButton.addEventListener("click", () => {
+          setFieldLogPanel(false);
+        });
+      }
+
+      if (fieldLogSaveButton) {
+        fieldLogSaveButton.addEventListener("click", saveManualFieldNote);
+      }
+
+      if (fieldLogExportButton) {
+        fieldLogExportButton.addEventListener("click", exportFieldLogJson);
+      }
+
+      if (fieldLogClearButton) {
+        fieldLogClearButton.addEventListener("click", clearFieldLogEntries);
+      }
+
+      if (fieldLogFirstRunOkButton) {
+        fieldLogFirstRunOkButton.addEventListener("click", dismissFieldLogFirstRun);
+      }
+
+      fieldIssueButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const issueLabel = button.getAttribute("data-field-issue") || "Issue";
+          addQuickIssue(issueLabel);
+        });
+      });
 
       // Hazards button
       const hazardsButton = document.getElementById("hazards-button");
@@ -4924,6 +5495,28 @@ updateRouteSummaryDisplay();
       // Battery optimization: pause heavy updates when app is backgrounded
       document.addEventListener("visibilitychange", () => {
         isAppVisible = !document.hidden;
+        if (document.hidden) {
+          fieldLogLastHiddenAt = Date.now();
+          logFieldEvent("app-hidden", {});
+          return;
+        }
+
+        if (fieldLogLastHiddenAt > 0) {
+          const hiddenDurationMs = Date.now() - fieldLogLastHiddenAt;
+          logFieldEvent("app-resumed", {
+            hiddenDurationMs,
+          });
+
+          if (hiddenDurationMs >= FIELD_LOG_GAP_MS) {
+            logFieldEvent("tracking-gap", {
+              gapMs: hiddenDurationMs,
+              reason: "app-hidden-or-screen-locked",
+            });
+          }
+
+          fieldLogLastHiddenAt = 0;
+        }
+
         if (isAppVisible) {
           showToast("App resumed");
         }
