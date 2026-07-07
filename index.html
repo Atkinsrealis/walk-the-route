@@ -4151,7 +4151,7 @@ function formatEstimatedWalkTime(distanceMeters) {
 }
 
 function updateRouteSummaryDisplay(options = {}) {
-  const { updateTime = true } = options;
+  const { updateTime = true, forceTimeUpdate = false } = options;
   const routeSummaryValue = document.getElementById("route-summary-value");
   const routeEstimatedTimeValue = document.getElementById(
     "route-estimated-time-value",
@@ -4174,7 +4174,11 @@ function updateRouteSummaryDisplay(options = {}) {
     routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
   }
 
-  if (routeEstimatedTimeValue && updateTime) {
+  const canShowCardTime =
+    updateTime &&
+    (forceTimeUpdate || gpsConfidenceState === GPS_CONFIDENCE_LOCKED);
+
+  if (routeEstimatedTimeValue && canShowCardTime) {
     routeEstimatedTimeValue.textContent =
       timeTextCompact === "—" ? "—" : `~${timeTextCompact}`;
   }
