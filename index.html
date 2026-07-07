@@ -27,8 +27,9 @@
         --floating-button-size: 50px;
         --floating-button-gap: 12px;
         --floating-button-right: 14px;
+        --route-card-side-offset: clamp(12px, 4vw, 18px);
         --route-card-bottom-offset: calc(
-          clamp(22px, 4vh, 58px) + env(safe-area-inset-bottom)
+          clamp(14px, 2.8vh, 34px) + env(safe-area-inset-bottom)
         );
         --route-card-height-estimate: clamp(188px, 24vh, 236px);
         --floating-button-bottom: calc(
@@ -600,8 +601,10 @@
         position: fixed;
         top: auto;
         bottom: var(--route-card-bottom-offset);
-        left: 16px;
-        right: 16px;
+        left: 0;
+        right: 0;
+        width: min(640px, calc(100vw - (var(--route-card-side-offset) * 2)));
+        margin: 0 auto;
         z-index: 19;
         display: flex;
         flex-direction: column;
@@ -1918,6 +1921,7 @@
           --floating-button-size: 46px;
           --floating-button-gap: 10px;
           --floating-button-right: 14px;
+          --route-card-side-offset: 12px;
           --route-card-height-estimate: clamp(178px, 28vh, 228px);
           --floating-button-bottom: calc(
             var(--route-card-bottom-offset) +
@@ -2408,9 +2412,6 @@
         }
 
         .route-card {
-          left: 12px;
-          right: 12px;
-          bottom: calc(clamp(28px, 5vh, 64px) + env(safe-area-inset-bottom));
           padding: 11px 12px;
         }
 
@@ -2472,6 +2473,7 @@
           --floating-button-size: 44px;
           --floating-button-gap: 9px;
           --floating-button-right: 12px;
+          --route-card-side-offset: 10px;
           --route-card-height-estimate: clamp(172px, 30vh, 214px);
           --floating-button-bottom: calc(
             var(--route-card-bottom-offset) +
@@ -2489,7 +2491,6 @@
         }
         .route-card {
           gap: 10px;
-          bottom: calc(clamp(22px, 5vh, 52px) + env(safe-area-inset-bottom));
         }
 
         .route-card__next-step-anchor {
@@ -7699,7 +7700,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-07-2";
+          const SERVICE_WORKER_VERSION = "2026-07-07-3";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
