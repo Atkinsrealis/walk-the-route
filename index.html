@@ -675,7 +675,7 @@
 
       .route-card__header {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         gap: 10px;
         min-width: 0;
@@ -684,18 +684,8 @@
       .route-card__lead {
         display: inline-flex;
         align-items: flex-start;
-        gap: 10px;
+        gap: 0;
         min-width: 0;
-      }
-
-      .route-card__route-icon {
-        width: 14px;
-        height: 14px;
-        margin-top: 2px;
-        border-radius: 999px;
-        background: linear-gradient(180deg, #c084fc 0%, #7c3aed 100%);
-        box-shadow: 0 0 0 2px rgba(193, 181, 255, 0.12);
-        flex-shrink: 0;
       }
 
       .route-card__text {
@@ -705,15 +695,8 @@
         min-width: 0;
       }
 
-      .route-card__label {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        opacity: 0.74;
-      }
-
       .route-card__value {
-        font-size: 24px;
+        font-size: 22px;
         font-weight: 800;
         line-height: 1;
       }
@@ -803,14 +786,14 @@
       }
 
       #distance-value {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 800;
         line-height: 1.25;
         color: rgba(255, 255, 255, 0.95);
       }
 
       #route-estimated-time-value {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 800;
         line-height: 1.15;
         color: rgba(255, 255, 255, 0.95);
@@ -838,8 +821,8 @@
         width: 100%;
         box-sizing: border-box;
         margin-top: 0;
-        padding-top: 12px;
-        border-top: 1px solid rgba(148, 163, 184, 0.28);
+        padding-top: 4px;
+        border-top: 0;
       }
 
       #route-summary-value {
@@ -866,8 +849,8 @@
         flex: 0 0 100%;
         width: 100%;
         margin-top: 0;
-        padding-top: 10px;
-        border-top: 1px solid rgba(148, 163, 184, 0.2);
+        padding-top: 4px;
+        border-top: 0;
         font-size: 12px;
         font-weight: 700;
         line-height: 1.35;
@@ -2330,7 +2313,7 @@
 
         #distance-value,
         #route-estimated-time-value {
-          font-size: 16px;
+          font-size: 15px;
         }
 
         .route-card__track {
@@ -2382,12 +2365,6 @@
         .route-card__header {
           grid-template-columns: minmax(0, 1fr) auto;
           row-gap: 8px;
-        }
-
-        .route-card__ring {
-          grid-column: 1 / -1;
-          justify-self: center;
-          order: 3;
         }
 
         .route-card__badge {
@@ -2580,9 +2557,7 @@
     <div class="route-card is-locating" id="route-card">
       <div class="route-card__header">
         <div class="route-card__lead">
-          <span class="route-card__route-icon" aria-hidden="true"></span>
           <div class="route-card__text">
-            <span class="route-card__label">Route progress</span>
             <span class="route-card__value" id="progress-value">Locating…</span>
           </div>
         </div>
