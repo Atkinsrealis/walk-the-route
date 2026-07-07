@@ -360,6 +360,7 @@
       body.mode-pre-event .route-test-switcher,
       body.mode-pre-event .warning,
       body.mode-pre-event .route-card,
+      body.mode-pre-event .next-step-button,
       body.mode-pre-event .compass-button,
       body.mode-pre-event .share-location-button,
       body.mode-pre-event .follow-toggle-button,
@@ -1018,6 +1019,7 @@
       .route-center-button,
       .follow-toggle-button,
       .share-location-button,
+      .next-step-button,
       .compass-button {
         position: fixed;
         z-index: 12;
@@ -1054,6 +1056,7 @@
       .route-center-button:focus-visible,
       .follow-toggle-button:focus-visible,
       .share-location-button:focus-visible,
+      .next-step-button:focus-visible,
       .compass-button:focus-visible {
         outline: none;
         border-color: rgba(226, 232, 240, 0.72);
@@ -1719,8 +1722,50 @@
         border-color: rgba(52, 211, 153, 0.44);
       }
 
+      .next-step-button {
+        right: calc(
+          var(--floating-button-right) + var(--floating-button-size) + 10px
+        );
+        bottom: calc(
+          var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
+            (var(--floating-button-gap) * 2) + 9px
+        );
+        width: auto;
+        min-width: 110px;
+        max-width: 170px;
+        height: 38px;
+        padding: 0 12px;
+        border-radius: 999px;
+        color: #efe6ff;
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0.02em;
+        line-height: 1;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(76, 29, 149, 0.58) 0%,
+            rgba(15, 23, 42, 0.95) 80%
+          );
+        border-color: rgba(196, 181, 253, 0.42);
+        box-shadow:
+          0 10px 22px rgba(2, 6, 23, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      }
+
+      .next-step-button__text {
+        max-width: 146px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       .share-location-button:active {
         transform: scale(0.96);
+      }
+
+      .next-step-button:active {
+        transform: scale(0.98);
       }
 
       .share-location-button svg {
@@ -2421,6 +2466,7 @@
         .route-center-button,
         .follow-toggle-button,
         .share-location-button,
+        .next-step-button,
         .compass-button,
         .help-panel,
         .help-backdrop,
@@ -2699,6 +2745,17 @@
           fill="currentColor"
         />
       </svg>
+    </button>
+
+    <button
+      class="next-step-button"
+      id="next-step-button"
+      aria-label="Show next step"
+      title="Next step"
+    >
+      <span class="next-step-button__text" id="next-step-button-text"
+        >Next step</span
+      >
     </button>
 
     <button
@@ -3582,6 +3639,7 @@ localStorage.setItem(
       let routeStatusToastByState = {};
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
+      let nextStepGuidance = null;
 
       const hazards = [
         {
@@ -4742,6 +4800,46 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const distance = formatDistance(nextThing.distanceAhead);
 
         nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
+      }
+
+      function updateNextStepPill(userPoint, segmentInfo = null) {
+        const nextStepButtonText = document.getElementById("next-step-button-text");
+
+        if (!nextStepButtonText) {
+          return;
+        }
+
+        nextStepGuidance = null;
+
+        if (Array.isArray(userPoint) && isHeathrowRoute()) {
+          const nextThing = getNextThingAhead(userPoint);
+
+          if (nextThing) {
+            const icon = nextThing.type === "hazard" ? "Hazard" : "Rest";
+            const distance = formatDistance(nextThing.distanceAhead);
+            nextStepButtonText.textContent = `${icon} ${distance}`;
+            nextStepGuidance = {
+              kind: nextThing.type,
+              label: nextThing.label,
+              distance: distance,
+            };
+            return;
+          }
+        }
+
+        if (segmentInfo && segmentInfo.nextMilestone) {
+          nextStepButtonText.textContent = "Next point";
+          nextStepGuidance = {
+            kind: "milestone",
+            label: segmentInfo.nextMilestone,
+            distance: Number.isFinite(segmentInfo.distanceToMilestone)
+              ? formatDistance(segmentInfo.distanceToMilestone)
+              : null,
+          };
+          return;
+        }
+
+        nextStepButtonText.textContent = "Next step";
       }
 
       function showWarning(message, level = "") {
@@ -6839,6 +6937,7 @@ function runRouteIntroAfterLoad() {
               displayRouteProgress,
               fallbackSegmentInfo,
             );
+            updateNextStepPill(userPoint, displaySegmentInfo || fallbackSegmentInfo);
 
             updateWarningState(displayDistanceToRoute, gpsState);
             notifyRouteState(displayDistanceToRoute, gpsState);
@@ -7100,6 +7199,7 @@ updateRouteSummaryDisplay();
 
       // Share button
       const shareBtn = document.getElementById("share-location-button");
+      const nextStepButton = document.getElementById("next-step-button");
 
       if (shareBtn) {
         shareBtn.addEventListener("click", async () => {
@@ -7127,6 +7227,29 @@ updateRouteSummaryDisplay();
           } catch (err) {
             showToast("Share cancelled");
           }
+        });
+      }
+
+      if (nextStepButton) {
+        nextStepButton.addEventListener("click", () => {
+          if (nextStepGuidance) {
+            if (nextStepGuidance.kind === "hazard" || nextStepGuidance.kind === "rest") {
+              const typeLabel = nextStepGuidance.kind === "hazard" ? "Hazard" : "Rest";
+              const distanceText = nextStepGuidance.distance
+                ? ` in ${nextStepGuidance.distance}`
+                : "";
+              showToast(`Next ${typeLabel}: ${nextStepGuidance.label}${distanceText}`);
+            } else if (nextStepGuidance.kind === "milestone") {
+              const distanceText = nextStepGuidance.distance
+                ? ` (${nextStepGuidance.distance})`
+                : "";
+              showToast(`Next point: ${nextStepGuidance.label}${distanceText}`);
+            }
+          } else {
+            showToast("No upcoming step yet");
+          }
+
+          setHelpPanel(true);
         });
       }
 
