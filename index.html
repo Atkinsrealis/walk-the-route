@@ -834,33 +834,38 @@
       }
 
       .route-card__time-strip {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 10px 14px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: end;
+        gap: 8px;
         margin: 2px 0 0;
         padding: 0;
       }
 
       .route-card__time-item {
-        display: inline-flex;
-        align-items: baseline;
-        gap: 4px;
-        font-size: 11px;
-        line-height: 1.3;
-        color: rgba(255, 255, 255, 0.72);
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+      }
+
+      .route-card__time-item--align-right {
+        text-align: right;
+        align-items: flex-end;
       }
 
       .route-card__time-label {
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
         font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: rgba(243, 232, 255, 0.62);
       }
 
       .route-card__time-value {
         color: rgba(255, 255, 255, 0.96);
-        font-weight: 650;
-        letter-spacing: 0.01em;
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.12;
       }
 
       .route-card__time-strip[hidden] {
@@ -2604,11 +2609,7 @@
           <span class="route-card__time-label">Start</span>
           <span class="route-card__time-value" id="route-time-start">—</span>
         </span>
-        <span class="route-card__time-item">
-          <span class="route-card__time-label">Travel</span>
-          <span class="route-card__time-value" id="route-time-travel">—</span>
-        </span>
-        <span class="route-card__time-item">
+        <span class="route-card__time-item route-card__time-item--align-right">
           <span class="route-card__time-label">Finish</span>
           <span class="route-card__time-value" id="route-time-finish">—</span>
         </span>
@@ -5185,13 +5186,12 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         );
         const routeTimeStrip = document.getElementById("route-time-strip");
         const routeTimeStart = document.getElementById("route-time-start");
-        const routeTimeTravel = document.getElementById("route-time-travel");
         const routeTimeFinish = document.getElementById("route-time-finish");
         const routeCard = document.getElementById("route-card");
         const activeRoute = getActiveRoute();
 
         const setRouteTimeStrip = (travelMinutes = null) => {
-          if (!routeTimeStrip || !routeTimeStart || !routeTimeTravel || !routeTimeFinish) {
+          if (!routeTimeStrip || !routeTimeStart || !routeTimeFinish) {
             return;
           }
 
@@ -5205,9 +5205,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
               : null;
 
           routeTimeStart.textContent = formatClockAmPm(startTimestamp);
-          routeTimeTravel.textContent = hasTravel
-            ? formatMinutesCompact(travelMinutes)
-            : "—";
           routeTimeFinish.textContent = formatClockAmPm(finishTimestamp);
           routeTimeStrip.hidden = false;
         };
