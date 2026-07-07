@@ -1814,14 +1814,16 @@
         color: #111;
 
         border: none;
-        border-radius: 16px;
+        border-radius: 14px;
 
+        font-size: 16px;
         font-weight: 800;
-        padding: 14px;
+        padding: 16px;
         text-align: center;
         position: relative;
         overflow: hidden;
         isolation: isolate;
+        box-shadow: 0 6px 18px rgba(250, 204, 21, 0.25);
       }
 
       .help-primary::after {
@@ -2151,10 +2153,6 @@
 
       .help-steps li {
         margin-bottom: 4px;
-      }
-
-      .help-primary::after {
-        content: none;
       }
 
       .toast {
@@ -2749,6 +2747,10 @@
 
       @media (prefers-reduced-motion: reduce) {
         .route-card.is-locating::before {
+          animation: none;
+        }
+
+        .help-primary::after {
           animation: none;
         }
       }
@@ -8112,7 +8114,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-07-6";
+          const SERVICE_WORKER_VERSION = "2026-07-07-7";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
