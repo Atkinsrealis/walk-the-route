@@ -807,33 +807,41 @@
         animation: route-card-border-spin 6s linear infinite;
       }
 
-      .route-start-banner {
-        flex: 0 0 100%;
+      .route-start-chip {
+        position: fixed;
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom) + (var(--floating-button-size) * 4) +
+            (var(--floating-button-gap) * 4)
+        );
+        z-index: 44;
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        margin-top: 2px;
-        padding: 8px 10px;
-        border-radius: 10px;
-        border: 1px solid rgba(125, 211, 252, 0.36);
+        padding: 9px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(125, 211, 252, 0.42);
         background: linear-gradient(
           160deg,
-          rgba(8, 145, 178, 0.32) 0%,
-          rgba(15, 23, 42, 0.2) 70%
+          rgba(8, 145, 178, 0.45) 0%,
+          rgba(15, 23, 42, 0.86) 78%
         );
         color: #d8f5ff;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 800;
         letter-spacing: 0.02em;
+        box-shadow:
+          0 10px 24px rgba(2, 6, 23, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
       }
 
-      .route-start-banner[hidden] {
+      .route-start-chip[hidden] {
         display: none;
       }
 
-      .route-start-banner__icon {
-        width: 18px;
-        height: 18px;
+      .route-start-chip__icon {
+        width: 20px;
+        height: 20px;
         border-radius: 999px;
         display: inline-flex;
         align-items: center;
@@ -2437,11 +2445,6 @@
 
       <span class="route-card__badge preparing" id="route-badge">Preparing</span>
 
-      <div class="route-start-banner" id="route-start-banner" hidden>
-        <span class="route-start-banner__icon" aria-hidden="true">▶</span>
-        <span>Route started</span>
-      </div>
-
       <div class="route-complete-banner" id="route-complete-banner" hidden>
         <span class="route-complete-banner__icon" aria-hidden="true">✓</span>
         <span>Route completed</span>
@@ -2548,6 +2551,11 @@
         />
       </svg>
     </button>
+
+    <div class="route-start-chip" id="route-start-chip" hidden>
+      <span class="route-start-chip__icon" aria-hidden="true">▶</span>
+      <span>Start route</span>
+    </div>
 
     <div id="map"></div>
     <div id="fallback-container" class="fallback-container" hidden>
@@ -3386,6 +3394,7 @@ localStorage.setItem(
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
       let routeStartMomentTimeout = null;
+      let routeSectionBreakPopup = null;
 
       const hazards = [
         {
@@ -4032,13 +4041,20 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
   const coveredMeters = totalDistance * (safeProgress / 100);
   const remainingMeters = Math.max(0, totalDistance - coveredMeters);
 
-  const coveredText = formatDistance(coveredMeters);
-  const remainingText = formatDistance(remainingMeters);
-  const sectionRemainingMeters = Number(options.sectionRemainingMeters);
+  const formatDistanceCompact = (meters) => {
+    if (!Number.isFinite(meters) || meters <= 0) {
+      return "0m";
+    }
 
-  if (Number.isFinite(sectionRemainingMeters) && sectionRemainingMeters > 0) {
-    return `Covered ${coveredText} · Remaining ${remainingText} · Section left ${formatDistance(sectionRemainingMeters)}`;
-  }
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)}km`;
+    }
+
+    return `${Math.round(meters)}m`;
+  };
+
+  const coveredText = formatDistanceCompact(coveredMeters);
+  const remainingText = formatDistanceCompact(remainingMeters);
 
   return `Covered ${coveredText} · Remaining ${remainingText}`;
 }
@@ -4678,12 +4694,12 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
       }
 
       function setRouteStartMomentState(started) {
-        const startBanner = document.getElementById("route-start-banner");
-        if (!startBanner) {
+        const startChip = document.getElementById("route-start-chip");
+        if (!startChip) {
           return;
         }
 
-        startBanner.hidden = !started;
+        startChip.hidden = !started;
       }
 
       function showRouteStartMoment() {
@@ -4710,6 +4726,31 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           setRouteStartMomentState(false);
           routeStartMomentTimeout = null;
         }, 5500);
+      }
+
+      function closeRouteSectionBreakPopup() {
+        if (routeSectionBreakPopup) {
+          routeSectionBreakPopup.remove();
+          routeSectionBreakPopup = null;
+        }
+      }
+
+      function showRouteSectionBreakPopup(lngLat, sectionNumber) {
+        if (!map || !lngLat || !Number.isFinite(sectionNumber)) {
+          return;
+        }
+
+        closeRouteSectionBreakPopup();
+
+        routeSectionBreakPopup = new mapboxgl.Popup({
+          closeButton: false,
+          closeOnClick: false,
+          offset: 14,
+          className: "route-section-break-popup",
+        })
+          .setLngLat(lngLat)
+          .setHTML(`<strong>Section ${sectionNumber}</strong>`)
+          .addTo(map);
       }
 
       function applyRouteAwareMarkerControls() {
@@ -4987,7 +5028,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
         if (!hasValidDistance || normalizedDistance === null) {
           setRouteCompletionState(false);
-          progressValue.textContent = `Section 1/${getTotalSegments()}`;
+          progressValue.textContent = "Section 1";
           distanceValue.textContent = "Waiting for start";
           updateRouteSummaryDisplay();
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
@@ -5001,7 +5042,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             lastStableSegmentInfo &&
             Number.isFinite(lastStableDistanceToRoute)
           ) {
-            progressValue.textContent = `Section ${lastStableSegmentInfo.currentSegmentNumber}/${lastStableSegmentInfo.totalSegments}`;
+            progressValue.textContent = `Section ${lastStableSegmentInfo.currentSegmentNumber}`;
           } else {
             progressValue.textContent = "Locating…";
           }
@@ -5052,19 +5093,14 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
         // Display segment info instead of percentage
         if (segmentInfo) {
-          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
+          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}`;
           const nextMilestoneDistance = formatDistance(
             segmentInfo.distanceToMilestone,
           );
           distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
 
           if (routeSummaryValue) {
-            routeSummaryValue.textContent = buildCoveredRemainingText(
-              safeProgress,
-              {
-                sectionRemainingMeters: segmentInfo.distanceToMilestone,
-              },
-            );
+            routeSummaryValue.textContent = buildCoveredRemainingText(safeProgress);
           }
         } else {
           progressValue.textContent = `${Math.round(safeProgress)}%`;
@@ -6242,6 +6278,7 @@ function runRouteIntroAfterLoad() {
           }
 
           setRouteStartMomentState(false);
+          closeRouteSectionBreakPopup();
           isRouteCardMetaCompact = false;
           document
             .getElementById("route-card")
@@ -6305,6 +6342,42 @@ function runRouteIntroAfterLoad() {
 
         map.on("rotateend", () => {
           updateCompassButton();
+        });
+
+        map.on("mouseenter", "route-section-breaks", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        map.on("mouseleave", "route-section-breaks", () => {
+          map.getCanvas().style.cursor = "";
+          closeRouteSectionBreakPopup();
+        });
+
+        map.on("mousemove", "route-section-breaks", (event) => {
+          const feature = event.features && event.features[0];
+          const sectionNumber = feature && feature.properties
+            ? Number(feature.properties.segmentNumber)
+            : NaN;
+
+          if (!Number.isFinite(sectionNumber)) {
+            closeRouteSectionBreakPopup();
+            return;
+          }
+
+          showRouteSectionBreakPopup(event.lngLat, sectionNumber);
+        });
+
+        map.on("click", "route-section-breaks", (event) => {
+          const feature = event.features && event.features[0];
+          const sectionNumber = feature && feature.properties
+            ? Number(feature.properties.segmentNumber)
+            : NaN;
+
+          if (!Number.isFinite(sectionNumber)) {
+            return;
+          }
+
+          showRouteSectionBreakPopup(event.lngLat, sectionNumber);
         });
       }
 
