@@ -5729,14 +5729,42 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           return GPS_CONFIDENCE_LOST;
         }
 
+        // Hysteresis margins to reduce GPS state churn
+        // Only transition when accuracy improves/degrades beyond thresholds with margins
+        const hysteresisMargin = 5;
+        
+        if (gpsConfidenceState === GPS_CONFIDENCE_LOCKED) {
+          // Already locked: only drop to weak if accuracy degrades significantly
+          if (accuracy > gpsWeakAccuracyMeters - hysteresisMargin) {
+            return GPS_CONFIDENCE_LOST;
+          }
+          if (accuracy > gpsLockAccuracyMeters + hysteresisMargin) {
+            return GPS_CONFIDENCE_WEAK;
+          }
+          return GPS_CONFIDENCE_LOCKED;
+        }
+        
+        if (gpsConfidenceState === GPS_CONFIDENCE_WEAK) {
+          // Already weak: only go to locked if accuracy improves significantly
+          if (accuracy <= gpsLockAccuracyMeters - hysteresisMargin && hasMinimumLocatingElapsed) {
+            return GPS_CONFIDENCE_LOCKED;
+          }
+          // Only drop to lost if accuracy degrades significantly
+          if (accuracy > gpsWeakAccuracyMeters + hysteresisMargin) {
+            return GPS_CONFIDENCE_LOST;
+          }
+          return GPS_CONFIDENCE_WEAK;
+        }
+        
+        // Currently lost state
         if (
-          accuracy <= gpsLockAccuracyMeters &&
+          accuracy <= gpsLockAccuracyMeters - hysteresisMargin &&
           hasMinimumLocatingElapsed
         ) {
           return GPS_CONFIDENCE_LOCKED;
         }
 
-        if (accuracy <= gpsWeakAccuracyMeters) {
+        if (accuracy <= gpsWeakAccuracyMeters - hysteresisMargin) {
           return GPS_CONFIDENCE_WEAK;
         }
 
@@ -5899,14 +5927,9 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           if (routeEstimatedTimeValue) {
             routeEstimatedTimeValue.textContent = "—";
           }
-          if (
-            lastStableSegmentInfo &&
-            Number.isFinite(lastStableDistanceToRoute)
-          ) {
-            progressValue.textContent = `Section ${lastStableSegmentInfo.currentSegmentNumber}`;
-          } else {
-            progressValue.textContent = "Locating…";
-          }
+          
+          // Show overall route progress percentage even without GPS lock
+          progressValue.textContent = `${Math.round(Math.min(100, Math.max(0, progress || 0)))}%`;
 
           if (gpsState === GPS_CONFIDENCE_WEAK) {
             distanceValue.textContent = "GPS weak - holding last confident position";
@@ -5995,9 +6018,10 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           return;
         }
 
-        // Display segment info instead of percentage
+        // Display overall route progress percentage
+        progressValue.textContent = `${Math.round(safeProgress)}%`;
+        
         if (segmentInfo) {
-          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}`;
           const nextMilestoneDistance = formatDistance(
             segmentInfo.distanceToMilestone,
           );
@@ -6019,7 +6043,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             buildNextGuidanceText(segmentInfo),
           );
         } else {
-          progressValue.textContent = `${Math.round(safeProgress)}%`;
           distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
 
           if (routeEstimatedTimeValue) {
@@ -7348,6 +7371,7 @@ function runRouteIntroAfterLoad() {
             const segmentInfo = getCurrentSegment(userPoint);
 
             if (
+              gpsState === GPS_CONFIDENCE_LOCKED &&
               segmentInfo &&
               segmentInfo.currentSegmentNumber !== fieldLogLastSegmentNumber
             ) {
