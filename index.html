@@ -4976,7 +4976,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         if (!hasValidDistance || normalizedDistance === null) {
           setRouteCompletionState(false);
           progressValue.textContent = "Section 1";
-          distanceValue.textContent = "Waiting for start";
+          distanceValue.textContent = "Waiting for start...";
           updateRouteSummaryDisplay();
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           routeBadge.className = "route-card__badge preparing";
