@@ -7645,6 +7645,15 @@ updateRouteSummaryDisplay();
             return;
           }
 
+          const confirmShare = window.confirm(
+            "Share location with event team?",
+          );
+
+          if (!confirmShare) {
+            showToast("Location share cancelled");
+            return;
+          }
+
           const [lng, lat] = lastActualPosition;
           const url = `https://www.google.com/maps?q=${lat},${lng}`;
 
