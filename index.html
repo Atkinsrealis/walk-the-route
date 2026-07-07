@@ -6568,20 +6568,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           const finishCoordinate =
             routeCoordinates[routeCoordinates.length - 1];
 
-          const startLabel = activeRoute.startLabel || "Start";
-          const startDescription =
-            activeRoute.startDescription || "Route begins here";
-
-          const finishLabel = activeRoute.finishLabel || "Finish";
-          const finishDescription =
-            activeRoute.finishDescription || "End of route";
-
-          const startPopupHtml =
-            "<h3>" + startLabel + "</h3><p>" + startDescription + "</p>";
-
-          const finishPopupHtml =
-            "<h3>" + finishLabel + "</h3><p>" + finishDescription + "</p>";
-
           if (!routeStartMarker) {
             routeStartMarker = new mapboxgl.Marker({
               element: createRouteEndpointMarker("start"),
@@ -6591,7 +6577,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
           routeStartMarker
             .setLngLat(startCoordinate)
-            .setPopup(new mapboxgl.Popup().setHTML(startPopupHtml))
             .addTo(map);
 
           routeStartMarker.getElement().style.zIndex = "20";
@@ -6605,7 +6590,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
           routeFinishMarker
             .setLngLat(finishCoordinate)
-            .setPopup(new mapboxgl.Popup().setHTML(finishPopupHtml))
             .addTo(map);
 
           routeFinishMarker.getElement().style.zIndex = "20";
