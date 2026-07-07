@@ -675,7 +675,7 @@
 
       .route-card__header {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
         align-items: center;
         gap: 10px;
         min-width: 0;
@@ -721,6 +721,7 @@
         font-size: 11px;
         font-weight: 800;
         letter-spacing: 0.03em;
+        justify-self: center;
       }
 
       .route-card__ring::after {
@@ -857,7 +858,7 @@
         color: rgba(255, 255, 255, 0.92);
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 0;
       }
 
       .route-card__gps-status[hidden] {
@@ -865,26 +866,7 @@
       }
 
       .route-card__gps-status::before {
-        content: "";
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: #14b8a6;
-        flex-shrink: 0;
-      }
-
-      .route-card__gps-status.is-gps-weak::before,
-      .route-card__gps-status.is-warning::before {
-        background: #ffd000;
-      }
-
-      .route-card__gps-status.is-gps-cached::before {
-        background: #f5b920;
-      }
-
-      .route-card__gps-status.is-gps-lost::before,
-      .route-card__gps-status.is-alert::before {
-        background: #f76b1c;
+        content: none;
       }
 
       .route-card__badge {
@@ -898,6 +880,7 @@
         background: rgba(17, 170, 98, 0.2);
         color: #9cf7c6;
         white-space: nowrap;
+        justify-self: end;
       }
 
       .route-card__badge.preparing {
@@ -2357,19 +2340,9 @@
           gap: 10px;
         }
 
-        .route-card__badge {
-          width: 100%;
-          text-align: center;
-        }
-
         .route-card__header {
-          grid-template-columns: minmax(0, 1fr) auto;
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
           row-gap: 8px;
-        }
-
-        .route-card__badge {
-          grid-column: 1 / -1;
-          order: 2;
         }
 
         .route-card__stats {
