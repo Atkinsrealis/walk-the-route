@@ -2701,11 +2701,11 @@
 
       <div class="route-card__status-rail">
         <div class="route-card__summary">
-          <span id="route-summary-value">Now: Waiting for start...</span>
+          <span id="route-summary-value">Now: Waiting for route data</span>
         </div>
 
         <div class="route-card__gps-status" id="route-gps-status">
-          <span id="route-gps-status-text">Next: Waiting for route data</span>
+          <span id="route-gps-status-text">Next: —</span>
         </div>
       </div>
 
@@ -5447,8 +5447,8 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           updateRouteSummaryDisplay();
           setRouteTimeStrip(null);
           setNowNext(
-            "Now: Waiting for start...",
-            "Next: Waiting for route data",
+            "Now: Waiting for route data",
+            "Next: —",
           );
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           routeBadge.className = "route-card__badge preparing";
