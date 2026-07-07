@@ -37,6 +37,11 @@
           var(--route-card-height-estimate) +
           clamp(46px, 8vh, 72px)
         );
+        --toast-bottom-offset: calc(
+          var(--route-card-bottom-offset) +
+          var(--route-card-height-estimate) +
+          clamp(22px, 4vh, 34px)
+        );
         --field-log-top: calc(
           var(--status-stack-top) + 26px + env(safe-area-inset-top)
         );
@@ -2127,18 +2132,22 @@
 
       .toast {
         position: fixed;
-        bottom: 110px; /* sits above your bottom buttons */
+        bottom: var(--toast-bottom-offset);
         left: 50%;
         transform: translateX(-50%);
 
         background: rgba(10, 15, 31, 0.95);
         color: white;
 
-        padding: 10px 14px;
-        border-radius: 999px;
+        padding: 12px 16px;
+        border-radius: 14px;
 
-        font-size: 13px;
-        white-space: nowrap;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.32;
+        max-width: min(90vw, 420px);
+        white-space: normal;
+        text-align: center;
 
         opacity: 0;
         pointer-events: none;
@@ -2146,7 +2155,7 @@
           opacity 0.2s ease,
           transform 0.2s ease;
 
-        z-index: 50;
+        z-index: 60;
       }
 
       .toast.show {
@@ -3924,6 +3933,7 @@ localStorage.setItem(
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
       let nextStepGuidance = null;
+      let toastHideTimer = null;
       let aheadSheetOpen = false;
       let aheadSheetExpanded = false;
       let lastAheadUserPoint = null;
@@ -5481,12 +5491,18 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const toast = document.getElementById("toast");
         if (!toast) return;
 
+        if (toastHideTimer) {
+          clearTimeout(toastHideTimer);
+          toastHideTimer = null;
+        }
+
         toast.textContent = message;
         toast.classList.add("show");
 
-        setTimeout(() => {
+        toastHideTimer = setTimeout(() => {
           toast.classList.remove("show");
-        }, 2500);
+          toastHideTimer = null;
+        }, 4200);
       }
 
       function applyRouteAwareMarkerControls() {
