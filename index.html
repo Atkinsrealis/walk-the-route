@@ -27,8 +27,10 @@
         --floating-button-size: 56px;
         --floating-button-gap: 14px;
         --floating-button-right: 16px;
-        --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
         --route-card-bottom-offset: calc(96px + env(safe-area-inset-bottom));
+        --floating-button-bottom: calc(
+          var(--route-card-bottom-offset) + 170px
+        );
         --route-switcher-top: 92px;
         --route-switcher-shell-height: 32px;
         --status-stack-gap-below-switcher: 8px;
@@ -372,6 +374,10 @@
       body.mode-pre-event .offline-notice,
       body.mode-pre-event #map,
       body.mode-pre-event #fallback-container {
+        display: none !important;
+      }
+
+      body.mode-active-walk .bottom-panel {
         display: none !important;
       }
 
@@ -1903,6 +1909,9 @@
         :root {
           --floating-button-gap: 12px;
           --floating-button-right: 14px;
+          --floating-button-bottom: calc(
+            var(--route-card-bottom-offset) + 150px
+          );
           --status-stack-gap-below-switcher: 9px;
           --route-card-stack-height: 132px;
           --status-stack-gap: 2px;
@@ -2448,6 +2457,9 @@
         :root {
           --floating-button-gap: 10px;
           --floating-button-right: 12px;
+          --floating-button-bottom: calc(
+            var(--route-card-bottom-offset) + 140px
+          );
           --status-stack-gap-below-switcher: 10px;
           --route-card-stack-height: 142px;
           --status-stack-gap: 2px;
@@ -4018,10 +4030,10 @@ localStorage.setItem(
 
         if (bounds) {
           const topOffset =
-            document.querySelector(".route-card")?.offsetHeight || 140;
+            document.querySelector(".topbar")?.offsetHeight || 110;
 
           const bottomOffset =
-            document.querySelector(".bottom-panel")?.offsetHeight || 180;
+            document.querySelector(".route-card")?.offsetHeight || 260;
 
           const uiGap = 60;
           const isLandscape = window.innerWidth > window.innerHeight;
@@ -4033,11 +4045,9 @@ localStorage.setItem(
             ],
             {
               padding: {
-                top: isLandscape
-                  ? topOffset + 20 // ↓ LESS space in landscape
-                  : topOffset + uiGap,
+                top: isLandscape ? topOffset + 16 : topOffset + 26,
 
-                bottom: isLandscape ? bottomOffset + 20 : bottomOffset + uiGap,
+                bottom: isLandscape ? bottomOffset + 28 : bottomOffset + 74,
 
                 left: 60, // give more horizontal breathing room in landscape
                 right: 60,
