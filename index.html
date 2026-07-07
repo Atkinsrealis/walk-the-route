@@ -1548,14 +1548,21 @@
         bottom: 92px;
         z-index: 30;
 
-        background: rgba(6, 17, 31, 0.96);
+        background:
+          radial-gradient(circle at 50% -18%, rgba(168, 85, 247, 0.28) 0%, rgba(168, 85, 247, 0.14) 22%, transparent 54%),
+          linear-gradient(
+            160deg,
+            rgba(42, 16, 86, 0.82) 0%,
+            rgba(14, 14, 40, 0.95) 30%,
+            rgba(7, 11, 22, 0.99) 72%
+          );
         color: white;
 
         border-radius: 20px;
         padding: 10px 12px 12px;
 
         box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
-        border: 1px solid rgba(250, 204, 21, 0.18);
+        border: none;
         backdrop-filter: blur(14px);
 
         max-height: none;
@@ -1803,10 +1810,10 @@
         width: 100%;
         box-sizing: border-box;
 
-        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
-        color: #06111f;
+        background: rgba(255, 255, 255, 0.08);
+        color: white;
 
-        border: 2px solid #eab308;
+        border: none;
         border-radius: 16px;
 
         font-weight: 800;
@@ -1840,12 +1847,11 @@
       .help-primary:focus,
       .help-primary:focus-visible {
         outline: none;
-        border-color: #eab308;
-        box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.22);
+        box-shadow: 0 0 0 3px rgba(216, 180, 254, 0.22);
       }
 
       .help-primary:active {
-        border-color: #ca8a04;
+        background: rgba(255, 255, 255, 0.12);
       }
 
       .share-location-button {
@@ -2127,8 +2133,7 @@
       }
 
       .help-primary::after {
-        content: " →";
-        color: var(--text-muted);
+        content: none;
       }
 
       .toast {
@@ -8086,7 +8091,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-07-4";
+          const SERVICE_WORKER_VERSION = "2026-07-07-5";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
