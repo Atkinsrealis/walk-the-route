@@ -682,6 +682,14 @@
         min-width: 0;
       }
 
+      .route-card__header-actions {
+        justify-self: end;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 6px;
+      }
+
       .route-card__lead {
         display: inline-flex;
         align-items: flex-start;
@@ -1019,7 +1027,6 @@
       .route-center-button,
       .follow-toggle-button,
       .share-location-button,
-      .next-step-button,
       .compass-button {
         position: fixed;
         z-index: 12;
@@ -1056,7 +1063,6 @@
       .route-center-button:focus-visible,
       .follow-toggle-button:focus-visible,
       .share-location-button:focus-visible,
-      .next-step-button:focus-visible,
       .compass-button:focus-visible {
         outline: none;
         border-color: rgba(226, 232, 240, 0.72);
@@ -1723,21 +1729,16 @@
       }
 
       .next-step-button {
-        right: calc(
-          var(--floating-button-right) + var(--floating-button-size) + 10px
-        );
-        bottom: calc(
-          var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
-            (var(--floating-button-gap) * 2) + 9px
-        );
+        position: static;
+        z-index: 1;
         width: auto;
-        min-width: 110px;
+        min-width: 102px;
         max-width: 170px;
-        height: 38px;
-        padding: 0 12px;
+        height: 32px;
+        padding: 0 11px;
         border-radius: 999px;
         color: #efe6ff;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 750;
         letter-spacing: 0.02em;
         line-height: 1;
@@ -1749,8 +1750,20 @@
           );
         border-color: rgba(196, 181, 253, 0.42);
         box-shadow:
-          0 10px 22px rgba(2, 6, 23, 0.34),
+          0 6px 14px rgba(2, 6, 23, 0.3),
           inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-width: 1px;
+        border-style: solid;
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.22s ease,
+          border-color 0.22s ease,
+          background 0.22s ease,
+          color 0.22s ease;
       }
 
       .next-step-button__text {
@@ -1766,6 +1779,15 @@
 
       .next-step-button:active {
         transform: scale(0.98);
+      }
+
+      .next-step-button:focus-visible {
+        outline: none;
+        border-color: rgba(226, 232, 240, 0.72);
+        box-shadow:
+          0 0 0 3px rgba(148, 163, 184, 0.2),
+          0 8px 16px rgba(2, 6, 23, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
       }
 
       .share-location-button svg {
@@ -2629,7 +2651,20 @@
           <span id="route-progress-ring-value">0%</span>
         </div>
 
-        <span class="route-card__badge preparing" id="route-badge">Preparing</span>
+        <div class="route-card__header-actions">
+          <button
+            class="next-step-button"
+            id="next-step-button"
+            aria-label="Show next step"
+            title="Next step"
+          >
+            <span class="next-step-button__text" id="next-step-button-text"
+              >Next step</span
+            >
+          </button>
+
+          <span class="route-card__badge preparing" id="route-badge">Preparing</span>
+        </div>
       </div>
 
       <div class="route-card__stats">
@@ -2745,17 +2780,6 @@
           fill="currentColor"
         />
       </svg>
-    </button>
-
-    <button
-      class="next-step-button"
-      id="next-step-button"
-      aria-label="Show next step"
-      title="Next step"
-    >
-      <span class="next-step-button__text" id="next-step-button-text"
-        >Next step</span
-      >
     </button>
 
     <button
