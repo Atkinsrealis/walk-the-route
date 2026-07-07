@@ -807,6 +807,44 @@
         animation: route-card-border-spin 6s linear infinite;
       }
 
+      .route-start-banner {
+        flex: 0 0 100%;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(125, 211, 252, 0.36);
+        background: linear-gradient(
+          160deg,
+          rgba(8, 145, 178, 0.32) 0%,
+          rgba(15, 23, 42, 0.2) 70%
+        );
+        color: #d8f5ff;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .route-start-banner[hidden] {
+        display: none;
+      }
+
+      .route-start-banner__icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        line-height: 1;
+        color: #082f49;
+        background: #7dd3fc;
+        box-shadow: 0 0 0 1px rgba(14, 116, 144, 0.45);
+      }
+
       .route-complete-banner {
         flex: 0 0 100%;
         display: inline-flex;
@@ -2399,6 +2437,11 @@
 
       <span class="route-card__badge preparing" id="route-badge">Preparing</span>
 
+      <div class="route-start-banner" id="route-start-banner" hidden>
+        <span class="route-start-banner__icon" aria-hidden="true">▶</span>
+        <span>Route started</span>
+      </div>
+
       <div class="route-complete-banner" id="route-complete-banner" hidden>
         <span class="route-complete-banner__icon" aria-hidden="true">✓</span>
         <span>Route completed</span>
@@ -3335,6 +3378,7 @@ localStorage.setItem(
       let routeStatusToastByState = {};
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
+      let routeStartMomentTimeout = null;
 
       const hazards = [
         {
@@ -4605,6 +4649,41 @@ function updateRouteSummaryDisplay() {
         }, 2500);
       }
 
+      function setRouteStartMomentState(started) {
+        const startBanner = document.getElementById("route-start-banner");
+        if (!startBanner) {
+          return;
+        }
+
+        startBanner.hidden = !started;
+      }
+
+      function showRouteStartMoment() {
+        if (routeStartMomentTimeout) {
+          clearTimeout(routeStartMomentTimeout);
+          routeStartMomentTimeout = null;
+        }
+
+        const routeCard = document.getElementById("route-card");
+        const completeBanner = document.getElementById("route-complete-banner");
+
+        if (routeCard) {
+          routeCard.classList.remove("is-complete");
+        }
+
+        if (completeBanner) {
+          completeBanner.hidden = true;
+        }
+
+        setRouteStartMomentState(true);
+        showToast("Route started");
+
+        routeStartMomentTimeout = setTimeout(() => {
+          setRouteStartMomentState(false);
+          routeStartMomentTimeout = null;
+        }, 5500);
+      }
+
       function applyRouteAwareMarkerControls() {
         const hazardsButton = document.getElementById("hazards-button");
         const restButton = document.getElementById("rest-button");
@@ -4844,6 +4923,14 @@ function updateRouteSummaryDisplay() {
 
           if (completeBanner) {
             completeBanner.hidden = !completed;
+          }
+
+          if (completed) {
+            if (routeStartMomentTimeout) {
+              clearTimeout(routeStartMomentTimeout);
+              routeStartMomentTimeout = null;
+            }
+            setRouteStartMomentState(false);
           }
 
           if (completed && !hasRouteCompletionCelebrated) {
@@ -5875,6 +5962,12 @@ function runRouteIntroAfterLoad() {
         );
 
         if (nextMode === APP_MODE_PRE_EVENT) {
+          if (routeStartMomentTimeout) {
+            clearTimeout(routeStartMomentTimeout);
+            routeStartMomentTimeout = null;
+          }
+
+          setRouteStartMomentState(false);
           isRouteCardMetaCompact = false;
           document
             .getElementById("route-card")
@@ -6116,6 +6209,7 @@ function runRouteIntroAfterLoad() {
 
         setAppMode(APP_MODE_ACTIVE_WALK);
         hasRouteCompletionCelebrated = false;
+        showRouteStartMoment();
         beginFieldLogSessionForWalk();
         logWalkStartIfNeeded();
         showFieldLogFirstRunIfNeeded();
