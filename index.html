@@ -647,8 +647,8 @@
       }
 
       .ahead-sheet {
-        width: min(260px, calc(100vw - 84px));
-        padding: 9px 10px;
+        width: min(320px, calc(100vw - 56px));
+        padding: 12px 12px 11px;
         border-radius: 12px;
         border: 1px solid rgba(196, 181, 253, 0.32);
         background: linear-gradient(
@@ -658,11 +658,16 @@
         );
         box-shadow: 0 10px 22px rgba(2, 6, 23, 0.42);
         display: none;
-        gap: 7px;
+        gap: 10px;
       }
 
       .ahead-sheet.open {
         display: grid;
+      }
+
+      .ahead-sheet__summary {
+        display: grid;
+        gap: 8px;
       }
 
       .ahead-sheet__row {
@@ -679,10 +684,71 @@
       }
 
       .ahead-sheet__value {
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 600;
         color: rgba(248, 250, 252, 0.94);
         line-height: 1.28;
+      }
+
+      .ahead-sheet__expand {
+        border-top: 1px solid rgba(196, 181, 253, 0.2);
+        padding-top: 8px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .ahead-sheet__toggle {
+        all: unset;
+        justify-self: start;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        color: #ddd6fe;
+        cursor: pointer;
+      }
+
+      .ahead-sheet__details {
+        display: none;
+        gap: 8px;
+        max-height: 168px;
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+
+      .ahead-sheet.expanded .ahead-sheet__details {
+        display: grid;
+      }
+
+      .ahead-sheet__list-group {
+        display: grid;
+        gap: 5px;
+      }
+
+      .ahead-sheet__group-label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(226, 232, 240, 0.64);
+      }
+
+      .ahead-sheet__list {
+        display: grid;
+        gap: 5px;
+      }
+
+      .ahead-sheet__item,
+      .ahead-sheet__empty {
+        font-size: 12px;
+        line-height: 1.3;
+      }
+
+      .ahead-sheet__item {
+        color: rgba(248, 250, 252, 0.94);
+      }
+
+      .ahead-sheet__empty {
+        color: rgba(226, 232, 240, 0.66);
       }
 
       @property --route-border-angle {
@@ -2833,23 +2899,47 @@
 
       <div class="route-card__next-step-anchor">
         <div class="ahead-sheet" id="ahead-sheet" aria-hidden="true">
-          <div class="ahead-sheet__row">
-            <span class="ahead-sheet__label">Next checkpoint</span>
-            <span class="ahead-sheet__value" id="ahead-checkpoint-value"
-              >Waiting for route data</span
-            >
+          <div class="ahead-sheet__summary">
+            <div class="ahead-sheet__row">
+              <span class="ahead-sheet__label">Next checkpoint</span>
+              <span class="ahead-sheet__value" id="ahead-checkpoint-value"
+                >Waiting for route data</span
+              >
+            </div>
+            <div class="ahead-sheet__row">
+              <span class="ahead-sheet__label">Nearest hazard</span>
+              <span class="ahead-sheet__value" id="ahead-hazard-value"
+                >No hazard flagged ahead</span
+              >
+            </div>
+            <div class="ahead-sheet__row">
+              <span class="ahead-sheet__label">Nearest rest</span>
+              <span class="ahead-sheet__value" id="ahead-rest-value"
+                >No rest stop ahead</span
+              >
+            </div>
           </div>
-          <div class="ahead-sheet__row">
-            <span class="ahead-sheet__label">Nearest hazard</span>
-            <span class="ahead-sheet__value" id="ahead-hazard-value"
-              >No hazard flagged ahead</span
-            >
-          </div>
-          <div class="ahead-sheet__row">
-            <span class="ahead-sheet__label">Nearest rest</span>
-            <span class="ahead-sheet__value" id="ahead-rest-value"
-              >No rest stop ahead</span
-            >
+
+          <div class="ahead-sheet__expand">
+            <button class="ahead-sheet__toggle" id="ahead-sheet-toggle" type="button">
+              Show more
+            </button>
+
+            <div class="ahead-sheet__details" id="ahead-sheet-details" aria-hidden="true">
+              <div class="ahead-sheet__list-group">
+                <span class="ahead-sheet__group-label">Upcoming hazards</span>
+                <div class="ahead-sheet__list" id="ahead-hazard-list">
+                  <span class="ahead-sheet__empty">No hazard flagged ahead</span>
+                </div>
+              </div>
+
+              <div class="ahead-sheet__list-group">
+                <span class="ahead-sheet__group-label">Upcoming rest stops</span>
+                <div class="ahead-sheet__list" id="ahead-rest-list">
+                  <span class="ahead-sheet__empty">No rest stop ahead</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -3829,8 +3919,34 @@ localStorage.setItem(
       let hasRouteCompletionCelebrated = false;
       let nextStepGuidance = null;
       let aheadSheetOpen = false;
+      let aheadSheetExpanded = false;
       let lastAheadUserPoint = null;
       let lastAheadSegmentInfo = null;
+
+      function setAheadSheetExpanded(expanded) {
+        const aheadSheet = document.getElementById("ahead-sheet");
+        const aheadSheetDetails = document.getElementById("ahead-sheet-details");
+        const aheadSheetToggle = document.getElementById("ahead-sheet-toggle");
+
+        aheadSheetExpanded = Boolean(expanded);
+
+        if (aheadSheet) {
+          aheadSheet.classList.toggle("expanded", aheadSheetExpanded);
+        }
+
+        if (aheadSheetDetails) {
+          aheadSheetDetails.setAttribute(
+            "aria-hidden",
+            aheadSheetExpanded ? "false" : "true",
+          );
+        }
+
+        if (aheadSheetToggle) {
+          aheadSheetToggle.textContent = aheadSheetExpanded
+            ? "Show less"
+            : "Show more";
+        }
+      }
 
       function setAheadSheet(open) {
         const aheadSheet = document.getElementById("ahead-sheet");
@@ -3843,14 +3959,43 @@ localStorage.setItem(
         aheadSheetOpen = Boolean(open);
         aheadSheet.classList.toggle("open", aheadSheetOpen);
         aheadSheet.setAttribute("aria-hidden", aheadSheetOpen ? "false" : "true");
+
+        if (!aheadSheetOpen) {
+          setAheadSheetExpanded(false);
+        }
+      }
+
+      function renderAheadList(listElement, items, getText, emptyText) {
+        if (!listElement) {
+          return;
+        }
+
+        listElement.innerHTML = "";
+
+        if (!Array.isArray(items) || items.length === 0) {
+          const emptyItem = document.createElement("span");
+          emptyItem.className = "ahead-sheet__empty";
+          emptyItem.textContent = emptyText;
+          listElement.appendChild(emptyItem);
+          return;
+        }
+
+        items.forEach((item) => {
+          const row = document.createElement("span");
+          row.className = "ahead-sheet__item";
+          row.textContent = getText(item);
+          listElement.appendChild(row);
+        });
       }
 
       function updateAheadSheet(userPoint, segmentInfo = null) {
         const checkpointValue = document.getElementById("ahead-checkpoint-value");
         const hazardValue = document.getElementById("ahead-hazard-value");
         const restValue = document.getElementById("ahead-rest-value");
+        const hazardList = document.getElementById("ahead-hazard-list");
+        const restList = document.getElementById("ahead-rest-list");
 
-        if (!checkpointValue || !hazardValue || !restValue) {
+        if (!checkpointValue || !hazardValue || !restValue || !hazardList || !restList) {
           return;
         }
 
@@ -3869,22 +4014,51 @@ localStorage.setItem(
         if (!Array.isArray(userPoint) || !isHeathrowRoute()) {
           hazardValue.textContent = "Not available on this route";
           restValue.textContent = "Not available on this route";
+
+          renderAheadList(
+            hazardList,
+            [],
+            (item) => item,
+            "Not available on this route",
+          );
+          renderAheadList(
+            restList,
+            [],
+            (item) => item,
+            "Not available on this route",
+          );
           return;
         }
 
-        const hazardAhead = getNextHazardAhead(userPoint);
+        const upcomingHazards = getUpcomingHazardsAhead(userPoint, 3);
+        const hazardAhead = upcomingHazards[0] || null;
         if (hazardAhead) {
           hazardValue.textContent = `${hazardAhead.type} in ${formatDistance(hazardAhead.distanceAhead)}`;
         } else {
           hazardValue.textContent = "No hazard flagged ahead";
         }
 
-        const restAhead = getNextRestAhead(userPoint);
+        renderAheadList(
+          hazardList,
+          upcomingHazards,
+          (hazard) => `${hazard.type} - ${formatDistance(hazard.distanceAhead)}`,
+          "No hazard flagged ahead",
+        );
+
+        const upcomingRestStops = getUpcomingRestAhead(userPoint, 2);
+        const restAhead = upcomingRestStops[0] || null;
         if (restAhead) {
           restValue.textContent = `${restAhead.label} in ${formatDistance(restAhead.distanceAhead)}`;
         } else {
           restValue.textContent = "No rest stop ahead";
         }
+
+        renderAheadList(
+          restList,
+          upcomingRestStops,
+          (restStop) => `${restStop.label} - ${formatDistance(restStop.distanceAhead)}`,
+          "No rest stop ahead",
+        );
       }
 
       const hazards = [
@@ -4854,12 +5028,16 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
       }
 
       function getNextHazardAhead(userPoint) {
+        return getUpcomingHazardsAhead(userPoint, 1)[0] || null;
+      }
+
+      function getUpcomingHazardsAhead(userPoint, limit = 3) {
         if (!isHeathrowRoute()) {
-          return null;
+          return [];
         }
 
         if (routeCoordinates.length < 2) {
-          return null;
+          return [];
         }
 
         const userMeasure = getRouteMeasure(userPoint);
@@ -4880,16 +5058,20 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           .filter((h) => h.distanceAhead > 25)
           .sort((a, b) => a.distanceAhead - b.distanceAhead);
 
-        return upcomingHazards[0] || null;
+        return upcomingHazards.slice(0, Math.max(1, limit));
       }
 
       function getNextRestAhead(userPoint) {
+        return getUpcomingRestAhead(userPoint, 1)[0] || null;
+      }
+
+      function getUpcomingRestAhead(userPoint, limit = 2) {
         if (!isHeathrowRoute()) {
-          return null;
+          return [];
         }
 
         if (routeCoordinates.length < 2) {
-          return null;
+          return [];
         }
 
         const userMeasure = getRouteMeasure(userPoint);
@@ -4910,7 +5092,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           .filter((r) => r.distanceAhead > 25)
           .sort((a, b) => a.distanceAhead - b.distanceAhead);
 
-        return upcomingRestStops[0] || null;
+        return upcomingRestStops.slice(0, Math.max(1, limit));
       }
 
       function showOperationalToast(message, options = {}) {
@@ -7448,6 +7630,7 @@ updateRouteSummaryDisplay();
       // Share button
       const shareBtn = document.getElementById("share-location-button");
       const nextStepButton = document.getElementById("next-step-button");
+      const aheadSheetToggleButton = document.getElementById("ahead-sheet-toggle");
 
       if (shareBtn) {
         shareBtn.addEventListener("click", async () => {
@@ -7485,6 +7668,12 @@ updateRouteSummaryDisplay();
           }
 
           setAheadSheet(!aheadSheetOpen);
+        });
+      }
+
+      if (aheadSheetToggleButton) {
+        aheadSheetToggleButton.addEventListener("click", () => {
+          setAheadSheetExpanded(!aheadSheetExpanded);
         });
       }
 
