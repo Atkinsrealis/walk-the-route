@@ -2810,6 +2810,12 @@ dogwalk: {
       };
       const routeParams = new URLSearchParams(window.location.search);
       const requestedRouteKey = routeParams.get("route");
+      const forwardHighlightParam =
+        (routeParams.get("forwardHighlight") || "").toLowerCase();
+      const enableForwardRouteHighlight =
+        forwardHighlightParam === "1" ||
+        forwardHighlightParam === "true" ||
+        forwardHighlightParam === "yes";
 
       let activeRouteKey = ROUTES[requestedRouteKey]
         ? requestedRouteKey
@@ -3034,6 +3040,7 @@ localStorage.setItem(
       const GPS_CONFIDENCE_WEAK = "weak";
       const GPS_CONFIDENCE_LOST = "lost";
       const GPS_CONFIDENCE_CACHED = "cached";
+      const FORWARD_ROUTE_HIGHLIGHT_AHEAD_METERS = 240;
       const FIELD_LOG_GAP_MS = 45000;
       const FIELD_LOG_MAX_ENTRIES = 800;
       const FIELD_LOG_SESSION_RESUME_WINDOW_MS = 45 * 60 * 1000;
@@ -5337,6 +5344,169 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         };
       }
 
+      function buildEmptyFeatureCollection() {
+        return {
+          type: "FeatureCollection",
+          features: [],
+        };
+      }
+
+      function interpolateCoordinate(start, end, ratio) {
+        const clampedRatio = Math.max(0, Math.min(1, ratio));
+
+        return [
+          start[0] + (end[0] - start[0]) * clampedRatio,
+          start[1] + (end[1] - start[1]) * clampedRatio,
+        ];
+      }
+
+      function extractRouteCoordinatesSliceByDistance(startDistance, endDistance) {
+        if (routeCoordinates.length < 2) {
+          return [];
+        }
+
+        const safeStartDistance = Math.max(0, startDistance || 0);
+        const safeEndDistance = Math.max(safeStartDistance, endDistance || 0);
+
+        let cumulativeDistance = 0;
+        const sliceCoordinates = [];
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+
+          if (!Number.isFinite(segmentLength) || segmentLength <= 0) {
+            continue;
+          }
+
+          const segmentStart = cumulativeDistance;
+          const segmentEnd = cumulativeDistance + segmentLength;
+          cumulativeDistance = segmentEnd;
+
+          const overlapStart = Math.max(safeStartDistance, segmentStart);
+          const overlapEnd = Math.min(safeEndDistance, segmentEnd);
+
+          if (overlapEnd < overlapStart) {
+            continue;
+          }
+
+          const startRatio = (overlapStart - segmentStart) / segmentLength;
+          const endRatio = (overlapEnd - segmentStart) / segmentLength;
+
+          const startPoint = interpolateCoordinate(start, end, startRatio);
+          const endPoint = interpolateCoordinate(start, end, endRatio);
+
+          if (!sliceCoordinates.length) {
+            sliceCoordinates.push(startPoint);
+          } else {
+            const lastPoint = sliceCoordinates[sliceCoordinates.length - 1];
+            if (haversineDistanceMeters(lastPoint, startPoint) > 0.4) {
+              sliceCoordinates.push(startPoint);
+            }
+          }
+
+          const currentLastPoint = sliceCoordinates[sliceCoordinates.length - 1];
+          if (haversineDistanceMeters(currentLastPoint, endPoint) > 0.4) {
+            sliceCoordinates.push(endPoint);
+          }
+
+          if (segmentEnd >= safeEndDistance) {
+            break;
+          }
+        }
+
+        return sliceCoordinates.length >= 2 ? sliceCoordinates : [];
+      }
+
+      function buildRouteSectionBreaksFeatureCollection() {
+        const segments = getRouteSegments();
+        const features = [];
+
+        for (let i = 1; i < segments.length; i += 1) {
+          const boundaryIndex = segments[i].startIdx;
+          const boundaryCoordinate = routeCoordinates[boundaryIndex];
+
+          if (!boundaryCoordinate || boundaryCoordinate.length < 2) {
+            continue;
+          }
+
+          features.push({
+            type: "Feature",
+            properties: {
+              segmentNumber: i + 1,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: boundaryCoordinate,
+            },
+          });
+        }
+
+        return {
+          type: "FeatureCollection",
+          features,
+        };
+      }
+
+      function setForwardHighlightData(data) {
+        if (!map) {
+          return;
+        }
+
+        const source = map.getSource("route-forward");
+        if (source) {
+          source.setData(data);
+        }
+      }
+
+      function clearForwardRouteHighlight() {
+        setForwardHighlightData(buildEmptyFeatureCollection());
+      }
+
+      function updateForwardRouteHighlight(userPoint, gpsState = GPS_CONFIDENCE_LOST) {
+        if (!enableForwardRouteHighlight) {
+          return;
+        }
+
+        if (
+          !map ||
+          !Array.isArray(userPoint) ||
+          userPoint.length < 2 ||
+          gpsState !== GPS_CONFIDENCE_LOCKED
+        ) {
+          clearForwardRouteHighlight();
+          return;
+        }
+
+        const routeMeasure = getRouteMeasure(userPoint);
+        const startDistance = routeMeasure.distanceAlongRoute;
+        const endDistance = startDistance + FORWARD_ROUTE_HIGHLIGHT_AHEAD_METERS;
+        const highlightCoordinates = extractRouteCoordinatesSliceByDistance(
+          startDistance,
+          endDistance,
+        );
+
+        if (highlightCoordinates.length < 2) {
+          clearForwardRouteHighlight();
+          return;
+        }
+
+        setForwardHighlightData({
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: highlightCoordinates,
+              },
+            },
+          ],
+        });
+      }
+
       function addRouteToMap(routeFeature) {
         const geometry = routeFeature.geometry;
 
@@ -5375,7 +5545,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
               "line-color": "#7c3aed",
               "line-width": 2,
               "line-dasharray": [0, 1.5, 0.8, 1.5],
-              "line-opacity": 0.75,
+              "line-opacity": enableForwardRouteHighlight ? 0 : 0.75,
             },
           });
 
@@ -5389,8 +5559,69 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
               "line-opacity": 0.95,
             },
           });
+
+          map.addSource("route-section-breaks", {
+            type: "geojson",
+            data: buildRouteSectionBreaksFeatureCollection(),
+          });
+
+          map.addLayer({
+            id: "route-section-breaks-halo",
+            type: "circle",
+            source: "route-section-breaks",
+            paint: {
+              "circle-radius": 5,
+              "circle-color": "#0b1223",
+              "circle-opacity": 0.82,
+            },
+          });
+
+          map.addLayer({
+            id: "route-section-breaks",
+            type: "circle",
+            source: "route-section-breaks",
+            paint: {
+              "circle-radius": 2.8,
+              "circle-color": "#ddd6fe",
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "#7c3aed",
+              "circle-opacity": 0.95,
+            },
+          });
+
+          if (enableForwardRouteHighlight) {
+            map.addSource("route-forward", {
+              type: "geojson",
+              data: buildEmptyFeatureCollection(),
+            });
+
+            map.addLayer({
+              id: "route-forward-highlight",
+              type: "line",
+              source: "route-forward",
+              layout: {
+                "line-cap": "round",
+                "line-join": "round",
+              },
+              paint: {
+                "line-color": "#c4b5fd",
+                "line-width": 4.8,
+                "line-opacity": 0.28,
+              },
+            });
+          }
         } else {
           map.getSource("route").setData(routeFeature);
+
+          const sectionBreaksSource = map.getSource("route-section-breaks");
+          if (sectionBreaksSource) {
+            sectionBreaksSource.setData(buildRouteSectionBreaksFeatureCollection());
+          }
+        }
+
+        if (enableForwardRouteHighlight) {
+          const targetPoint = lastSnappedPosition || lastActualPosition;
+          updateForwardRouteHighlight(targetPoint, gpsConfidenceState);
         }
 
         if (routeSurfaceSummary) {
@@ -6093,6 +6324,7 @@ function runRouteIntroAfterLoad() {
         lastStableSegmentInfo = null;
         lastWarningUpdate = 0;
         lastWarningState = "";
+        clearForwardRouteHighlight();
 
         if (!("geolocation" in navigator)) {
           isWaitingForFirstLocation = false;
@@ -6136,6 +6368,7 @@ function runRouteIntroAfterLoad() {
             updateMapView(lng, lat);
 
             const userPoint = [lng, lat];
+            updateForwardRouteHighlight(userPoint, gpsState);
 
             if (showHelp && isAppVisible) {
               updateHelpLocationPanel();
@@ -6210,6 +6443,7 @@ function runRouteIntroAfterLoad() {
             setGpsConfidenceState(
               cachedPos ? GPS_CONFIDENCE_CACHED : GPS_CONFIDENCE_LOST,
             );
+            clearForwardRouteHighlight();
 
             logFieldEvent("geolocation-error", {
               code: error && Number.isFinite(error.code) ? error.code : null,
