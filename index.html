@@ -430,13 +430,13 @@
         left: 0;
         right: 0;
 
-        height: calc(230px + env(safe-area-inset-top));
+        height: calc(168px + env(safe-area-inset-top));
 
         background: linear-gradient(
           to bottom,
-          rgba(8, 12, 24, 0.96) 0%,
-          rgba(8, 12, 24, 0.82) 38%,
-          rgba(8, 12, 24, 0.46) 68%,
+          rgba(8, 12, 24, 0.88) 0%,
+          rgba(8, 12, 24, 0.68) 34%,
+          rgba(8, 12, 24, 0.3) 62%,
           rgba(8, 12, 24, 0) 100%
         );
 
@@ -451,9 +451,9 @@
         right: 0;
         z-index: 10;
 
-        padding-top: calc(18px + env(safe-area-inset-top));
+        padding-top: calc(10px + env(safe-area-inset-top));
         padding-right: 132px;
-        padding-bottom: 24px;
+        padding-bottom: 12px;
         padding-left: 16px;
 
         color: white;
@@ -497,7 +497,7 @@
 
       .topbar h1,
       .topbar p {
-        transform: translateY(15px);
+        transform: none;
       }
       .route-test-switcher {
         display: inline-flex;
@@ -2371,14 +2371,14 @@
 
       @media (max-width: 480px) {
         .topbar {
-          padding-top: calc(16px + env(safe-area-inset-top));
+          padding-top: calc(10px + env(safe-area-inset-top));
           padding-right: 116px;
-          padding-bottom: 22px;
+          padding-bottom: 12px;
           padding-left: 12px;
         }
 
         .topbar__brand {
-          top: calc(8px + env(safe-area-inset-top));
+          top: calc(10px + env(safe-area-inset-top));
           right: 14px;
 
           margin-bottom: 0;
@@ -2400,7 +2400,7 @@
 
         .topbar h1,
         .topbar p {
-          transform: translateY(15px);
+          transform: none;
         }
 
         .warning {
