@@ -582,7 +582,8 @@
       .warning.help {
         background: rgba(6, 17, 31, 0.96);
         color: white;
-        border-left: 5px solid #14b8a6;
+        border-left: 5px solid #facc15;
+        box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.18);
       }
 
       .warning.gps-weak {
@@ -1535,7 +1536,7 @@
       }
 
       .help-card.on {
-        background: #14b8a6;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
         color: #06111f;
         box-shadow: none;
       }
@@ -1554,7 +1555,7 @@
         padding: 10px 12px 12px;
 
         box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
-        border: 1px solid rgba(94, 234, 212, 0.18);
+        border: 1px solid rgba(250, 204, 21, 0.18);
         backdrop-filter: blur(14px);
 
         max-height: none;
@@ -1595,7 +1596,7 @@
 
       .help-panel__label {
         display: block;
-        color: #5eead4;
+        color: #facc15;
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.08em;
@@ -1656,8 +1657,8 @@
         margin-top: 0;
         padding: 10px 12px;
         border-radius: 16px;
-        background: rgba(94, 234, 212, 0.1);
-        border: 1px solid rgba(94, 234, 212, 0.22);
+        background: rgba(250, 204, 21, 0.1);
+        border: 1px solid rgba(250, 204, 21, 0.22);
         display: grid;
         gap: 4px;
       }
@@ -1667,7 +1668,7 @@
         font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #5eead4;
+        color: #facc15;
       }
 
       .help-location strong {
@@ -1696,7 +1697,7 @@
         border: none;
         border-radius: 14px;
         padding: 11px 10px;
-        background: #14b8a6;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
         color: #06111f;
         font-weight: 800;
         text-align: center;
@@ -1802,10 +1803,10 @@
         width: 100%;
         box-sizing: border-box;
 
-        background: #14b8a6;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
         color: #06111f;
 
-        border: 2px solid #0f766e;
+        border: 2px solid #eab308;
         border-radius: 16px;
 
         font-weight: 800;
@@ -1839,12 +1840,12 @@
       .help-primary:focus,
       .help-primary:focus-visible {
         outline: none;
-        border-color: #0f766e;
-        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22);
+        border-color: #eab308;
+        box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.22);
       }
 
       .help-primary:active {
-        border-color: #115e59;
+        border-color: #ca8a04;
       }
 
       .share-location-button {
@@ -8085,7 +8086,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-07-3";
+          const SERVICE_WORKER_VERSION = "2026-07-07-4";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
