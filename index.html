@@ -3357,7 +3357,6 @@ localStorage.setItem(
       let routeStatusToastByState = {};
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
-      let routeSectionBreakPopup = null;
 
       const hazards = [
         {
@@ -4659,31 +4658,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         setTimeout(() => {
           toast.classList.remove("show");
         }, 2500);
-      }
-
-      function closeRouteSectionBreakPopup() {
-        if (routeSectionBreakPopup) {
-          routeSectionBreakPopup.remove();
-          routeSectionBreakPopup = null;
-        }
-      }
-
-      function showRouteSectionBreakPopup(lngLat, sectionNumber) {
-        if (!map || !lngLat || !Number.isFinite(sectionNumber)) {
-          return;
-        }
-
-        closeRouteSectionBreakPopup();
-
-        routeSectionBreakPopup = new mapboxgl.Popup({
-          closeButton: false,
-          closeOnClick: false,
-          offset: 14,
-          className: "route-section-break-popup",
-        })
-          .setLngLat(lngLat)
-          .setHTML(`<strong>Section ${sectionNumber}</strong>`)
-          .addTo(map);
       }
 
       function applyRouteAwareMarkerControls() {
@@ -6225,7 +6199,6 @@ function runRouteIntroAfterLoad() {
         );
 
         if (nextMode === APP_MODE_PRE_EVENT) {
-          closeRouteSectionBreakPopup();
           isRouteCardMetaCompact = false;
           document
             .getElementById("route-card")
@@ -6297,34 +6270,6 @@ function runRouteIntroAfterLoad() {
 
         map.on("mouseleave", "route-section-breaks", () => {
           map.getCanvas().style.cursor = "";
-          closeRouteSectionBreakPopup();
-        });
-
-        map.on("mousemove", "route-section-breaks", (event) => {
-          const feature = event.features && event.features[0];
-          const sectionNumber = feature && feature.properties
-            ? Number(feature.properties.segmentNumber)
-            : NaN;
-
-          if (!Number.isFinite(sectionNumber)) {
-            closeRouteSectionBreakPopup();
-            return;
-          }
-
-          showRouteSectionBreakPopup(event.lngLat, sectionNumber);
-        });
-
-        map.on("click", "route-section-breaks", (event) => {
-          const feature = event.features && event.features[0];
-          const sectionNumber = feature && feature.properties
-            ? Number(feature.properties.segmentNumber)
-            : NaN;
-
-          if (!Number.isFinite(sectionNumber)) {
-            return;
-          }
-
-          showRouteSectionBreakPopup(event.lngLat, sectionNumber);
         });
       }
 
