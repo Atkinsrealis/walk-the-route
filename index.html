@@ -24,12 +24,20 @@
 
     <style>
       :root {
-        --floating-button-size: 56px;
-        --floating-button-gap: 14px;
-        --floating-button-right: 16px;
-        --route-card-bottom-offset: calc(96px + env(safe-area-inset-bottom));
+        --floating-button-size: 50px;
+        --floating-button-gap: 12px;
+        --floating-button-right: 14px;
+        --route-card-bottom-offset: calc(
+          clamp(104px, 13vh, 152px) + env(safe-area-inset-bottom)
+        );
+        --route-card-height-estimate: clamp(188px, 24vh, 236px);
         --floating-button-bottom: calc(
-          var(--route-card-bottom-offset) + 170px
+          var(--route-card-bottom-offset) +
+          var(--route-card-height-estimate) +
+          clamp(12px, 2vh, 20px)
+        );
+        --field-log-top: calc(
+          var(--status-stack-top) + 26px + env(safe-area-inset-top)
         );
         --route-switcher-top: 92px;
         --route-switcher-shell-height: 32px;
@@ -1157,8 +1165,8 @@
       .route-center-button svg,
       .follow-toggle-button svg,
       .share-location-button svg {
-        width: 26px;
-        height: 26px;
+        width: 22px;
+        height: 22px;
         display: block;
         fill: currentColor;
       }
@@ -1799,8 +1807,8 @@
       }
 
       .share-location-button svg {
-        width: 26px;
-        height: 26px;
+        width: 22px;
+        height: 22px;
         display: block;
         fill: currentColor;
       }
@@ -1907,11 +1915,16 @@
 
       @media (max-width: 480px) {
         :root {
-          --floating-button-gap: 12px;
+          --floating-button-size: 46px;
+          --floating-button-gap: 10px;
           --floating-button-right: 14px;
+          --route-card-height-estimate: clamp(178px, 28vh, 228px);
           --floating-button-bottom: calc(
-            var(--route-card-bottom-offset) + 150px
+            var(--route-card-bottom-offset) +
+            var(--route-card-height-estimate) +
+            clamp(10px, 2vh, 16px)
           );
+          --field-log-top: calc(122px + env(safe-area-inset-top));
           --status-stack-gap-below-switcher: 9px;
           --route-card-stack-height: 132px;
           --status-stack-gap: 2px;
@@ -2002,7 +2015,8 @@
       .field-log-button {
         position: fixed;
         left: 14px;
-        bottom: calc(94px + env(safe-area-inset-bottom));
+        top: var(--field-log-top);
+        bottom: auto;
         z-index: 45;
         border: none;
         border-radius: 999px;
@@ -2396,7 +2410,7 @@
         .route-card {
           left: 12px;
           right: 12px;
-          bottom: calc(92px + env(safe-area-inset-bottom));
+          bottom: calc(clamp(98px, 14vh, 140px) + env(safe-area-inset-bottom));
           padding: 11px 12px;
         }
 
@@ -2455,11 +2469,16 @@
 
       @media (max-width: 360px) {
         :root {
-          --floating-button-gap: 10px;
+          --floating-button-size: 44px;
+          --floating-button-gap: 9px;
           --floating-button-right: 12px;
+          --route-card-height-estimate: clamp(172px, 30vh, 214px);
           --floating-button-bottom: calc(
-            var(--route-card-bottom-offset) + 140px
+            var(--route-card-bottom-offset) +
+            var(--route-card-height-estimate) +
+            10px
           );
+          --field-log-top: calc(116px + env(safe-area-inset-top));
           --status-stack-gap-below-switcher: 10px;
           --route-card-stack-height: 142px;
           --status-stack-gap: 2px;
@@ -2470,7 +2489,7 @@
         }
         .route-card {
           gap: 10px;
-          bottom: calc(88px + env(safe-area-inset-bottom));
+          bottom: calc(clamp(94px, 14vh, 132px) + env(safe-area-inset-bottom));
         }
 
         .route-card__next-step-anchor {
