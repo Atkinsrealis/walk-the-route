@@ -3063,6 +3063,25 @@ localStorage.setItem(
             milestone: "Finish point",
           },
         ],
+
+        dogwalk: [
+          {
+            name: "Start section",
+            milestone: "First bend",
+          },
+          {
+            name: "Village stretch",
+            milestone: "Main street corner",
+          },
+          {
+            name: "Loop return",
+            milestone: "Approach finish",
+          },
+          {
+            name: "Final section",
+            milestone: "Finish point",
+          },
+        ],
       };
 
       function getSegmentTemplates() {
@@ -3999,6 +4018,11 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
   const coveredText = formatDistanceCompact(coveredMeters);
   const remainingText = formatDistanceCompact(remainingMeters);
+  const sectionRemainingMeters = Number(options.sectionRemainingMeters);
+
+  if (Number.isFinite(sectionRemainingMeters) && sectionRemainingMeters > 0) {
+    return `Covered ${coveredText} · Section left ${formatDistanceCompact(sectionRemainingMeters)}`;
+  }
 
   return `Covered ${coveredText} · Remaining ${remainingText}`;
 }
@@ -5001,7 +5025,12 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
 
           if (routeSummaryValue) {
-            routeSummaryValue.textContent = buildCoveredRemainingText(safeProgress);
+            routeSummaryValue.textContent = buildCoveredRemainingText(
+              safeProgress,
+              {
+                sectionRemainingMeters: segmentInfo.distanceToMilestone,
+              },
+            );
           }
         } else {
           progressValue.textContent = `${Math.round(safeProgress)}%`;
@@ -5533,7 +5562,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             layout: {
               "text-field": [
                 "concat",
-                "Section ",
+                "S",
                 ["to-string", ["get", "segmentNumber"]],
               ],
               "text-size": 11,
