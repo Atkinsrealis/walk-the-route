@@ -1,4 +1,4 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v33";
+const CACHE_NAME = "heathrow-perimeter-walk-v34";
 const MAPBOX_CACHE_NAME = "heathrow-mapbox-v1";
 
 const APP_ASSETS = [

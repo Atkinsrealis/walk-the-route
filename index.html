@@ -1810,8 +1810,8 @@
         width: 100%;
         box-sizing: border-box;
 
-        background: rgba(255, 255, 255, 0.08);
-        color: white;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+        color: #111;
 
         border: none;
         border-radius: 16px;
@@ -1819,6 +1819,27 @@
         font-weight: 800;
         padding: 14px;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      .help-primary::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background: linear-gradient(
+          120deg,
+          rgba(255, 255, 255, 0) 12%,
+          rgba(255, 255, 255, 0.5) 44%,
+          rgba(247, 97, 188, 0.35) 56%,
+          rgba(255, 255, 255, 0) 88%
+        );
+        transform: translateX(-140%);
+        animation: start-button-sheen 3.7s cubic-bezier(0.22, 0.61, 0.36, 1)
+          infinite;
       }
 
       .help-link {
@@ -1846,12 +1867,12 @@
 
       .help-primary:focus,
       .help-primary:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(216, 180, 254, 0.22);
+        outline: 3px solid rgba(255, 214, 46, 0.42);
+        outline-offset: 2px;
       }
 
       .help-primary:active {
-        background: rgba(255, 255, 255, 0.12);
+        transform: scale(0.99);
       }
 
       .share-location-button {
@@ -8091,7 +8112,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-07-5";
+          const SERVICE_WORKER_VERSION = "2026-07-07-6";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
