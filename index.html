@@ -706,6 +706,24 @@
         color: rgba(255, 255, 255, 0.84);
       }
 
+      #distance-value {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.25;
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      #distance-value .distance-value__metric {
+        color: #c4b5fd;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+      }
+
+      #distance-value .distance-value__context {
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 650;
+      }
+
       .route-card__summary {
         flex: 0 0 100%;
         width: 100%;
@@ -5011,7 +5029,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           const nextMilestoneDistance = formatDistance(
             segmentInfo.distanceToMilestone,
           );
-          distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
+          distanceValue.innerHTML = `<span class="distance-value__metric">${nextMilestoneDistance}</span> <span class="distance-value__context">to ${segmentInfo.nextMilestone}</span>`;
 
           if (routeSummaryValue) {
             routeSummaryValue.textContent = buildCoveredRemainingText(
