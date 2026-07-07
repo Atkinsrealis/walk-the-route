@@ -706,9 +706,10 @@
         color: rgba(255, 255, 255, 0.84);
       }
 
-      .route-card__source {
-        font-size: 11px;
-        opacity: 0.68;
+      #route-summary-value {
+        font-size: 14px;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.96);
       }
 
       .route-card__gps-status {
@@ -2387,9 +2388,6 @@
 <span id="distance-value">Finding your position</span>
 <span id="route-summary-value">Route distance calculating…</span>
 <span id="next-thing-value">Next: checking route…</span>
-<span class="route-card__source"
-  >Route source: Heathrow perimeter</span
->
         </div>
       </div>
 
@@ -4424,9 +4422,12 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         }
 
         if (!isHeathrowRoute()) {
-          nextThingValue.textContent = "Test route active";
+          nextThingValue.textContent = "";
+          nextThingValue.hidden = true;
           return;
         }
+
+        nextThingValue.hidden = false;
 
         const nextThing = getNextThingAhead(userPoint);
 
@@ -6550,14 +6551,6 @@ function runRouteIntroAfterLoad() {
 addRouteToMap(routeFeature);
 updateRouteSummaryDisplay();
 runRouteIntroAfterLoad();
-
-const routeSourceLabel = document.querySelector(
-  ".route-card__source",
-);
-
-            if (routeSourceLabel) {
-              routeSourceLabel.textContent = `Route source: ${getActiveRoute().sourceLabel}`;
-            }
           })
           .catch((error) => {
             console.error(error);
