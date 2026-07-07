@@ -2616,11 +2616,11 @@
 
       <div class="route-card__status-rail">
         <div class="route-card__summary">
-          <span id="route-summary-value">Route distance calculating…</span>
+          <span id="route-summary-value">Now: Waiting for start...</span>
         </div>
 
-        <div class="route-card__gps-status" id="route-gps-status" hidden>
-          <span id="route-gps-status-text"></span>
+        <div class="route-card__gps-status" id="route-gps-status">
+          <span id="route-gps-status-text">Next: Waiting for route data</span>
         </div>
       </div>
 
@@ -4266,7 +4266,7 @@ function updateRouteSummaryDisplay(options = {}) {
     : "—";
 
   if (routeSummaryValue) {
-    routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
+    routeSummaryValue.textContent = `Now: Route ${distanceText} · approx. ${timeText}`;
   }
 
   const canShowCardTime =
@@ -5174,6 +5174,11 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
+        const routeSummaryValue = document.getElementById("route-summary-value");
+        const routeGpsStatus = document.getElementById("route-gps-status");
+        const routeGpsStatusText = document.getElementById(
+          "route-gps-status-text",
+        );
         const routeEstimatedTimeValue = document.getElementById(
           "route-estimated-time-value",
         );
@@ -5188,6 +5193,39 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const routeTimeFinish = document.getElementById("route-time-finish");
         const routeCard = document.getElementById("route-card");
         const activeRoute = getActiveRoute();
+
+        const setNowNext = (nowText, nextText) => {
+          if (routeSummaryValue) {
+            routeSummaryValue.textContent = nowText;
+          }
+
+          if (routeGpsStatusText) {
+            routeGpsStatusText.textContent = nextText;
+          }
+
+          if (routeGpsStatus) {
+            routeGpsStatus.className = "route-card__gps-status";
+            routeGpsStatus.hidden = false;
+          }
+        };
+
+        const buildNextGuidanceText = (currentSegmentInfo) => {
+          if (Array.isArray(lastActualPosition) && isHeathrowRoute()) {
+            const nextThing = getNextThingAhead(lastActualPosition);
+            if (nextThing) {
+              const icon = nextThing.type === "hazard" ? "Hazard" : "Rest";
+              return `Next: ${icon} ${nextThing.label} in ${formatDistance(nextThing.distanceAhead)}`;
+            }
+
+            return "Next: Finish ahead";
+          }
+
+          if (currentSegmentInfo && currentSegmentInfo.nextMilestone) {
+            return `Next: ${currentSegmentInfo.nextMilestone}`;
+          }
+
+          return "Next: Continue on route";
+        };
 
         const setRouteTimeStrip = (travelMinutes = null) => {
           if (!routeTimeStrip || !routeTimeStart || !routeTimeFinish) {
@@ -5269,6 +5307,10 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           }
           updateRouteSummaryDisplay();
           setRouteTimeStrip(null);
+          setNowNext(
+            "Now: Waiting for start...",
+            "Next: Waiting for route data",
+          );
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           routeBadge.className = "route-card__badge preparing";
           return;
@@ -5315,6 +5357,12 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
           updateRouteSummaryDisplay({ updateTime: false });
           setRouteTimeStrip(null);
+          setNowNext(
+            lastStableSegmentInfo
+              ? `Now: Section ${lastStableSegmentInfo.currentSegmentNumber}`
+              : "Now: Locating GPS",
+            buildNextGuidanceText(lastStableSegmentInfo || segmentInfo),
+          );
 
           if (
             routeEstimatedTimeValue &&
@@ -5354,6 +5402,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           }
           updateRouteSummaryDisplay({ updateTime: false });
           setRouteTimeStrip(0);
+          setNowNext("Now: Route completed", "Next: Finish reached");
           routeBadge.textContent = "Completed";
           routeBadge.className = "route-card__badge completed";
           return;
@@ -5362,6 +5411,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
           progressValue.textContent = "Off route";
           distanceValue.textContent = "Move closer to the purple route";
+          setNowNext("Now: Off route", "Next: Move closer to the route");
           routeBadge.textContent = activeRoute.badgeFarOffRoute || "Far off route";
           routeBadge.className = "route-card__badge alert";
           return;
@@ -5386,6 +5436,10 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           );
 
           updateRouteSummaryDisplay({ updateTime: false });
+          setNowNext(
+            `Now: Section ${segmentInfo.currentSegmentNumber}`,
+            buildNextGuidanceText(segmentInfo),
+          );
         } else {
           progressValue.textContent = `${Math.round(safeProgress)}%`;
           distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
@@ -5399,6 +5453,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           setRouteTimeStrip(estimateWalkMinutes(getRouteDistanceMeters()));
 
           updateRouteSummaryDisplay({ updateTime: false });
+          setNowNext("Now: On route", buildNextGuidanceText(segmentInfo));
         }
 
         if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
@@ -5436,7 +5491,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           now - lastWarningUpdate >= WARNING_UPDATE_INTERVAL ||
           nextLevel !== lastWarningState
         ) {
-          showWarning(nextState, nextLevel);
           if (nextLevel !== lastWarningState) {
             logFieldEvent("warning-state-change", {
               level: nextLevel,
