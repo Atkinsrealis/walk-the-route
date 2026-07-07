@@ -647,7 +647,10 @@
       }
 
       .ahead-sheet {
-        width: min(352px, calc(100vw - 44px));
+        width: min(
+          352px,
+          calc(100vw - (var(--route-card-side-offset) * 2) - 28px)
+        );
         padding: 13px 14px 12px;
         border-radius: 12px;
         border: 1px solid rgba(196, 181, 253, 0.32);
@@ -677,7 +680,7 @@
       }
 
       .ahead-sheet__label {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
@@ -685,7 +688,7 @@
       }
 
       .ahead-sheet__value {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 600;
         color: rgba(248, 250, 252, 0.94);
         line-height: 1.28;
@@ -701,7 +704,7 @@
       .ahead-sheet__toggle {
         all: unset;
         justify-self: start;
-        font-size: 11px;
+        font-size: 13px;
         font-weight: 800;
         letter-spacing: 0.03em;
         color: #ddd6fe;
@@ -726,7 +729,7 @@
       }
 
       .ahead-sheet__group-label {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.05em;
         text-transform: uppercase;
@@ -740,7 +743,7 @@
 
       .ahead-sheet__item,
       .ahead-sheet__empty {
-        font-size: 13px;
+        font-size: 14px;
         line-height: 1.3;
       }
 
