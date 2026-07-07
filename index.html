@@ -711,10 +711,6 @@
         opacity: 0.68;
       }
 
-      .route-card.route-card--compact-meta #route-summary-value {
-        display: none;
-      }
-
       .route-card__gps-status {
         flex: 0 0 100%;
         width: 100%;
@@ -805,52 +801,6 @@
       .route-card.is-complete::before {
         opacity: 1;
         animation: route-card-border-spin 6s linear infinite;
-      }
-
-      .route-start-chip {
-        position: fixed;
-        right: var(--floating-button-right);
-        bottom: calc(
-          var(--floating-button-bottom) + (var(--floating-button-size) * 4) +
-            (var(--floating-button-gap) * 4)
-        );
-        z-index: 44;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 9px 12px;
-        border-radius: 999px;
-        border: 1px solid rgba(125, 211, 252, 0.42);
-        background: linear-gradient(
-          160deg,
-          rgba(8, 145, 178, 0.45) 0%,
-          rgba(15, 23, 42, 0.86) 78%
-        );
-        color: #d8f5ff;
-        font-size: 14px;
-        font-weight: 800;
-        letter-spacing: 0.02em;
-        box-shadow:
-          0 10px 24px rgba(2, 6, 23, 0.4),
-          inset 0 1px 0 rgba(255, 255, 255, 0.08);
-      }
-
-      .route-start-chip[hidden] {
-        display: none;
-      }
-
-      .route-start-chip__icon {
-        width: 20px;
-        height: 20px;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        line-height: 1;
-        color: #082f49;
-        background: #7dd3fc;
-        box-shadow: 0 0 0 1px rgba(14, 116, 144, 0.45);
       }
 
       .route-complete-banner {
@@ -2552,11 +2502,6 @@
       </svg>
     </button>
 
-    <div class="route-start-chip" id="route-start-chip" hidden>
-      <span class="route-start-chip__icon" aria-hidden="true">▶</span>
-      <span>Start route</span>
-    </div>
-
     <div id="map"></div>
     <div id="fallback-container" class="fallback-container" hidden>
       <div class="fallback-content">
@@ -3393,7 +3338,6 @@ localStorage.setItem(
       let routeStatusToastByState = {};
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
-      let routeStartMomentTimeout = null;
       let routeSectionBreakPopup = null;
 
       const hazards = [
@@ -4693,41 +4637,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         }, 2500);
       }
 
-      function setRouteStartMomentState(started) {
-        const startChip = document.getElementById("route-start-chip");
-        if (!startChip) {
-          return;
-        }
-
-        startChip.hidden = !started;
-      }
-
-      function showRouteStartMoment() {
-        if (routeStartMomentTimeout) {
-          clearTimeout(routeStartMomentTimeout);
-          routeStartMomentTimeout = null;
-        }
-
-        const routeCard = document.getElementById("route-card");
-        const completeBanner = document.getElementById("route-complete-banner");
-
-        if (routeCard) {
-          routeCard.classList.remove("is-complete");
-        }
-
-        if (completeBanner) {
-          completeBanner.hidden = true;
-        }
-
-        setRouteStartMomentState(true);
-        showToast("Route started");
-
-        routeStartMomentTimeout = setTimeout(() => {
-          setRouteStartMomentState(false);
-          routeStartMomentTimeout = null;
-        }, 5500);
-      }
-
       function closeRouteSectionBreakPopup() {
         if (routeSectionBreakPopup) {
           routeSectionBreakPopup.remove();
@@ -4993,14 +4902,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
           if (completeBanner) {
             completeBanner.hidden = !completed;
-          }
-
-          if (completed) {
-            if (routeStartMomentTimeout) {
-              clearTimeout(routeStartMomentTimeout);
-              routeStartMomentTimeout = null;
-            }
-            setRouteStartMomentState(false);
           }
 
           if (completed && !hasRouteCompletionCelebrated) {
@@ -5459,7 +5360,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const segments = getRouteSegments();
         const features = [];
 
-        for (let i = 1; i < segments.length; i += 1) {
+        for (let i = 0; i < segments.length; i += 1) {
           const boundaryIndex = segments[i].startIdx;
           const boundaryCoordinate = routeCoordinates[boundaryIndex];
 
@@ -5622,6 +5523,29 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
               "circle-stroke-width": 1,
               "circle-stroke-color": "#7c3aed",
               "circle-opacity": 0.95,
+            },
+          });
+
+          map.addLayer({
+            id: "route-section-break-labels",
+            type: "symbol",
+            source: "route-section-breaks",
+            layout: {
+              "text-field": [
+                "concat",
+                "Section ",
+                ["to-string", ["get", "segmentNumber"]],
+              ],
+              "text-size": 11,
+              "text-offset": [0, -1.25],
+              "text-anchor": "bottom",
+              "text-allow-overlap": true,
+            },
+            paint: {
+              "text-color": "#f3e8ff",
+              "text-halo-color": "#0b1223",
+              "text-halo-width": 1.2,
+              "text-opacity": 0.92,
             },
           });
 
@@ -6272,12 +6196,6 @@ function runRouteIntroAfterLoad() {
         );
 
         if (nextMode === APP_MODE_PRE_EVENT) {
-          if (routeStartMomentTimeout) {
-            clearTimeout(routeStartMomentTimeout);
-            routeStartMomentTimeout = null;
-          }
-
-          setRouteStartMomentState(false);
           closeRouteSectionBreakPopup();
           isRouteCardMetaCompact = false;
           document
@@ -6559,7 +6477,6 @@ function runRouteIntroAfterLoad() {
 
         setAppMode(APP_MODE_ACTIVE_WALK);
         hasRouteCompletionCelebrated = false;
-        showRouteStartMoment();
         beginFieldLogSessionForWalk();
         logWalkStartIfNeeded();
         showFieldLogFirstRunIfNeeded();
