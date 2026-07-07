@@ -631,7 +631,7 @@
           0 0 84px rgba(168, 85, 247, 0.08),
           inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-        overflow: hidden;
+        overflow: visible;
         isolation: isolate;
       }
 
@@ -647,8 +647,8 @@
       }
 
       .ahead-sheet {
-        width: min(320px, calc(100vw - 56px));
-        padding: 12px 12px 11px;
+        width: min(352px, calc(100vw - 44px));
+        padding: 13px 14px 12px;
         border-radius: 12px;
         border: 1px solid rgba(196, 181, 253, 0.32);
         background: linear-gradient(
@@ -658,7 +658,8 @@
         );
         box-shadow: 0 10px 22px rgba(2, 6, 23, 0.42);
         display: none;
-        gap: 10px;
+        gap: 11px;
+        z-index: 6;
       }
 
       .ahead-sheet.open {
@@ -710,7 +711,7 @@
       .ahead-sheet__details {
         display: none;
         gap: 8px;
-        max-height: 168px;
+        max-height: 244px;
         overflow-y: auto;
         padding-right: 2px;
       }
@@ -739,7 +740,7 @@
 
       .ahead-sheet__item,
       .ahead-sheet__empty {
-        font-size: 12px;
+        font-size: 13px;
         line-height: 1.3;
       }
 
