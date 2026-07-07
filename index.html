@@ -742,6 +742,17 @@
         color: rgba(255, 255, 255, 0.96);
       }
 
+      #route-summary-value .distance-value__metric {
+        color: #c4b5fd;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+      }
+
+      #route-summary-value .distance-value__context {
+        color: rgba(255, 255, 255, 0.92);
+        font-weight: 650;
+      }
+
       .route-card__gps-status {
         flex: 0 0 100%;
         width: 100%;
@@ -4027,7 +4038,7 @@ function updateRouteSummaryDisplay() {
 function buildCoveredRemainingText(progressPercent, options = {}) {
   const totalDistance = getRouteDistanceMeters();
   if (!Number.isFinite(totalDistance) || totalDistance <= 0) {
-    return "Route distance unavailable";
+    return '<span class="distance-value__context">Route distance unavailable</span>';
   }
 
   const safeProgress = Math.min(100, Math.max(0, progressPercent || 0));
@@ -4050,11 +4061,14 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
   const remainingText = formatDistanceCompact(remainingMeters);
   const sectionRemainingMeters = Number(options.sectionRemainingMeters);
 
+  const metric = (value) => `<span class="distance-value__metric">${value}</span>`;
+  const context = (value) => `<span class="distance-value__context">${value}</span>`;
+
   if (Number.isFinite(sectionRemainingMeters) && sectionRemainingMeters > 0) {
-    return `Covered ${coveredText} · Section left ${formatDistanceCompact(sectionRemainingMeters)}`;
+    return `${context("Covered")} ${metric(coveredText)} ${context("· Section left")} ${metric(formatDistanceCompact(sectionRemainingMeters))}`;
   }
 
-  return `Covered ${coveredText} · Remaining ${remainingText}`;
+  return `${context("Covered")} ${metric(coveredText)} ${context("· Remaining")} ${metric(remainingText)}`;
 }
 
       function getClosestPointOnRoute(userPoint) {
@@ -4994,7 +5008,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           routeBadge.className = "route-card__badge preparing";
 
           if (routeSummaryValue) {
-            routeSummaryValue.textContent = buildCoveredRemainingText(progress);
+            routeSummaryValue.innerHTML = buildCoveredRemainingText(progress);
           }
           return;
         }
@@ -5009,7 +5023,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           progressValue.textContent = "Route completed";
           distanceValue.textContent = "You reached the finish";
           if (routeSummaryValue) {
-            routeSummaryValue.textContent = buildCoveredRemainingText(100);
+            routeSummaryValue.innerHTML = buildCoveredRemainingText(100);
           }
           routeBadge.textContent = "Completed";
           routeBadge.className = "route-card__badge completed";
@@ -5033,7 +5047,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           distanceValue.innerHTML = `<span class="distance-value__metric">${nextMilestoneDistance}</span> <span class="distance-value__context">to ${segmentInfo.nextMilestone}</span>`;
 
           if (routeSummaryValue) {
-            routeSummaryValue.textContent = buildCoveredRemainingText(
+            routeSummaryValue.innerHTML = buildCoveredRemainingText(
               safeProgress,
               {
                 sectionRemainingMeters: segmentInfo.distanceToMilestone,
@@ -5045,7 +5059,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
 
           if (routeSummaryValue) {
-            routeSummaryValue.textContent = buildCoveredRemainingText(safeProgress);
+            routeSummaryValue.innerHTML = buildCoveredRemainingText(safeProgress);
           }
         }
 
