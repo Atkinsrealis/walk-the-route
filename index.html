@@ -640,6 +640,49 @@
         right: 14px;
         bottom: 12px;
         z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+
+      .ahead-sheet {
+        width: min(260px, calc(100vw - 84px));
+        padding: 9px 10px;
+        border-radius: 12px;
+        border: 1px solid rgba(196, 181, 253, 0.32);
+        background: linear-gradient(
+          170deg,
+          rgba(20, 18, 42, 0.96) 0%,
+          rgba(10, 14, 31, 0.97) 100%
+        );
+        box-shadow: 0 10px 22px rgba(2, 6, 23, 0.42);
+        display: none;
+        gap: 7px;
+      }
+
+      .ahead-sheet.open {
+        display: grid;
+      }
+
+      .ahead-sheet__row {
+        display: grid;
+        gap: 2px;
+      }
+
+      .ahead-sheet__label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(226, 232, 240, 0.64);
+      }
+
+      .ahead-sheet__value {
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(248, 250, 252, 0.94);
+        line-height: 1.28;
       }
 
       @property --route-border-angle {
@@ -2789,14 +2832,35 @@
       </div>
 
       <div class="route-card__next-step-anchor">
+        <div class="ahead-sheet" id="ahead-sheet" aria-hidden="true">
+          <div class="ahead-sheet__row">
+            <span class="ahead-sheet__label">Next checkpoint</span>
+            <span class="ahead-sheet__value" id="ahead-checkpoint-value"
+              >Waiting for route data</span
+            >
+          </div>
+          <div class="ahead-sheet__row">
+            <span class="ahead-sheet__label">Nearest hazard</span>
+            <span class="ahead-sheet__value" id="ahead-hazard-value"
+              >No hazard flagged ahead</span
+            >
+          </div>
+          <div class="ahead-sheet__row">
+            <span class="ahead-sheet__label">Nearest rest</span>
+            <span class="ahead-sheet__value" id="ahead-rest-value"
+              >No rest stop ahead</span
+            >
+          </div>
+        </div>
+
         <button
           class="next-step-button"
           id="next-step-button"
-          aria-label="Show next step"
-          title="Next step"
+          aria-label="Show what is ahead"
+          title="What is ahead"
         >
           <span class="next-step-button__text" id="next-step-button-text"
-            >Next step</span
+            >Ahead</span
           >
         </button>
       </div>
@@ -3764,6 +3828,64 @@ localStorage.setItem(
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
       let nextStepGuidance = null;
+      let aheadSheetOpen = false;
+      let lastAheadUserPoint = null;
+      let lastAheadSegmentInfo = null;
+
+      function setAheadSheet(open) {
+        const aheadSheet = document.getElementById("ahead-sheet");
+
+        if (!aheadSheet) {
+          aheadSheetOpen = false;
+          return;
+        }
+
+        aheadSheetOpen = Boolean(open);
+        aheadSheet.classList.toggle("open", aheadSheetOpen);
+        aheadSheet.setAttribute("aria-hidden", aheadSheetOpen ? "false" : "true");
+      }
+
+      function updateAheadSheet(userPoint, segmentInfo = null) {
+        const checkpointValue = document.getElementById("ahead-checkpoint-value");
+        const hazardValue = document.getElementById("ahead-hazard-value");
+        const restValue = document.getElementById("ahead-rest-value");
+
+        if (!checkpointValue || !hazardValue || !restValue) {
+          return;
+        }
+
+        lastAheadUserPoint = Array.isArray(userPoint) ? [...userPoint] : null;
+        lastAheadSegmentInfo = segmentInfo || null;
+
+        if (segmentInfo && segmentInfo.nextMilestone) {
+          const distanceText = Number.isFinite(segmentInfo.distanceToMilestone)
+            ? ` (${formatDistance(segmentInfo.distanceToMilestone)})`
+            : "";
+          checkpointValue.textContent = `${segmentInfo.nextMilestone}${distanceText}`;
+        } else {
+          checkpointValue.textContent = "Waiting for route data";
+        }
+
+        if (!Array.isArray(userPoint) || !isHeathrowRoute()) {
+          hazardValue.textContent = "Not available on this route";
+          restValue.textContent = "Not available on this route";
+          return;
+        }
+
+        const hazardAhead = getNextHazardAhead(userPoint);
+        if (hazardAhead) {
+          hazardValue.textContent = `${hazardAhead.type} in ${formatDistance(hazardAhead.distanceAhead)}`;
+        } else {
+          hazardValue.textContent = "No hazard flagged ahead";
+        }
+
+        const restAhead = getNextRestAhead(userPoint);
+        if (restAhead) {
+          restValue.textContent = `${restAhead.label} in ${formatDistance(restAhead.distanceAhead)}`;
+        } else {
+          restValue.textContent = "No rest stop ahead";
+        }
+      }
 
       const hazards = [
         {
@@ -4941,9 +5063,8 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           const nextThing = getNextThingAhead(userPoint);
 
           if (nextThing) {
-            const icon = nextThing.type === "hazard" ? "Hazard" : "Rest";
             const distance = formatDistance(nextThing.distanceAhead);
-            nextStepButtonText.textContent = `${icon} ${distance}`;
+            nextStepButtonText.textContent = "Ahead";
             nextStepGuidance = {
               kind: nextThing.type,
               label: nextThing.label,
@@ -4954,7 +5075,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         }
 
         if (segmentInfo && segmentInfo.nextMilestone) {
-          nextStepButtonText.textContent = "Next point";
+          nextStepButtonText.textContent = "Ahead";
           nextStepGuidance = {
             kind: "milestone",
             label: segmentInfo.nextMilestone,
@@ -4965,7 +5086,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           return;
         }
 
-        nextStepButtonText.textContent = "Next step";
+        nextStepButtonText.textContent = "Ahead";
       }
 
       function showWarning(message, level = "") {
@@ -7064,6 +7185,7 @@ function runRouteIntroAfterLoad() {
               fallbackSegmentInfo,
             );
             updateNextStepPill(userPoint, displaySegmentInfo || fallbackSegmentInfo);
+            updateAheadSheet(userPoint, displaySegmentInfo || fallbackSegmentInfo);
 
             updateWarningState(displayDistanceToRoute, gpsState);
             notifyRouteState(displayDistanceToRoute, gpsState);
@@ -7358,26 +7480,26 @@ updateRouteSummaryDisplay();
 
       if (nextStepButton) {
         nextStepButton.addEventListener("click", () => {
-          if (nextStepGuidance) {
-            if (nextStepGuidance.kind === "hazard" || nextStepGuidance.kind === "rest") {
-              const typeLabel = nextStepGuidance.kind === "hazard" ? "Hazard" : "Rest";
-              const distanceText = nextStepGuidance.distance
-                ? ` in ${nextStepGuidance.distance}`
-                : "";
-              showToast(`Next ${typeLabel}: ${nextStepGuidance.label}${distanceText}`);
-            } else if (nextStepGuidance.kind === "milestone") {
-              const distanceText = nextStepGuidance.distance
-                ? ` (${nextStepGuidance.distance})`
-                : "";
-              showToast(`Next point: ${nextStepGuidance.label}${distanceText}`);
-            }
-          } else {
-            showToast("No upcoming step yet");
+          if (lastAheadUserPoint || lastAheadSegmentInfo) {
+            updateAheadSheet(lastAheadUserPoint, lastAheadSegmentInfo);
           }
 
-          setHelpPanel(true);
+          setAheadSheet(!aheadSheetOpen);
         });
       }
+
+      document.addEventListener("click", (event) => {
+        if (!aheadSheetOpen) {
+          return;
+        }
+
+        const anchor = document.querySelector(".route-card__next-step-anchor");
+        if (anchor && anchor.contains(event.target)) {
+          return;
+        }
+
+        setAheadSheet(false);
+      });
 
       const fieldLogButton = document.getElementById("field-log-button");
       const fieldLogCloseButton = document.getElementById("field-log-close-button");
@@ -7512,6 +7634,10 @@ updateRouteSummaryDisplay();
 
       function setHelpPanel(open) {
         showHelp = open;
+
+        if (showHelp) {
+          setAheadSheet(false);
+        }
 
         helpButton.classList.toggle("on", showHelp);
         helpPanel.classList.toggle("open", showHelp);
