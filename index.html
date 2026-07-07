@@ -4365,7 +4365,11 @@ function updateRouteSummaryDisplay(options = {}) {
     : "—";
 
   if (routeSummaryValue) {
-    routeSummaryValue.textContent = `Now: Route ${distanceText} · approx. ${timeText}`;
+    if (gpsConfidenceState !== GPS_CONFIDENCE_LOCKED) {
+      routeSummaryValue.textContent = "Now: Waiting for route data";
+    } else {
+      routeSummaryValue.textContent = `Now: Route ${distanceText} · approx. ${timeText}`;
+    }
   }
 
   const canShowCardTime =
