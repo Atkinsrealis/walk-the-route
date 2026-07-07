@@ -28,6 +28,7 @@
         --floating-button-gap: 14px;
         --floating-button-right: 16px;
         --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
+        --route-card-bottom-offset: calc(96px + env(safe-area-inset-bottom));
         --route-switcher-top: 92px;
         --route-switcher-shell-height: 32px;
         --status-stack-gap-below-switcher: 8px;
@@ -357,7 +358,6 @@
       }
 
       body.mode-pre-event .topbar,
-      body.mode-pre-event .route-test-switcher,
       body.mode-pre-event .warning,
       body.mode-pre-event .route-card,
       body.mode-pre-event .next-step-button,
@@ -485,14 +485,11 @@
         transform: translateY(15px);
       }
       .route-test-switcher {
-        position: fixed;
-        top: calc(var(--route-switcher-top) + env(safe-area-inset-top));
-        left: 16px;
-        z-index: 21;
-
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        margin-top: 18px;
+        max-width: 100%;
 
         padding: 3px;
         border-radius: 999px;
@@ -502,6 +499,10 @@
 
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+      }
+
+      body.mode-active-walk .route-test-switcher {
+        display: none;
       }
 
       .route-test-switcher a {
@@ -529,12 +530,7 @@
 
       .warning {
         position: fixed;
-        top: calc(
-          var(--status-stack-top) +
-            var(--route-card-stack-height) +
-            var(--status-stack-gap) +
-            env(safe-area-inset-top)
-        );
+        top: calc(108px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         color: white;
@@ -588,7 +584,8 @@
 
       .route-card {
         position: fixed;
-        top: calc(var(--status-stack-top) + env(safe-area-inset-top));
+        top: auto;
+        bottom: var(--route-card-bottom-offset);
         left: 16px;
         right: 16px;
         z-index: 19;
@@ -2382,6 +2379,7 @@
         .warning {
           left: 12px;
           right: 12px;
+          top: calc(98px + env(safe-area-inset-top));
           padding: 11px 12px;
           font-size: 13px;
         }
@@ -2389,6 +2387,7 @@
         .route-card {
           left: 12px;
           right: 12px;
+          bottom: calc(92px + env(safe-area-inset-bottom));
           padding: 11px 12px;
         }
 
@@ -2459,6 +2458,7 @@
         }
         .route-card {
           gap: 10px;
+          bottom: calc(88px + env(safe-area-inset-bottom));
         }
 
         .route-card__next-step-anchor {
@@ -2567,16 +2567,26 @@
             Participants will set off in small groups, following a designated landside route around the airport perimeter.
           </p>
           <p id="landing-copy-middle">
-            The full route is approximately 10 miles and is expected to take between 3 and 4 hours, with shorter options available for those who prefer a different level of participation.
+            The route follows marked roads and paths around airport operations, so stay alert and follow event safety guidance at all times.
           </p>
           <p id="landing-copy-end">
-            This map provides guided navigation, highlighting key checkpoints and potential hazards to help you follow the route with confidence.
+            Use the app during the walk to track progress, view guidance, and share your location when needed.
           </p>
         </div>
 
         <div class="landing-screen__meta">
-          <p id="landing-location-value">Heathrow Perimeter Walk</p>
+          <p id="landing-location-value">Loading checkpoint location...</p>
           <p id="landing-distance-time-value">Route distance calculating…</p>
+        </div>
+
+        <div class="route-test-switcher" aria-label="Test route switcher">
+          <a href="index.html" id="route-link-heathrow">Heathrow</a>
+          <a href="index.html?route=bledlow" id="route-link-bledlow"
+            >Bledlow test</a
+          >
+          <a href="index.html?route=dogwalk" id="route-link-dogwalk"
+            >Dog walk</a
+          >
         </div>
 
         <div class="landing-share-hint" aria-label="Share button explanation">
@@ -2640,16 +2650,6 @@
 
       <h1 id="app-title">Perimeter Walk</h1>
       <p id="app-subtitle">Infrastructure Charity Event</p>
-    </div>
-
-    <div class="route-test-switcher" aria-label="Test route switcher">
-      <a href="index.html" id="route-link-heathrow">Heathrow</a>
-      <a href="index.html?route=bledlow" id="route-link-bledlow"
-        >Bledlow test</a
-      >
-      <a href="index.html?route=dogwalk" id="route-link-dogwalk"
-        >Dog walk</a
-      >
     </div>
 
     <div class="warning" id="warning">You may be off the official route</div>
