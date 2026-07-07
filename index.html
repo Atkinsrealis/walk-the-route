@@ -3987,7 +3987,7 @@ function formatRouteDistance(distanceMeters) {
     return `${(distanceMeters / 1000).toFixed(1)} km`;
   }
 
-  return `${Math.round(distanceMeters)} m`;
+  return `${Math.round(distanceMeters)}m`;
 }
 
 function formatEstimatedWalkTime(distanceMeters) {
@@ -4778,7 +4778,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         if (distance >= 1000) {
           return `${(distance / 1000).toFixed(1)} km`;
         }
-        return `${Math.round(distance)} m`;
+        return `${Math.round(distance)}m`;
       }
 
       function getRouteProgress(userPoint) {
