@@ -4149,7 +4149,8 @@ function formatEstimatedWalkTime(distanceMeters) {
   return `${walkHours} hr ${walkMinutes} min walk`;
 }
 
-function updateRouteSummaryDisplay() {
+function updateRouteSummaryDisplay(options = {}) {
+  const { updateTime = true } = options;
   const routeSummaryValue = document.getElementById("route-summary-value");
   const routeEstimatedTimeValue = document.getElementById(
     "route-estimated-time-value",
@@ -4172,8 +4173,9 @@ function updateRouteSummaryDisplay() {
     routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
   }
 
-  if (routeEstimatedTimeValue) {
-    routeEstimatedTimeValue.textContent = `~${timeTextCompact}`;
+  if (routeEstimatedTimeValue && updateTime) {
+    routeEstimatedTimeValue.textContent =
+      timeTextCompact === "—" ? "—" : `~${timeTextCompact}`;
   }
 
   if (landingDistanceTimeValue) {
@@ -5072,7 +5074,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
-        const routeSummaryValue = document.getElementById("route-summary-value");
         const routeEstimatedTimeValue = document.getElementById(
           "route-estimated-time-value",
         );
@@ -5183,8 +5184,16 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
           routeBadge.className = "route-card__badge preparing";
 
-          if (routeSummaryValue) {
-            routeSummaryValue.innerHTML = buildCoveredRemainingText(progress);
+          updateRouteSummaryDisplay({ updateTime: false });
+
+          if (
+            routeEstimatedTimeValue &&
+            lastStableSegmentInfo &&
+            Number.isFinite(lastStableSegmentInfo.distanceToMilestone)
+          ) {
+            routeEstimatedTimeValue.textContent = `~${formatEstimatedWalkTime(
+              Math.max(0, lastStableSegmentInfo.distanceToMilestone),
+            ).replace(/ walk$/, "")}`;
           }
           return;
         }
@@ -5213,9 +5222,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           if (routeEstimatedTimeValue) {
             routeEstimatedTimeValue.textContent = "~0 min";
           }
-          if (routeSummaryValue) {
-            routeSummaryValue.innerHTML = buildCoveredRemainingText(100);
-          }
+          updateRouteSummaryDisplay({ updateTime: false });
           routeBadge.textContent = "Completed";
           routeBadge.className = "route-card__badge completed";
           return;
@@ -5239,18 +5246,11 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
           if (routeEstimatedTimeValue) {
             routeEstimatedTimeValue.textContent = `~${formatEstimatedWalkTime(
-              getRouteDistanceMeters(),
+              Math.max(0, segmentInfo.distanceToMilestone),
             ).replace(/ walk$/, "")}`;
           }
 
-          if (routeSummaryValue) {
-            routeSummaryValue.innerHTML = buildCoveredRemainingText(
-              safeProgress,
-              {
-                sectionRemainingMeters: segmentInfo.distanceToMilestone,
-              },
-            );
-          }
+          updateRouteSummaryDisplay({ updateTime: false });
         } else {
           progressValue.textContent = `${Math.round(safeProgress)}%`;
           distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
@@ -5261,9 +5261,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             ).replace(/ walk$/, "")}`;
           }
 
-          if (routeSummaryValue) {
-            routeSummaryValue.innerHTML = buildCoveredRemainingText(safeProgress);
-          }
+          updateRouteSummaryDisplay({ updateTime: false });
         }
 
         if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
