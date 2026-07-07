@@ -1810,7 +1810,7 @@
         width: 100%;
         box-sizing: border-box;
 
-        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+        background: linear-gradient(180deg, #ff8b2d 0%, #f76b1c 100%);
         color: #111;
 
         border: none;
@@ -1823,7 +1823,7 @@
         position: relative;
         overflow: hidden;
         isolation: isolate;
-        box-shadow: 0 6px 18px rgba(250, 204, 21, 0.25);
+        box-shadow: 0 6px 18px rgba(247, 107, 28, 0.25);
       }
 
       .help-primary::after {
@@ -1869,7 +1869,7 @@
 
       .help-primary:focus,
       .help-primary:focus-visible {
-        outline: 3px solid rgba(255, 214, 46, 0.42);
+        outline: 3px solid rgba(247, 107, 28, 0.42);
         outline-offset: 2px;
       }
 
@@ -8114,7 +8114,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-07-7";
+          const SERVICE_WORKER_VERSION = "2026-07-07-8";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
