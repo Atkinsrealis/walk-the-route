@@ -495,9 +495,9 @@
         display: block;
 
         width: auto;
-        height: 18px;
+        height: 20px;
 
-        max-width: 106px;
+        max-width: 117px;
         object-fit: contain;
       }
 
@@ -2557,8 +2557,8 @@
         }
 
         .topbar__logo {
-          height: 17px;
-          max-width: 99px;
+          height: 19px;
+          max-width: 109px;
         }
 
         .topbar h1 {
@@ -5678,14 +5678,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         }
 
         const progress = (bestProgress / totalLength) * 100;
-        const distanceToStart = haversineDistanceMeters(
-          userPoint,
-          routeCoordinates[0],
-        );
-
-        if (distanceToStart > START_APPROACH_DISTANCE) {
-          return 0;
-        }
 
         if (progress >= 99 && bestDistance > FINISH_APPROACH_DISTANCE) {
           return 99;
