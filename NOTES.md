@@ -8,6 +8,7 @@ Add anything here as it comes up — no need to be formal.
 ## 💡 Ideas & Backlog (not yet built)
 
 ### Predictive ETA with rest-break buffer
+
 Make the **Finish** time account for planned stops (designated rest-break areas,
 traffic waits) so participants get a realistic "with breaks" arrival time from
 the **start**, not just a reactive ETA.
