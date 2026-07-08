@@ -3562,6 +3562,11 @@ localStorage.setItem(
       const MIN_LOCATING_ANIMATION_MS = 3000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
+      // Automatic route-jump detection: flag GPS fixes that imply an
+      // impossible walking speed between consecutive positions.
+      const AUTO_ROUTE_JUMP_SPEED_MPS = 8; // ~28.8 km/h - faster than any walker/jogger
+      const AUTO_ROUTE_JUMP_MIN_METERS = 25; // ignore small GPS jitter
+      const AUTO_ROUTE_JUMP_COOLDOWN_MS = 8000; // avoid spamming during sustained drift
       const SURFACE_TOOLTIP_HIDE_ZOOM = 16.8;
       const COMPASS_SHOW_BEARING = 4;
       const COMPASS_HIDE_BEARING = 0.5;
@@ -3928,6 +3933,9 @@ localStorage.setItem(
       let lastPositionTime = 0;
       let lastProcessedPosition = null;
       let lastProcessedPositionTime = 0;
+      let lastJumpSamplePosition = null;
+      let lastJumpSampleTime = 0;
+      let lastAutoRouteJumpLoggedAt = 0;
       let isRouteCardMetaCompact = false;
       let lastLocationAccuracy = null;
       let lastDirectionHeading = null;
@@ -6264,6 +6272,38 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         lastPositionTime = now;
       }
 
+      function detectAutoRouteJump(userPoint, gpsState) {
+        const now = Date.now();
+
+        if (lastJumpSamplePosition && lastJumpSampleTime > 0) {
+          const jumpMeters = haversineDistanceMeters(
+            lastJumpSamplePosition,
+            userPoint,
+          );
+          const elapsedSeconds = (now - lastJumpSampleTime) / 1000;
+
+          if (elapsedSeconds > 0 && jumpMeters >= AUTO_ROUTE_JUMP_MIN_METERS) {
+            const speedMps = jumpMeters / elapsedSeconds;
+
+            if (
+              speedMps >= AUTO_ROUTE_JUMP_SPEED_MPS &&
+              now - lastAutoRouteJumpLoggedAt >= AUTO_ROUTE_JUMP_COOLDOWN_MS
+            ) {
+              lastAutoRouteJumpLoggedAt = now;
+              logFieldEvent("auto-route-jump", {
+                jumpMeters: Math.round(jumpMeters),
+                elapsedMs: Math.round(now - lastJumpSampleTime),
+                speedMps: Math.round(speedMps * 10) / 10,
+                gpsState,
+              });
+            }
+          }
+        }
+
+        lastJumpSamplePosition = userPoint;
+        lastJumpSampleTime = now;
+      }
+
       function shouldProcessLocationUpdate(lng, lat) {
         const now = Date.now();
 
@@ -6280,7 +6320,6 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             });
           }
         }
-
         if (!lastProcessedPosition) {
           lastProcessedPosition = [lng, lat];
           lastProcessedPositionTime = now;
@@ -7305,6 +7344,9 @@ function runRouteIntroAfterLoad() {
         lastStableSegmentInfo = null;
         lastWarningUpdate = 0;
         lastWarningState = "";
+        lastJumpSamplePosition = null;
+        lastJumpSampleTime = 0;
+        lastAutoRouteJumpLoggedAt = 0;
         clearForwardRouteHighlight();
 
         if (!("geolocation" in navigator)) {
@@ -7340,6 +7382,9 @@ function runRouteIntroAfterLoad() {
             }
 
             cachePosition(lng, lat);
+
+            // Automatically flag physically impossible GPS jumps (every raw fix)
+            detectAutoRouteJump([lng, lat], gpsState);
 
             if (!shouldProcessLocationUpdate(lng, lat)) {
               return;
@@ -8129,7 +8174,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-08-1";
+          const SERVICE_WORKER_VERSION = "2026-07-08-2";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
