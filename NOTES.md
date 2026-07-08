@@ -42,6 +42,38 @@ the **start**, not just a reactive ETA.
   mid-range, exact on approach) so small GPS jitter doesn't flicker.
 - **Live Finish ETA** — the Finish time now updates as `now + remaining`, so it
   responds when a walker stops or slows.
+- **Closer "return to my position" zoom** — tapping the position button now zooms
+  in tight (dogwalk 18, heathrow/bledlow 17.8); full-route view unchanged.
+
+---
+
+## 🏢 Commercialisation readiness (if it goes to a pro dev/design team)
+
+Honest assessment: the app is an **excellent, proven prototype** — the domain
+logic (GPS confidence, hysteresis, route snapping, field logging, offline PWA) is
+sound and the route config is cleanly separated. A competent team could follow
+it, **but they'd most likely refactor rather than build on it directly.** Treat
+the current codebase as a de-risked spec of exactly how the product should work.
+
+**Strengths to keep:**
+
+- Config-driven `ROUTES` object (data separated from logic).
+- Route data externalised as GeoJSON; sensible service-worker caching.
+- Clear, well-named functions.
+
+**Gaps a professional handover would need addressing (in priority order):**
+
+1. **Split the monolith** — `index.html` is ~8,000+ lines of inline HTML + CSS +
+   JS. Break into `index.html` + `styles.css` + modular JS files.
+2. **Add build tooling** — `package.json`, a bundler (Vite), ESLint + Prettier.
+3. **Introduce TypeScript** for the GPS/route logic (type safety on the maths).
+4. **Reduce global mutable state** — many module-level `let` vars; encapsulate.
+5. **Add tests** — unit tests around core maths (`getRouteProgress`,
+   `deriveGpsConfidenceState`); important for a safety-adjacent product.
+6. **Component structure** — UI is hand-managed via `getElementById`/`innerHTML`;
+   a team would likely rebuild in a framework (React/Vue/Svelte).
+7. **Secrets/config** — proper env management for the Mapbox token in production.
+8. **Docs** — `README.md` (setup/deploy) + `ARCHITECTURE.md`.
 
 ---
 
