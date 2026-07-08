@@ -4512,9 +4512,20 @@ localStorage.setItem(
           updateFollowButtonState();
         }
 
+        // Zoom in close on the walker's position. Use the route's live-follow
+        // zoom if it's higher, otherwise a tight default so "back to position"
+        // gives a clear, close-up view.
+        const activeRoute = getActiveRoute();
+        const positionZoom = Math.max(
+          17.8,
+          Number.isFinite(activeRoute.liveFollowZoom)
+            ? activeRoute.liveFollowZoom
+            : 0,
+        );
+
         map.easeTo({
           center: target,
-          zoom: 16,
+          zoom: positionZoom,
           duration: 700,
         });
       }
@@ -8197,7 +8208,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-08-6";
+          const SERVICE_WORKER_VERSION = "2026-07-08-7";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
