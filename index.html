@@ -5896,7 +5896,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
         if (!hasValidDistance || normalizedDistance === null) {
           setRouteCompletionState(false);
-          progressValue.textContent = "0%";
+          progressValue.textContent = "Locating…";
           distanceValue.textContent = "Waiting for start...";
           if (routeEstimatedTimeValue) {
             routeEstimatedTimeValue.textContent = "—";
@@ -5927,8 +5927,15 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             routeEstimatedTimeValue.textContent = "—";
           }
           
-          // Show overall route progress percentage even without GPS lock
-          progressValue.textContent = `${Math.round(Math.min(100, Math.max(0, progress || 0)))}%`;
+          // Top-left shows current section; ring/bar keep overall percentage
+          if (
+            lastStableSegmentInfo &&
+            Number.isFinite(lastStableDistanceToRoute)
+          ) {
+            progressValue.textContent = `Section ${lastStableSegmentInfo.currentSegmentNumber}`;
+          } else {
+            progressValue.textContent = "Locating…";
+          }
 
           if (gpsState === GPS_CONFIDENCE_WEAK) {
             distanceValue.textContent = "GPS weak - holding last confident position";
@@ -6017,10 +6024,9 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           return;
         }
 
-        // Display overall route progress percentage
-        progressValue.textContent = `${Math.round(safeProgress)}%`;
-        
+        // Ring and bar show overall route percentage; top-left shows section
         if (segmentInfo) {
+          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}`;
           const nextMilestoneDistance = formatDistance(
             segmentInfo.distanceToMilestone,
           );
@@ -6042,6 +6048,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             buildNextGuidanceText(segmentInfo),
           );
         } else {
+          progressValue.textContent = "On route";
           distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
 
           if (routeEstimatedTimeValue) {
@@ -8174,7 +8181,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-08-3";
+          const SERVICE_WORKER_VERSION = "2026-07-08-4";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
