@@ -5854,9 +5854,12 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             ? geolocationStartedAt
             : null;
           const hasTravel = Number.isFinite(travelMinutes) && travelMinutes > 0;
-          const finishTimestamp =
-            Number.isFinite(startTimestamp) && hasTravel
-              ? startTimestamp + travelMinutes * 60 * 1000
+          // Finish is a live ETA: current time + remaining walking minutes, so
+          // it naturally pushes back if the walker stops or slows down.
+          const finishTimestamp = hasTravel
+            ? Date.now() + travelMinutes * 60 * 1000
+            : travelMinutes === 0
+              ? Date.now()
               : null;
 
           routeTimeStart.textContent = formatClockAmPm(startTimestamp);
@@ -8194,7 +8197,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-08-5";
+          const SERVICE_WORKER_VERSION = "2026-07-08-6";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
