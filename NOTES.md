@@ -64,7 +64,17 @@ the current codebase as a de-risked spec of exactly how the product should work.
 **Gaps a professional handover would need addressing (in priority order):**
 
 1. **Split the monolith** — `index.html` is ~8,000+ lines of inline HTML + CSS +
-   JS. Break into `index.html` + `styles.css` + modular JS files.
+   JS. Two levels of effort here:
+   - **A — Quick & low-risk (a tidy-up for "another day"):** extract the inline
+     `<style>` → `styles.css` and `<script>` → `app.js`, then add both to the
+     service worker's `APP_ASSETS`. Mostly mechanical; one device test pass.
+   - **B — Full modularisation (bigger, riskier, do with the wider rebuild):**
+     break `app.js` into ES modules (config/gps/route-math/map/field-log/ui).
+     Real work because lots of shared global `let` state is read+written across
+     what would become module boundaries — needs untangling + tests first.
+   - **Decision (2026-07-08):** deferred. Too much risk mid-testing; priority is
+     a reliable app for the event. Revisit A on a calm day; leave B for a pro
+     rebuild alongside build tooling + tests.
 2. **Add build tooling** — `package.json`, a bundler (Vite), ESLint + Prettier.
 3. **Introduce TypeScript** for the GPS/route logic (type safety on the maths).
 4. **Reduce global mutable state** — many module-level `let` vars; encapsulate.
