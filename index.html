@@ -5609,10 +5609,23 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
       }
 
       function formatDistance(distance) {
+        if (!Number.isFinite(distance) || distance < 0) {
+          return "—";
+        }
         if (distance >= 1000) {
           return `${(distance / 1000).toFixed(1)} km`;
         }
-        return `${Math.round(distance)}m`;
+        // Round to cleaner increments so small GPS jitter doesn't make the
+        // number flicker; stay precise as the user gets close.
+        let rounded;
+        if (distance >= 100) {
+          rounded = Math.round(distance / 10) * 10; // nearest 10m at range
+        } else if (distance >= 20) {
+          rounded = Math.round(distance / 5) * 5; // nearest 5m mid-range
+        } else {
+          rounded = Math.round(distance); // exact on approach
+        }
+        return `${rounded}m`;
       }
 
       function getRouteProgress(userPoint) {
@@ -8181,7 +8194,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-08-4";
+          const SERVICE_WORKER_VERSION = "2026-07-08-5";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
