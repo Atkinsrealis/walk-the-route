@@ -3559,6 +3559,10 @@ localStorage.setItem(
       const DIRECTION_MIN_SAMPLE_METERS = 4;
       const GPS_LOCK_ACCURACY_METERS = 30;
       const GPS_WEAK_ACCURACY_METERS = 65;
+      // Fixes worse than this are treated as garbage (e.g. a bad reading right
+      // after resuming) - the marker holds its last good position instead of
+      // teleporting. The auto-route-jump detector still logs the spike.
+      const GPS_MAX_USABLE_ACCURACY_METERS = 150;
       const MIN_LOCATING_ANIMATION_MS = 3000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
@@ -7415,10 +7419,21 @@ function runRouteIntroAfterLoad() {
               clearTimeout(firstLocationTimeout);
             }
 
-            cachePosition(lng, lat);
-
             // Automatically flag physically impossible GPS jumps (every raw fix)
             detectAutoRouteJump([lng, lat], gpsState);
+
+            // Reject garbage fixes (absurd accuracy, e.g. right after resuming):
+            // keep the last good marker position instead of teleporting, while
+            // still reflecting the lost state in the UI.
+            if (
+              Number.isFinite(lastLocationAccuracy) &&
+              lastLocationAccuracy > GPS_MAX_USABLE_ACCURACY_METERS
+            ) {
+              updateWarningState(lastStableDistanceToRoute, gpsState);
+              return;
+            }
+
+            cachePosition(lng, lat);
 
             if (!shouldProcessLocationUpdate(lng, lat)) {
               return;
@@ -8208,7 +8223,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-08-7";
+          const SERVICE_WORKER_VERSION = "2026-07-08-8";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
