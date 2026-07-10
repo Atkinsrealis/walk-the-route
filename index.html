@@ -109,6 +109,7 @@
       .landing-screen {
         min-height: 100dvh;
         padding: calc(20px + env(safe-area-inset-top)) 20px 24px;
+        padding-top: max(36px, calc(20px + env(safe-area-inset-top)));
         position: relative;
         overflow: hidden;
       }
@@ -1956,6 +1957,10 @@
           border-color 0.22s ease,
           background 0.22s ease,
           color 0.22s ease;
+      }
+
+      .next-step-button[hidden] {
+        display: none;
       }
 
       .next-step-button__text {
@@ -5893,6 +5898,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
         const setRouteCompletionState = (completed) => {
           const completeBanner = document.getElementById("route-complete-banner");
+          const nextStepButton = document.getElementById("next-step-button");
 
           if (routeCard) {
             routeCard.classList.toggle("is-complete", completed);
@@ -5900,6 +5906,14 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
           if (completeBanner) {
             completeBanner.hidden = !completed;
+          }
+
+          if (nextStepButton) {
+            nextStepButton.hidden = completed;
+          }
+
+          if (completed) {
+            setAheadSheet(false);
           }
 
           if (completed && !hasRouteCompletionCelebrated) {
@@ -6033,8 +6047,8 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         setRouteCompletionState(isCompleted);
 
         if (isCompleted) {
-          progressValue.textContent = "Route completed";
-          distanceValue.textContent = "You reached the finish";
+          progressValue.textContent = "Complete";
+          distanceValue.textContent = "Finished";
           if (routeEstimatedTimeValue) {
             routeEstimatedTimeValue.textContent = "~0 min";
           }
