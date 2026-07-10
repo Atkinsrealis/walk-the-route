@@ -6295,9 +6295,14 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const previousRawSnapPoint = lastRawSnapPoint;
         lastRawSnapPoint = routeSnapshot.point;
 
-        // Only expose a snapped position while near the route; when off route
-        // this is null so the map (and recenters) follow the real GPS point.
-        lastSnappedPosition = isViewSnappedToRoute ? routeSnapshot.point : null;
+        // Only expose a snapped position while near the route AND holding a
+        // confident lock; when off route or GPS is weak/lost this is null so
+        // the map (and recenters) follow the real GPS point rather than
+        // pretending route-level confidence.
+        const canUseRouteSnap =
+          gpsState === GPS_CONFIDENCE_LOCKED && isViewSnappedToRoute;
+
+        lastSnappedPosition = canUseRouteSnap ? routeSnapshot.point : null;
 
         if (previousRawSnapPoint) {
           const snappedJumpMeters = haversineDistanceMeters(
