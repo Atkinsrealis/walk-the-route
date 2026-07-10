@@ -37,6 +37,7 @@
           var(--route-card-height-estimate) +
           clamp(46px, 8vh, 72px)
         );
+        --floating-button-bottom-live: initial;
         --toast-bottom-offset: calc(
           var(--route-card-bottom-offset) +
           var(--route-card-height-estimate) +
@@ -1226,7 +1227,7 @@
 
       .route-center-button {
         right: var(--floating-button-right);
-        bottom: var(--floating-button-bottom);
+        bottom: var(--floating-button-bottom-live, var(--floating-button-bottom));
         color: #efe6ff;
         background:
           linear-gradient(
@@ -1240,7 +1241,7 @@
       .follow-toggle-button {
         right: var(--floating-button-right);
         bottom: calc(
-          var(--floating-button-bottom) + var(--floating-button-size) +
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + var(--floating-button-size) +
             var(--floating-button-gap)
         );
         color: #efe6ff;
@@ -1881,7 +1882,7 @@
       .share-location-button {
         right: var(--floating-button-right);
         bottom: calc(
-          var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + (var(--floating-button-size) * 2) +
             (var(--floating-button-gap) * 2)
         );
         color: #efe6ff;
@@ -1897,7 +1898,7 @@
       .need-help-button {
         right: var(--floating-button-right);
         bottom: calc(
-          var(--floating-button-bottom) + (var(--floating-button-size) * 3) +
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + (var(--floating-button-size) * 3) +
             (var(--floating-button-gap) * 3)
         );
         color: #fff;
@@ -2031,7 +2032,7 @@
       .compass-button {
         right: var(--floating-button-right);
         bottom: calc(
-          var(--floating-button-bottom) + (var(--floating-button-size) * 4) +
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + (var(--floating-button-size) * 4) +
             (var(--floating-button-gap) * 4)
         );
 
@@ -7737,6 +7738,68 @@ updateRouteSummaryDisplay();
 
       updateFollowButtonState();
 
+      const routeCardElement = document.getElementById("route-card");
+      let floatingButtonLayoutFrame = null;
+
+      function syncFloatingButtonOffset() {
+        const rootStyle = document.documentElement?.style;
+
+        if (!rootStyle || !routeCardElement) {
+          return;
+        }
+
+        if (document.body.classList.contains("mode-pre-event")) {
+          rootStyle.removeProperty("--floating-button-bottom-live");
+          return;
+        }
+
+        const routeCardRect = routeCardElement.getBoundingClientRect();
+        if (!routeCardRect || routeCardRect.height <= 0) {
+          rootStyle.removeProperty("--floating-button-bottom-live");
+          return;
+        }
+
+        const viewportHeight = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight;
+        const clearance = window.innerWidth <= 480 ? 18 : 16;
+        const liveOffset = Math.max(
+          0,
+          Math.ceil(viewportHeight - routeCardRect.top + clearance),
+        );
+
+        rootStyle.setProperty("--floating-button-bottom-live", `${liveOffset}px`);
+      }
+
+      function queueFloatingButtonOffsetSync() {
+        if (floatingButtonLayoutFrame !== null) {
+          cancelAnimationFrame(floatingButtonLayoutFrame);
+        }
+
+        floatingButtonLayoutFrame = requestAnimationFrame(() => {
+          floatingButtonLayoutFrame = null;
+          syncFloatingButtonOffset();
+        });
+      }
+
+      queueFloatingButtonOffsetSync();
+      window.addEventListener("resize", queueFloatingButtonOffsetSync);
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener(
+          "resize",
+          queueFloatingButtonOffsetSync,
+        );
+      }
+
+      if ("ResizeObserver" in window && routeCardElement) {
+        const routeCardResizeObserver = new ResizeObserver(() => {
+          queueFloatingButtonOffsetSync();
+        });
+
+        routeCardResizeObserver.observe(routeCardElement);
+      }
+
       document
         .getElementById(FOLLOW_TOGGLE_BUTTON_ID)
         .addEventListener("click", () => {
@@ -8066,6 +8129,8 @@ updateRouteSummaryDisplay();
             if (landing) {
               landing.style.display = "none";
             }
+
+            queueFloatingButtonOffsetSync();
 
             if (map) {
               setTimeout(() => {
