@@ -6282,11 +6282,27 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         if (Number.isFinite(snapDistance)) {
           if (isViewSnappedToRoute && snapDistance > ROUTE_SNAP_RELEASE_METERS) {
             isViewSnappedToRoute = false;
+
+            logFieldEvent("route-snap-released", {
+              distanceFromRoute: Math.round(snapDistance),
+              gpsState,
+              accuracyMeters: Number.isFinite(lastLocationAccuracy)
+                ? Math.round(lastLocationAccuracy)
+                : null,
+            });
           } else if (
             !isViewSnappedToRoute &&
             snapDistance <= ROUTE_SNAP_ENGAGE_METERS
           ) {
             isViewSnappedToRoute = true;
+
+            logFieldEvent("route-snap-engaged", {
+              distanceFromRoute: Math.round(snapDistance),
+              gpsState,
+              accuracyMeters: Number.isFinite(lastLocationAccuracy)
+                ? Math.round(lastLocationAccuracy)
+                : null,
+            });
           }
         }
 
