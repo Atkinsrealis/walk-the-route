@@ -3565,6 +3565,14 @@ localStorage.setItem(
       const DIRECTION_MIN_SAMPLE_METERS = 4;
       const GPS_LOCK_ACCURACY_METERS = 30;
       const GPS_WEAK_ACCURACY_METERS = 65;
+      // Number of consecutive lockable-accuracy fixes required before the app
+      // grants a full "locked" state when coming up from weak/lost. Prevents a
+      // single lucky fix from flipping the UI to fully-trusted.
+      const GPS_LOCK_STREAK_REQUIRED = 3;
+      // After dropping out of lock (or a geolocation error), stay in a cautious
+      // recovering state for at least this long before re-granting lock, so a
+      // fresh fix isn't trusted the instant signal returns.
+      const GPS_RECOVERY_HOLD_MS = 6000;
       // Fixes worse than this are treated as garbage (e.g. a bad reading right
       // after resuming) - the marker holds its last good position instead of
       // teleporting. The auto-route-jump detector still logs the spike.
@@ -3951,6 +3959,8 @@ localStorage.setItem(
       let lastDirectionHeading = null;
       let lastDirectionSamplePoint = null;
       let gpsConfidenceState = GPS_CONFIDENCE_LOST;
+      let consecutiveLockableFixes = 0;
+      let gpsRecoveryHoldUntil = 0;
       let lastStableDistanceToRoute = null;
       let lastStableRouteProgress = 0;
       let lastStableSegmentInfo = null;
@@ -5733,12 +5743,18 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         gpsConfidenceState = nextState;
 
         if (previousState !== nextState) {
+          const recoveryHoldMsRemaining = Math.max(
+            0,
+            gpsRecoveryHoldUntil - Date.now(),
+          );
           logFieldEvent("gps-state-change", {
             from: previousState,
             to: nextState,
             accuracyMeters: Number.isFinite(lastLocationAccuracy)
               ? Math.round(lastLocationAccuracy)
               : null,
+            lockStreak: consecutiveLockableFixes,
+            recoveryHoldMsRemaining,
           });
         }
       }
@@ -5760,6 +5776,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           Date.now() - geolocationStartedAt >= MIN_LOCATING_ANIMATION_MS;
 
         if (!Number.isFinite(accuracy)) {
+          consecutiveLockableFixes = 0;
           return GPS_CONFIDENCE_LOST;
         }
 
@@ -5768,36 +5785,64 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         // Transitions into a worse state require accuracy to EXCEED a higher threshold (+ margin).
         const hysteresisMargin = 5;
 
+        const meetsLockAccuracy = accuracy <= gpsLockAccuracyMeters - hysteresisMargin;
+        const withinLockHold = accuracy <= gpsLockAccuracyMeters + hysteresisMargin;
+        const withinWeakHold = accuracy <= gpsWeakAccuracyMeters + hysteresisMargin;
+        const meetsWeakAccuracy = accuracy <= gpsWeakAccuracyMeters - hysteresisMargin;
+
+        // Item 1: track a run of consecutive lockable-accuracy fixes. A single
+        // good reading is not enough to earn full lock from a lower state.
+        if (meetsLockAccuracy) {
+          consecutiveLockableFixes = Math.min(
+            consecutiveLockableFixes + 1,
+            GPS_LOCK_STREAK_REQUIRED + 3,
+          );
+        } else {
+          consecutiveLockableFixes = 0;
+        }
+
         if (gpsConfidenceState === GPS_CONFIDENCE_LOCKED) {
           // Stay locked unless accuracy degrades well past lock threshold
-          if (accuracy <= gpsLockAccuracyMeters + hysteresisMargin) {
+          if (withinLockHold) {
             return GPS_CONFIDENCE_LOCKED;
           }
+          // Item 2: leaving lock opens a recovery-hold window so we don't
+          // immediately re-trust a fresh fix once signal bounces back.
+          gpsRecoveryHoldUntil = Date.now() + GPS_RECOVERY_HOLD_MS;
           // Degrade to weak before lost — never skip weak
-          if (accuracy <= gpsWeakAccuracyMeters + hysteresisMargin) {
+          if (withinWeakHold) {
             return GPS_CONFIDENCE_WEAK;
           }
           return GPS_CONFIDENCE_LOST;
         }
 
+        // Coming up from weak/lost/cached: gate the upgrade to LOCKED behind
+        // the streak (item 1) and the recovery-hold window (item 2).
+        const recoveryHoldActive = Date.now() < gpsRecoveryHoldUntil;
+        const hasLockStreak = consecutiveLockableFixes >= GPS_LOCK_STREAK_REQUIRED;
+        const canUpgradeToLock =
+          meetsLockAccuracy &&
+          hasMinimumLocatingElapsed &&
+          hasLockStreak &&
+          !recoveryHoldActive;
+
         if (gpsConfidenceState === GPS_CONFIDENCE_WEAK) {
-          // Improve to locked only when accuracy is meaningfully better
-          if (accuracy <= gpsLockAccuracyMeters - hysteresisMargin && hasMinimumLocatingElapsed) {
+          if (canUpgradeToLock) {
             return GPS_CONFIDENCE_LOCKED;
           }
           // Stay weak unless accuracy degrades well past weak threshold
-          if (accuracy <= gpsWeakAccuracyMeters + hysteresisMargin) {
+          if (withinWeakHold) {
             return GPS_CONFIDENCE_WEAK;
           }
           return GPS_CONFIDENCE_LOST;
         }
 
-        // Currently lost — require meaningful improvement before upgrading
-        if (accuracy <= gpsLockAccuracyMeters - hysteresisMargin && hasMinimumLocatingElapsed) {
+        // Currently lost or cached — require the streak and no active hold
+        if (canUpgradeToLock) {
           return GPS_CONFIDENCE_LOCKED;
         }
 
-        if (accuracy <= gpsWeakAccuracyMeters - hysteresisMargin) {
+        if (meetsWeakAccuracy) {
           return GPS_CONFIDENCE_WEAK;
         }
 
@@ -7390,6 +7435,8 @@ function runRouteIntroAfterLoad() {
         hasRouteCompletionCelebrated = false;
         geolocationStartedAt = Date.now();
         setGpsConfidenceState(GPS_CONFIDENCE_LOST);
+        consecutiveLockableFixes = 0;
+        gpsRecoveryHoldUntil = 0;
         lastDirectionHeading = null;
         lastDirectionSamplePoint = null;
         lastStableDistanceToRoute = null;
@@ -7533,6 +7580,10 @@ function runRouteIntroAfterLoad() {
           },
           (error) => {
             const cachedPos = loadCachedPosition();
+            // A geolocation error means the next good fix should not be trusted
+            // instantly; ease back in via the recovery-hold window (item 2).
+            consecutiveLockableFixes = 0;
+            gpsRecoveryHoldUntil = Date.now() + GPS_RECOVERY_HOLD_MS;
             setGpsConfidenceState(
               cachedPos ? GPS_CONFIDENCE_CACHED : GPS_CONFIDENCE_LOST,
             );
