@@ -3580,6 +3580,12 @@ localStorage.setItem(
       const MIN_LOCATING_ANIMATION_MS = 3000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
+      // Require a short run of good finish-proximity fixes before declaring the
+      // route complete, so a single noisy fix can't trigger completion early.
+      const FINISH_CONFIRM_FIXES = 2;
+      // Require sustained evidence before raising a "far off route" alert,
+      // so one spiky fix doesn't fire a false off-route warning.
+      const OFF_ROUTE_CONFIRM_FIXES = 2;
       // Automatic route-jump detection: flag GPS fixes that imply an
       // impossible walking speed between consecutive positions.
       const AUTO_ROUTE_JUMP_SPEED_MPS = 8; // ~28.8 km/h - faster than any walker/jogger
@@ -3989,6 +3995,8 @@ localStorage.setItem(
       let routeStatusToastByState = {};
       let pointAlertState = {};
       let hasRouteCompletionCelebrated = false;
+      let finishProximityStreak = 0;
+      let offRouteFarStreak = 0;
       let nextStepGuidance = null;
       let toastHideTimer = null;
       let aheadSheetOpen = false;
@@ -5200,7 +5208,10 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         let routeState = "";
         let message = "";
 
-        if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
+        if (
+          distanceToRoute > ROUTE_ALERT_DISTANCE &&
+          offRouteFarStreak >= OFF_ROUTE_CONFIRM_FIXES
+        ) {
           routeState = "far";
           message = "Far from route";
         } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
@@ -5222,6 +5233,12 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         if (showOperationalToast(message, { bypassCooldown: routeState === "far" })) {
           lastRouteStatusToastState = routeState;
           routeStatusToastByState[routeState] = now;
+          if (routeState === "far") {
+            logFieldEvent("off-route-confirmed", {
+              distanceMeters: Math.round(distanceToRoute),
+              streak: offRouteFarStreak,
+            });
+          }
         }
       }
 
@@ -6075,8 +6092,47 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         }
 
         const safeProgress = Math.min(100, Math.max(0, displayProgress));
+
+        // Accuracy-aware, sustained finish detection: only count a fix toward
+        // completion when it is genuinely close AND the fix quality is good.
+        const gpsLockAccuracyForFinish =
+          (Number.isFinite(activeRoute.gpsLockAccuracyMeters)
+            ? activeRoute.gpsLockAccuracyMeters
+            : GPS_LOCK_ACCURACY_METERS) + 10;
+        const finishAccuracyOk =
+          !Number.isFinite(lastLocationAccuracy) ||
+          lastLocationAccuracy <= gpsLockAccuracyForFinish;
+        const meetsFinishProximity =
+          safeProgress >= 99 &&
+          normalizedDistance <= FINISH_APPROACH_DISTANCE &&
+          finishAccuracyOk;
+
+        if (meetsFinishProximity) {
+          finishProximityStreak = Math.min(
+            finishProximityStreak + 1,
+            FINISH_CONFIRM_FIXES + 2,
+          );
+        } else {
+          finishProximityStreak = 0;
+        }
+
+        // Once completed for this walk, latch it so a later noisy fix doesn't
+        // bounce the card out of the completed state.
         const isCompleted =
-          safeProgress >= 99 && normalizedDistance <= FINISH_APPROACH_DISTANCE;
+          hasRouteCompletionCelebrated ||
+          finishProximityStreak >= FINISH_CONFIRM_FIXES;
+
+        // Sustained off-route confirmation for the card + alert toast.
+        const isFarFromRoute = normalizedDistance > ROUTE_ALERT_DISTANCE;
+        if (isFarFromRoute) {
+          offRouteFarStreak = Math.min(
+            offRouteFarStreak + 1,
+            OFF_ROUTE_CONFIRM_FIXES + 2,
+          );
+        } else {
+          offRouteFarStreak = 0;
+        }
+        const offRouteConfirmed = offRouteFarStreak >= OFF_ROUTE_CONFIRM_FIXES;
 
         if (routeCard) {
           routeCard.style.setProperty("--route-progress", `${safeProgress}%`);
@@ -6106,7 +6162,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           return;
         }
 
-        if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
+        if (normalizedDistance > ROUTE_ALERT_DISTANCE && offRouteConfirmed) {
           progressValue.textContent = "Off route";
           distanceValue.textContent = "Move closer to the purple route";
           setNowNext("Now: Off route", "Next: Move closer to the route");
@@ -7437,6 +7493,8 @@ function runRouteIntroAfterLoad() {
         setGpsConfidenceState(GPS_CONFIDENCE_LOST);
         consecutiveLockableFixes = 0;
         gpsRecoveryHoldUntil = 0;
+        finishProximityStreak = 0;
+        offRouteFarStreak = 0;
         lastDirectionHeading = null;
         lastDirectionSamplePoint = null;
         lastStableDistanceToRoute = null;
