@@ -6054,14 +6054,24 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           }
 
           if (gpsState === GPS_CONFIDENCE_WEAK) {
-            distanceValue.textContent = "GPS weak - holding last confident position";
-            routeBadge.textContent = "GPS weak";
+            if (Date.now() < gpsRecoveryHoldUntil) {
+              distanceValue.textContent = "Recovering GPS - re-establishing lock";
+              routeBadge.textContent = "Recovering";
+            } else {
+              distanceValue.textContent = "GPS weak - holding last confident position";
+              routeBadge.textContent = "GPS weak";
+            }
           } else if (gpsState === GPS_CONFIDENCE_CACHED) {
             distanceValue.textContent = "Using last known position";
             routeBadge.textContent = "Cached";
           } else {
-            distanceValue.textContent = "GPS lost - waiting to recover";
-            routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
+            if (Date.now() < gpsRecoveryHoldUntil) {
+              distanceValue.textContent = "Recovering GPS - waiting for a strong fix";
+              routeBadge.textContent = "Recovering";
+            } else {
+              distanceValue.textContent = "GPS lost - waiting to recover";
+              routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
+            }
           }
 
           if (routeCard) {
@@ -6232,18 +6242,23 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         gpsState = GPS_CONFIDENCE_LOST,
       ) {
         const now = Date.now();
+        const isRecoveringGps = now < gpsRecoveryHoldUntil;
         let nextState = "";
         let nextLevel = "";
 
         if (gpsState === GPS_CONFIDENCE_WEAK) {
-          nextState = "GPS weak - route judgement paused";
-          nextLevel = "gps-weak";
+          nextState = isRecoveringGps
+            ? "Recovering GPS - route judgement paused"
+            : "GPS weak - route judgement paused";
+          nextLevel = isRecoveringGps ? "gps-recovering" : "gps-weak";
         } else if (gpsState === GPS_CONFIDENCE_CACHED) {
           nextState = "Using cached location - route judgement paused";
           nextLevel = "gps-cached";
         } else if (gpsState !== GPS_CONFIDENCE_LOCKED || !Number.isFinite(distanceToRoute)) {
-          nextState = "GPS lost - route judgement paused";
-          nextLevel = "gps-lost";
+          nextState = isRecoveringGps
+            ? "Recovering GPS - route judgement paused"
+            : "GPS lost - route judgement paused";
+          nextLevel = isRecoveringGps ? "gps-recovering" : "gps-lost";
         } else {
           nextState = "";
           nextLevel = "";
