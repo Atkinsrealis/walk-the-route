@@ -7559,6 +7559,13 @@ function runRouteIntroAfterLoad() {
         lastAutoRouteJumpLoggedAt = 0;
         clearForwardRouteHighlight();
 
+        logFieldEvent("walk-started", {
+          totalSegments: getTotalSegments(),
+          routeDistanceMeters: Number.isFinite(getRouteDistanceMeters())
+            ? Math.round(getRouteDistanceMeters())
+            : null,
+        });
+
         if (!("geolocation" in navigator)) {
           isWaitingForFirstLocation = false;
           showWarning("Geolocation is not supported on this device", "alert");
