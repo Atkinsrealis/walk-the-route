@@ -7560,6 +7560,7 @@ function runRouteIntroAfterLoad() {
         gpsRecoveryHoldUntil = 0;
         finishProximityStreak = 0;
         offRouteFarStreak = 0;
+        fieldLogLastSegmentNumber = null;
         lastRawSnapPoint = null;
         isViewSnappedToRoute = true;
         lastDirectionHeading = null;
@@ -7650,6 +7651,7 @@ function runRouteIntroAfterLoad() {
             const segmentInfo = getCurrentSegment(userPoint);
 
             if (
+              !hasRouteCompletionCelebrated &&
               gpsState === GPS_CONFIDENCE_LOCKED &&
               segmentInfo &&
               segmentInfo.currentSegmentNumber !== fieldLogLastSegmentNumber
