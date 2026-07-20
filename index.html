@@ -6156,12 +6156,16 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           routeCard.style.setProperty("--route-progress", `${safeProgress}%`);
         }
 
+        const cardProgress = offRouteConfirmed
+          ? Math.min(safeProgress, 90)
+          : safeProgress;
+
         if (routeProgressRingValue) {
-          routeProgressRingValue.textContent = `${Math.round(safeProgress)}%`;
+          routeProgressRingValue.textContent = `${Math.round(cardProgress)}%`;
         }
 
         if (routeProgressTrackFill) {
-          routeProgressTrackFill.style.width = `${safeProgress}%`;
+          routeProgressTrackFill.style.width = `${cardProgress}%`;
         }
 
         setRouteCompletionState(isCompleted);
@@ -6182,8 +6186,11 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
 
         if (normalizedDistance > ROUTE_ALERT_DISTANCE && offRouteConfirmed) {
           progressValue.textContent = "Off route";
-          distanceValue.textContent = "Move closer to the purple route";
-          setNowNext("Now: Off route", "Next: Move closer to the route");
+          distanceValue.textContent = "Move closer";
+          if (routeEstimatedTimeValue) {
+            routeEstimatedTimeValue.textContent = "—";
+          }
+          setNowNext("Now: Off route", "Next: Move closer");
           routeBadge.textContent = activeRoute.badgeFarOffRoute || "Far off route";
           routeBadge.className = "route-card__badge alert";
           return;
