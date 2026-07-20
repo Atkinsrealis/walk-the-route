@@ -6151,12 +6151,13 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           offRouteFarStreak = 0;
         }
         const offRouteConfirmed = offRouteFarStreak >= OFF_ROUTE_CONFIRM_FIXES;
+        const offRouteUiActive = normalizedDistance > ROUTE_ALERT_DISTANCE;
 
         if (routeCard) {
           routeCard.style.setProperty("--route-progress", `${safeProgress}%`);
         }
 
-        const cardProgress = offRouteConfirmed
+        const cardProgress = offRouteUiActive
           ? 0
           : safeProgress;
 
@@ -6184,7 +6185,7 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
           return;
         }
 
-        if (normalizedDistance > ROUTE_ALERT_DISTANCE && offRouteConfirmed) {
+        if (offRouteUiActive) {
           progressValue.textContent = "Off route";
           distanceValue.textContent = "Move closer";
           if (routeEstimatedTimeValue) {
@@ -8499,7 +8500,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-08-8";
+          const SERVICE_WORKER_VERSION = "2026-07-20-1";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
