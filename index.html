@@ -6153,13 +6153,13 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         const offRouteConfirmed = offRouteFarStreak >= OFF_ROUTE_CONFIRM_FIXES;
         const offRouteUiActive = normalizedDistance > ROUTE_ALERT_DISTANCE;
 
-        if (routeCard) {
-          routeCard.style.setProperty("--route-progress", `${safeProgress}%`);
-        }
-
         const cardProgress = offRouteUiActive
           ? 0
           : safeProgress;
+
+        if (routeCard) {
+          routeCard.style.setProperty("--route-progress", `${cardProgress}%`);
+        }
 
         if (routeProgressRingValue) {
           routeProgressRingValue.textContent = `${Math.round(cardProgress)}%`;
