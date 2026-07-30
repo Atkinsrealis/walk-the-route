@@ -1,5 +1,13 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v28";
+const CACHE_NAME = "heathrow-perimeter-walk-v52";
 const MAPBOX_CACHE_NAME = "heathrow-mapbox-v1";
+const NETWORK_FIRST_PATHS = new Set([
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/heathrow-perimeter-route.geojson",
+  "/dog-walk/dog-walk-route.geojson",
+  "/route-surface-summary.json"
+]);
 
 const APP_ASSETS = [
   "/",
@@ -94,14 +102,29 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const normalizedPath = requestUrl.pathname === "/index.html"
+    ? "/index.html"
+    : requestUrl.pathname;
+  const isNetworkFirstAsset =
+    request.mode === "navigate" || NETWORK_FIRST_PATHS.has(normalizedPath);
+
   /*
-    For page navigation, try network first.
-    If offline, fall back to cached index.html.
-    This avoids Safari repeatedly serving a stale/broken page.
+    For the app shell and route data, try network first and refresh cache.
+    If offline, fall back to the last cached version.
+    This prevents mobile installs from getting stuck on stale UI assets.
   */
-  if (request.mode === "navigate") {
+  if (isNetworkFirstAsset) {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/index.html"))
+      fetch(request)
+        .then((networkResponse) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+          });
+        })
+        .catch(() => caches.match(request).then((cachedResponse) => {
+          return cachedResponse || caches.match("/index.html");
+        }))
     );
     return;
   }

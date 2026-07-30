@@ -24,10 +24,28 @@
 
     <style>
       :root {
-        --floating-button-size: 56px;
-        --floating-button-gap: 14px;
-        --floating-button-right: 16px;
-        --floating-button-bottom: calc(96px + env(safe-area-inset-bottom));
+        --floating-button-size: 46px;
+        --floating-button-gap: 20px;
+        --floating-button-right: 14px;
+        --route-card-side-offset: clamp(24px, 7vw, 32px);
+        --route-card-bottom-offset: calc(
+          clamp(14px, 2.8vh, 34px) + env(safe-area-inset-bottom)
+        );
+        --route-card-height-estimate: clamp(196px, 25vh, 248px);
+        --floating-button-bottom: calc(
+          var(--route-card-bottom-offset) +
+          var(--route-card-height-estimate) +
+          clamp(46px, 8vh, 72px)
+        );
+        --floating-button-bottom-live: initial;
+        --toast-bottom-offset: calc(
+          var(--route-card-bottom-offset) +
+          var(--route-card-height-estimate) +
+          clamp(22px, 4vh, 34px)
+        );
+        --field-log-top: calc(
+          var(--status-stack-top) + 26px + env(safe-area-inset-top)
+        );
         --route-switcher-top: 92px;
         --route-switcher-shell-height: 32px;
         --status-stack-gap-below-switcher: 8px;
@@ -92,6 +110,7 @@
       .landing-screen {
         min-height: 100dvh;
         padding: calc(20px + env(safe-area-inset-top)) 20px 24px;
+        padding-top: max(36px, calc(20px + env(safe-area-inset-top)));
         position: relative;
         overflow: hidden;
       }
@@ -106,7 +125,7 @@
       }
 
       .landing-screen__brand img {
-        height: 28px;
+        height: 31px;
         width: auto;
         display: block;
       }
@@ -230,6 +249,39 @@
         background: #94a3b8;
       }
 
+      .landing-share-hint {
+        margin-top: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(16, 185, 129, 0.22);
+        background: rgba(16, 185, 129, 0.09);
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .landing-share-hint__icon {
+        width: 24px;
+        height: 24px;
+        color: #047857;
+      }
+
+      .landing-share-hint__title {
+        margin: 0;
+        color: #065f46;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .landing-share-hint__text {
+        margin: 2px 0 0;
+        color: #065f46;
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
       .landing-footer {
         position: fixed;
         bottom: 0;
@@ -324,10 +376,11 @@
       }
 
       body.mode-pre-event .topbar,
-      body.mode-pre-event .route-test-switcher,
       body.mode-pre-event .warning,
       body.mode-pre-event .route-card,
+      body.mode-pre-event .next-step-button,
       body.mode-pre-event .compass-button,
+      body.mode-pre-event .need-help-button,
       body.mode-pre-event .share-location-button,
       body.mode-pre-event .follow-toggle-button,
       body.mode-pre-event .route-center-button,
@@ -338,6 +391,10 @@
       body.mode-pre-event .offline-notice,
       body.mode-pre-event #map,
       body.mode-pre-event #fallback-container {
+        display: none !important;
+      }
+
+      body.mode-active-walk .bottom-panel {
         display: none !important;
       }
 
@@ -381,13 +438,13 @@
         left: 0;
         right: 0;
 
-        height: calc(230px + env(safe-area-inset-top));
+        height: calc(168px + env(safe-area-inset-top));
 
         background: linear-gradient(
           to bottom,
-          rgba(8, 12, 24, 0.96) 0%,
-          rgba(8, 12, 24, 0.82) 38%,
-          rgba(8, 12, 24, 0.46) 68%,
+          rgba(8, 12, 24, 0.88) 0%,
+          rgba(8, 12, 24, 0.68) 34%,
+          rgba(8, 12, 24, 0.3) 62%,
           rgba(8, 12, 24, 0) 100%
         );
 
@@ -402,9 +459,9 @@
         right: 0;
         z-index: 10;
 
-        padding-top: calc(18px + env(safe-area-inset-top));
+        padding-top: calc(10px + env(safe-area-inset-top));
         padding-right: 132px;
-        padding-bottom: 24px;
+        padding-bottom: 12px;
         padding-left: 16px;
 
         color: white;
@@ -440,25 +497,22 @@
         display: block;
 
         width: auto;
-        height: 16px;
+        height: 20px;
 
-        max-width: 96px;
+        max-width: 117px;
         object-fit: contain;
       }
 
       .topbar h1,
       .topbar p {
-        transform: translateY(15px);
+        transform: none;
       }
       .route-test-switcher {
-        position: fixed;
-        top: calc(var(--route-switcher-top) + env(safe-area-inset-top));
-        left: 16px;
-        z-index: 21;
-
         display: inline-flex;
         align-items: center;
         gap: 4px;
+        margin-top: 18px;
+        max-width: 100%;
 
         padding: 3px;
         border-radius: 999px;
@@ -468,6 +522,10 @@
 
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+      }
+
+      body.mode-active-walk .route-test-switcher {
+        display: none;
       }
 
       .route-test-switcher a {
@@ -495,12 +553,7 @@
 
       .warning {
         position: fixed;
-        top: calc(
-          var(--status-stack-top) +
-            var(--route-card-stack-height) +
-            var(--status-stack-gap) +
-            env(safe-area-inset-top)
-        );
+        top: calc(108px + env(safe-area-inset-top));
         left: 16px;
         right: 16px;
         color: white;
@@ -531,7 +584,8 @@
       .warning.help {
         background: rgba(6, 17, 31, 0.96);
         color: white;
-        border-left: 5px solid #14b8a6;
+        border-left: 5px solid #facc15;
+        box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.18);
       }
 
       .warning.gps-weak {
@@ -554,24 +608,159 @@
 
       .route-card {
         position: fixed;
-        top: calc(var(--status-stack-top) + env(safe-area-inset-top));
-        left: 16px;
-        right: 16px;
+        top: auto;
+        bottom: var(--route-card-bottom-offset);
+        left: 0;
+        right: 0;
+        width: min(640px, calc(100vw - (var(--route-card-side-offset) * 2)));
+        margin: 0 auto;
         z-index: 19;
         display: flex;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        justify-content: space-between;
+        flex-direction: column;
+        align-items: stretch;
         gap: 12px;
-        padding: 12px 14px;
-        background: var(--bg-surface);
+        padding: 13px 14px 12px;
+        background:
+          radial-gradient(circle at 50% -18%, rgba(168, 85, 247, 0.28) 0%, rgba(168, 85, 247, 0.14) 22%, transparent 54%),
+          linear-gradient(
+            160deg,
+            rgba(42, 16, 86, 0.82) 0%,
+            rgba(14, 14, 40, 0.95) 30%,
+            rgba(7, 11, 22, 0.99) 72%
+          );
         color: white;
         border-radius: 18px;
+        border: 1px solid rgba(216, 180, 254, 0.28);
         backdrop-filter: blur(12px);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        box-shadow:
+          0 18px 42px rgba(2, 6, 23, 0.56),
+          0 0 0 1px rgba(168, 85, 247, 0.16),
+          0 0 46px rgba(124, 58, 237, 0.26),
+          0 0 84px rgba(168, 85, 247, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-        overflow: hidden;
+        overflow: visible;
         isolation: isolate;
+      }
+
+      .route-card__next-step-anchor {
+        position: absolute;
+        right: 14px;
+        bottom: 12px;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 8px;
+      }
+
+      .ahead-sheet {
+        width: min(
+          352px,
+          calc(100vw - (var(--route-card-side-offset) * 2) - 28px)
+        );
+        padding: 13px 14px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(196, 181, 253, 0.32);
+        background: linear-gradient(
+          170deg,
+          rgba(20, 18, 42, 0.96) 0%,
+          rgba(10, 14, 31, 0.97) 100%
+        );
+        box-shadow: 0 10px 22px rgba(2, 6, 23, 0.42);
+        display: none;
+        gap: 11px;
+        z-index: 6;
+      }
+
+      .ahead-sheet.open {
+        display: grid;
+      }
+
+      .ahead-sheet__summary {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ahead-sheet__row {
+        display: grid;
+        gap: 2px;
+      }
+
+      .ahead-sheet__label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(226, 232, 240, 0.64);
+      }
+
+      .ahead-sheet__value {
+        font-size: 14px;
+        font-weight: 600;
+        color: rgba(248, 250, 252, 0.94);
+        line-height: 1.28;
+      }
+
+      .ahead-sheet__expand {
+        border-top: 1px solid rgba(196, 181, 253, 0.2);
+        padding-top: 8px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .ahead-sheet__toggle {
+        all: unset;
+        justify-self: start;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        color: #ddd6fe;
+        cursor: pointer;
+      }
+
+      .ahead-sheet__details {
+        display: none;
+        gap: 8px;
+        max-height: 244px;
+        overflow-y: auto;
+        padding-right: 2px;
+      }
+
+      .ahead-sheet.expanded .ahead-sheet__details {
+        display: grid;
+      }
+
+      .ahead-sheet__list-group {
+        display: grid;
+        gap: 5px;
+      }
+
+      .ahead-sheet__group-label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: rgba(226, 232, 240, 0.64);
+      }
+
+      .ahead-sheet__list {
+        display: grid;
+        gap: 5px;
+      }
+
+      .ahead-sheet__item,
+      .ahead-sheet__empty {
+        font-size: 14px;
+        line-height: 1.3;
+      }
+
+      .ahead-sheet__item {
+        color: rgba(248, 250, 252, 0.94);
+      }
+
+      .ahead-sheet__empty {
+        color: rgba(226, 232, 240, 0.66);
       }
 
       @property --route-border-angle {
@@ -591,11 +780,11 @@
 
         background: conic-gradient(
           from var(--route-border-angle),
-          var(--purple-soft) 0deg,
-          var(--purple-soft) 245deg,
-          rgba(109, 40, 217, 0.95) 285deg,
-          rgba(193, 181, 255, 0.9) 315deg,
-          var(--purple-soft) 360deg
+          rgba(139, 92, 246, 0.02) 0deg,
+          rgba(139, 92, 246, 0.02) 235deg,
+          rgba(124, 58, 237, 1) 284deg,
+          rgba(221, 214, 254, 1) 316deg,
+          rgba(139, 92, 246, 0.02) 360deg
         );
 
         opacity: 0;
@@ -628,60 +817,242 @@
         }
       }
 
-      .route-card__main {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        flex: 1;
+      .route-card__header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .route-card__header-actions {
+        justify-self: end;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .route-card__lead {
+        display: inline-flex;
+        align-items: flex-start;
+        gap: 0;
         min-width: 0;
       }
 
       .route-card__text {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 4px;
         min-width: 0;
-      }
-
-      .route-card__label {
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        opacity: 0.68;
       }
 
       .route-card__value {
         font-size: 22px;
-        font-weight: 700;
+        font-weight: 800;
         line-height: 1;
       }
 
-      .route-card__meta {
+      .route-card__ring {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        background:
+          radial-gradient(circle at 50% 50%, rgba(8, 10, 28, 0.99) 0 58%, transparent 59%),
+          conic-gradient(from 0deg, #c084fc 0 var(--route-progress, 0%), rgba(139, 92, 246, 0.24) var(--route-progress, 0%) 100%);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+          0 0 0 1px rgba(221, 214, 254, 0.22),
+          0 0 20px rgba(124, 58, 237, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #f5f3ff;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        justify-self: center;
+      }
+
+      .route-card__ring::after {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border-radius: 999px;
+        background: rgba(6, 8, 21, 0.99);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      #route-progress-ring-value {
+        position: relative;
+        z-index: 1;
+      }
+
+      .route-card__stats {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 10px;
+        align-items: end;
+      }
+
+      .route-card__track {
+        width: 100%;
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(33, 23, 58, 0.8);
+        box-shadow:
+          inset 0 1px 2px rgba(2, 6, 23, 0.56),
+          0 0 0 1px rgba(221, 214, 254, 0.08);
+        overflow: hidden;
+      }
+
+      .route-card__track-fill {
+        display: block;
+        width: 0;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #a855f7 0%, #e9d5ff 100%);
+        transition: width 0.6s ease;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.18),
+          0 0 16px rgba(168, 85, 247, 0.3);
+      }
+
+      .route-card__stat {
         display: flex;
         flex-direction: column;
         gap: 2px;
-        font-size: 12px;
-        color: rgba(255, 255, 255, 0.78);
+        min-width: 0;
       }
 
-      .route-card__source {
+      .route-card__stat--align-right {
+        text-align: right;
+        align-items: flex-end;
+      }
+
+      .route-card__stat-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: rgba(243, 232, 255, 0.62);
+      }
+
+      #distance-value {
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.15;
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      #route-estimated-time-value {
+        font-size: 19px;
+        font-weight: 800;
+        line-height: 1.15;
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      #next-thing-value {
         font-size: 11px;
-        opacity: 0.58;
+        line-height: 1.3;
+        color: rgba(255, 255, 255, 0.62);
+      }
+
+      #distance-value .distance-value__metric {
+        color: #e9d5ff;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+      }
+
+      #distance-value .distance-value__context {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+      }
+
+      .route-card__summary {
+        margin: 0;
+        padding: 0;
+      }
+
+      .route-card__status-rail {
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 10px;
+        padding-left: 10px;
+        border-left: 3px solid rgba(168, 85, 247, 0.88);
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .route-card__time-strip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: end;
+        gap: 8px;
+        margin: 2px 0 0;
+        padding: 0;
+      }
+
+      .route-card__time-item {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+      }
+
+      .route-card__time-item--align-right {
+        text-align: right;
+        align-items: flex-end;
+      }
+
+      .route-card__time-label {
+        font-size: 10px;
+        letter-spacing: 0.02em;
+        color: rgba(243, 232, 255, 0.62);
+      }
+
+      .route-card__time-value {
+        color: rgba(255, 255, 255, 0.96);
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.16;
+      }
+
+      .route-card__time-strip[hidden] {
+        display: none;
+      }
+
+      #route-summary-value {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.32;
+        letter-spacing: 0;
+        color: rgba(255, 255, 255, 0.97);
+      }
+
+      #route-summary-value .distance-value__metric {
+        color: #e9d5ff;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+      }
+
+      #route-summary-value .distance-value__context {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
       }
 
       .route-card__gps-status {
-        flex: 0 0 100%;
-        width: 100%;
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid rgba(255, 255, 255, 0.14);
-        font-size: 13px;
-        font-weight: 700;
-        line-height: 1.35;
-        color: rgba(255, 255, 255, 0.92);
+        margin: 0;
+        padding: 0;
+        border-top: 0;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.32;
+        letter-spacing: 0;
+        color: rgba(226, 232, 240, 0.78);
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 0;
       }
 
       .route-card__gps-status[hidden] {
@@ -689,52 +1060,96 @@
       }
 
       .route-card__gps-status::before {
-        content: "";
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: #14b8a6;
-        flex-shrink: 0;
-      }
-
-      .route-card__gps-status.is-gps-weak::before,
-      .route-card__gps-status.is-warning::before {
-        background: #ffd000;
-      }
-
-      .route-card__gps-status.is-gps-cached::before {
-        background: #f5b920;
-      }
-
-      .route-card__gps-status.is-gps-lost::before,
-      .route-card__gps-status.is-alert::before {
-        background: #f76b1c;
+        content: none;
       }
 
       .route-card__badge {
         flex-shrink: 0;
-        padding: 8px 12px;
+        padding: 7px 12px;
         border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
-        background: rgba(17, 170, 98, 0.18);
-        color: #7ef0b3;
+        border: 1px solid rgba(34, 197, 94, 0.22);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.03em;
+        background: rgba(17, 170, 98, 0.2);
+        color: #9cf7c6;
         white-space: nowrap;
+        justify-self: end;
       }
 
       .route-card__badge.preparing {
-        background: rgba(245, 185, 32, 0.18);
-        color: #ffe680;
+        border-color: rgba(245, 185, 32, 0.3);
+        background: rgba(245, 185, 32, 0.2);
+        color: #ffef9a;
       }
 
       .route-card__badge.warning {
-        background: rgba(245, 185, 32, 0.18);
-        color: #ffe680;
+        border-color: rgba(245, 185, 32, 0.3);
+        background: rgba(245, 185, 32, 0.2);
+        color: #ffef9a;
       }
 
       .route-card__badge.alert {
-        background: rgba(232, 70, 70, 0.18);
-        color: #ffb088;
+        border-color: rgba(248, 113, 113, 0.28);
+        background: rgba(232, 70, 70, 0.2);
+        color: #ffb29a;
+      }
+
+      .route-card__badge.completed {
+        border-color: rgba(94, 234, 212, 0.42);
+        background: rgba(20, 184, 166, 0.22);
+        color: #b6fff0;
+      }
+
+      .route-card.is-complete {
+        border-color: rgba(94, 234, 212, 0.34);
+        box-shadow:
+          0 14px 30px rgba(2, 6, 23, 0.4),
+          0 0 0 1px rgba(94, 234, 212, 0.2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .route-card.is-complete::before {
+        opacity: 1;
+        animation: route-card-border-spin 6s linear infinite;
+      }
+
+      .route-complete-banner {
+        flex: 0 0 100%;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 2px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(94, 234, 212, 0.36);
+        background: linear-gradient(
+          160deg,
+          rgba(15, 118, 110, 0.34) 0%,
+          rgba(6, 78, 59, 0.2) 70%
+        );
+        color: #d5fff4;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+      }
+
+      .route-complete-banner[hidden] {
+        display: none;
+      }
+
+      .route-complete-banner__icon {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        line-height: 1;
+        color: #052e2b;
+        background: #5eead4;
+        box-shadow: 0 0 0 1px rgba(6, 78, 59, 0.45);
       }
 
       .bottom-panel {
@@ -752,47 +1167,127 @@
 
       .route-center-button,
       .follow-toggle-button,
-      .share-location-button {
+      .share-location-button,
+      .need-help-button,
+      .compass-button {
         position: fixed;
         z-index: 12;
         width: var(--floating-button-size);
         height: var(--floating-button-size);
-        border: 0;
+        border: 1px solid rgba(148, 163, 184, 0.28);
         border-radius: 999px;
-        background: var(--bg-surface-strong);
+        background:
+          linear-gradient(
+            160deg,
+            rgba(51, 65, 85, 0.58) 0%,
+            rgba(15, 23, 42, 0.94) 72%
+          );
         color: #fff;
         font-size: 22px;
         font-weight: 700;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        box-shadow:
+          0 12px 28px rgba(2, 6, 23, 0.38),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 0;
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.22s ease,
+          border-color 0.22s ease,
+          background 0.22s ease,
+          color 0.22s ease;
+      }
+
+      .route-center-button::before,
+      .follow-toggle-button::before,
+      .share-location-button::before,
+      .need-help-button::before {
+        content: "";
+        position: absolute;
+        inset: -8px;
+        border-radius: 999px;
+      }
+
+      .route-center-button:focus-visible,
+      .follow-toggle-button:focus-visible,
+      .share-location-button:focus-visible,
+      .need-help-button:focus-visible,
+      .compass-button:focus-visible {
+        outline: none;
+        border-color: rgba(226, 232, 240, 0.72);
+        box-shadow:
+          0 0 0 3px rgba(148, 163, 184, 0.24),
+          0 12px 28px rgba(2, 6, 23, 0.42),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
       }
 
       .route-center-button {
         right: var(--floating-button-right);
-        bottom: var(--floating-button-bottom);
-        color: #c4b5fd;
+        bottom: var(--floating-button-bottom-live, var(--floating-button-bottom));
+        color: #efe6ff;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(124, 58, 237, 0.5) 0%,
+            rgba(15, 23, 42, 0.96) 76%
+          );
+        border-color: rgba(216, 180, 254, 0.32);
       }
 
       .follow-toggle-button {
         right: var(--floating-button-right);
         bottom: calc(
-          var(--floating-button-bottom) + var(--floating-button-size) +
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + var(--floating-button-size) +
             var(--floating-button-gap)
         );
-        color: #c4b5fd;
+        color: #efe6ff;
         font-size: 20px;
         line-height: 1;
+        position: fixed;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(124, 58, 237, 0.5) 0%,
+            rgba(15, 23, 42, 0.96) 76%
+          );
+        border-color: rgba(216, 180, 254, 0.32);
+      }
+
+      .follow-toggle-button.is-on {
+        color: #efe6ff;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(124, 58, 237, 0.5) 0%,
+            rgba(15, 23, 42, 0.96) 76%
+          );
+        border-color: rgba(216, 180, 254, 0.32);
+        box-shadow: 0 12px 26px rgba(2, 6, 23, 0.34);
+      }
+
+      .follow-toggle-button.is-off {
+        color: #f3e8ff;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(124, 58, 237, 0.62) 0%,
+            rgba(15, 23, 42, 0.97) 76%
+          );
+        border-color: rgba(221, 214, 254, 0.54);
+        box-shadow:
+          0 12px 28px rgba(2, 6, 23, 0.4),
+          0 0 0 1px rgba(196, 181, 253, 0.48);
       }
 
       .route-center-button svg,
       .follow-toggle-button svg,
       .share-location-button svg {
-        width: 26px;
-        height: 26px;
+        width: 20px;
+        height: 20px;
         display: block;
         fill: currentColor;
       }
@@ -801,11 +1296,40 @@
         width: 18px;
         height: 18px;
         border-radius: 999px;
+        --direction-heading: 0;
         background: #00aeef;
         border: 3px solid #ffffff;
         box-shadow: 0 0 0 2px rgba(0, 174, 239, 0.36);
         position: relative;
         z-index: 999;
+      }
+
+      .user-location-marker::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 34px;
+        height: 40px;
+        background: linear-gradient(
+          to top,
+          rgba(0, 174, 239, 0.58) 0%,
+          rgba(0, 174, 239, 0.4) 36%,
+          rgba(0, 174, 239, 0.2) 70%,
+          rgba(0, 174, 239, 0.04) 100%
+        );
+        clip-path: polygon(50% 100%, 8% 0, 92% 0);
+        transform: translate(-50%, -86%) rotate(calc(var(--direction-heading) * 1deg));
+        transform-origin: 50% calc(100% - 2px);
+        opacity: 0;
+        pointer-events: none;
+        transition:
+          opacity 0.18s ease,
+          background 0.18s ease;
+      }
+
+      .user-location-marker.has-direction::before {
+        opacity: 1;
       }
 
       .user-location-marker::after {
@@ -822,9 +1346,119 @@
         box-shadow: 0 0 0 2px rgba(245, 185, 32, 0.36);
       }
 
+      .user-location-marker.is-weak::before {
+        background: linear-gradient(
+          to top,
+          rgba(245, 185, 32, 0.6) 0%,
+          rgba(245, 185, 32, 0.42) 36%,
+          rgba(245, 185, 32, 0.22) 70%,
+          rgba(245, 185, 32, 0.05) 100%
+        );
+      }
+
       .user-location-marker.is-cached {
         background: #94a3b8;
         box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.36);
+      }
+
+      .route-endpoint-marker {
+        position: relative;
+        width: 50px;
+        height: 62px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        pointer-events: auto;
+      }
+
+      .route-endpoint-marker__tag {
+        min-width: 44px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.84));
+        box-shadow:
+          0 10px 22px rgba(2, 6, 23, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        color: #f8fafc;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        line-height: 1;
+        text-align: center;
+      }
+
+      .route-endpoint-marker__pin {
+        position: relative;
+        margin-top: 6px;
+        width: 34px;
+        height: 34px;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: linear-gradient(160deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.92));
+        box-shadow:
+          0 12px 26px rgba(2, 6, 23, 0.36),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .route-endpoint-marker__pin::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -10px;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        background: inherit;
+        border-right: 1px solid rgba(255, 255, 255, 0.14);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        transform: translateX(-50%) rotate(45deg);
+        box-shadow: 8px 8px 20px rgba(2, 6, 23, 0.18);
+      }
+
+      .route-endpoint-marker__glyph {
+        position: relative;
+        width: 16px;
+        height: 16px;
+        z-index: 1;
+      }
+
+      .route-endpoint-marker--start .route-endpoint-marker__tag {
+        color: #ccfbf1;
+        border-color: rgba(45, 212, 191, 0.34);
+      }
+
+      .route-endpoint-marker--start .route-endpoint-marker__pin {
+        background: linear-gradient(160deg, rgba(15, 118, 110, 0.94), rgba(15, 23, 42, 0.94));
+        box-shadow:
+          0 12px 26px rgba(2, 6, 23, 0.36),
+          0 0 0 1px rgba(45, 212, 191, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .route-endpoint-marker--finish .route-endpoint-marker__tag {
+        color: #e9ddff;
+        border-color: rgba(167, 139, 250, 0.34);
+      }
+
+      .route-endpoint-marker--finish .route-endpoint-marker__pin {
+        background: linear-gradient(160deg, rgba(109, 40, 217, 0.94), rgba(15, 23, 42, 0.94));
+        box-shadow:
+          0 12px 26px rgba(2, 6, 23, 0.36),
+          0 0 0 1px rgba(167, 139, 250, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      .route-endpoint-marker svg {
+        width: 16px;
+        height: 16px;
+        display: block;
+        fill: currentColor;
       }
 
       @keyframes user-marker-pulse {
@@ -841,7 +1475,8 @@
 
       .route-center-button:active,
       .follow-toggle-button:active,
-      .share-location-button:active {
+      .share-location-button:active,
+      .need-help-button:active {
         transform: scale(0.96);
       }
 
@@ -852,7 +1487,11 @@
       }
 
       .card {
-        background: #060b18;
+        background: linear-gradient(
+          160deg,
+          rgba(33, 24, 56, 0.86) 0%,
+          rgba(11, 13, 30, 0.96) 78%
+        );
         color: white;
         padding: 14px 10px;
         border-radius: 16px;
@@ -860,13 +1499,24 @@
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
-        border: none;
-        box-shadow: none;
-        transition: background 0.2s ease;
+        border: 1px solid rgba(126, 108, 161, 0.2);
+        box-shadow: 0 8px 20px rgba(7, 9, 23, 0.28);
+        transition:
+          background 0.2s ease,
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
       }
 
       .card.on {
-        background: #7c3aed;
+        background: linear-gradient(
+          160deg,
+          rgba(123, 58, 237, 0.92) 0%,
+          rgba(79, 28, 167, 0.96) 78%
+        );
+        border-color: rgba(196, 181, 253, 0.42);
+        box-shadow:
+          0 10px 24px rgba(43, 20, 89, 0.38),
+          0 0 0 1px rgba(196, 181, 253, 0.12);
       }
 
       .card:active {
@@ -879,13 +1529,16 @@
       }
 
       .help-card {
-        background: #060b18;
+        background: linear-gradient(
+          160deg,
+          rgba(23, 19, 46, 0.9) 0%,
+          rgba(8, 10, 24, 0.97) 78%
+        );
         color: white;
-        box-shadow: none;
       }
 
       .help-card.on {
-        background: #14b8a6;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
         color: #06111f;
         box-shadow: none;
       }
@@ -897,14 +1550,21 @@
         bottom: 92px;
         z-index: 30;
 
-        background: rgba(6, 17, 31, 0.96);
+        background:
+          radial-gradient(circle at 50% -18%, rgba(168, 85, 247, 0.28) 0%, rgba(168, 85, 247, 0.14) 22%, transparent 54%),
+          linear-gradient(
+            160deg,
+            rgba(42, 16, 86, 0.82) 0%,
+            rgba(14, 14, 40, 0.95) 30%,
+            rgba(7, 11, 22, 0.99) 72%
+          );
         color: white;
 
         border-radius: 20px;
         padding: 10px 12px 12px;
 
         box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
-        border: 1px solid rgba(94, 234, 212, 0.18);
+        border: none;
         backdrop-filter: blur(14px);
 
         max-height: none;
@@ -945,7 +1605,7 @@
 
       .help-panel__label {
         display: block;
-        color: #5eead4;
+        color: #facc15;
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.08em;
@@ -1006,8 +1666,8 @@
         margin-top: 0;
         padding: 10px 12px;
         border-radius: 16px;
-        background: rgba(94, 234, 212, 0.1);
-        border: 1px solid rgba(94, 234, 212, 0.22);
+        background: rgba(250, 204, 21, 0.1);
+        border: 1px solid rgba(250, 204, 21, 0.22);
         display: grid;
         gap: 4px;
       }
@@ -1017,7 +1677,7 @@
         font-weight: 800;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: #5eead4;
+        color: #facc15;
       }
 
       .help-location strong {
@@ -1046,7 +1706,7 @@
         border: none;
         border-radius: 14px;
         padding: 11px 10px;
-        background: #14b8a6;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
         color: #06111f;
         font-weight: 800;
         text-align: center;
@@ -1152,15 +1812,38 @@
         width: 100%;
         box-sizing: border-box;
 
-        background: #14b8a6;
-        color: #06111f;
+        background: linear-gradient(180deg, #fde047 0%, #facc15 100%);
+        color: #111;
 
-        border: 2px solid #0f766e;
-        border-radius: 16px;
+        border: none;
+        border-radius: 14px;
 
+        font-size: 16px;
         font-weight: 800;
-        padding: 14px;
+        padding: 16px;
         text-align: center;
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        box-shadow: 0 6px 18px rgba(250, 204, 21, 0.25);
+      }
+
+      .help-primary::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background: linear-gradient(
+          120deg,
+          rgba(255, 255, 255, 0) 12%,
+          rgba(255, 255, 255, 0.5) 44%,
+          rgba(247, 97, 188, 0.35) 56%,
+          rgba(255, 255, 255, 0) 88%
+        );
+        transform: translateX(-140%);
+        animation: start-button-sheen 3.7s cubic-bezier(0.22, 0.61, 0.36, 1)
+          infinite;
       }
 
       .help-link {
@@ -1188,43 +1871,126 @@
 
       .help-primary:focus,
       .help-primary:focus-visible {
-        outline: none;
-        border-color: #0f766e;
-        box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22);
+        outline: 3px solid rgba(255, 214, 46, 0.42);
+        outline-offset: 2px;
       }
 
       .help-primary:active {
-        border-color: #115e59;
+        transform: scale(0.99);
       }
 
       .share-location-button {
-        position: fixed;
         right: var(--floating-button-right);
         bottom: calc(
-          var(--floating-button-bottom) + (var(--floating-button-size) * 2) +
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + (var(--floating-button-size) * 2) +
             (var(--floating-button-gap) * 2)
         );
-        width: 56px;
-        height: 56px;
+        color: #efe6ff;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(124, 58, 237, 0.5) 0%,
+            rgba(15, 23, 42, 0.96) 76%
+          );
+        border-color: rgba(216, 180, 254, 0.32);
+      }
+
+      .need-help-button {
+        right: var(--floating-button-right);
+        bottom: calc(
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + (var(--floating-button-size) * 3) +
+            (var(--floating-button-gap) * 3)
+        );
+        color: #fff;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(247, 107, 28, 0.52) 0%,
+            rgba(15, 23, 42, 0.96) 76%
+          );
+        border-color: rgba(247, 107, 28, 0.48);
+      }
+
+      .need-help-button.on {
+        color: #fff;
+        box-shadow:
+          0 12px 28px rgba(2, 6, 23, 0.42),
+          0 0 0 1px rgba(247, 107, 28, 0.42);
+      }
+
+      .next-step-button {
+        position: static;
+        z-index: 1;
+        width: auto;
+        min-width: 102px;
+        max-width: 170px;
+        height: 32px;
+        padding: 0 11px;
         border-radius: 999px;
-        background: var(--bg-surface-strong);
-        color: #34d399; /* subtle green = positive action */
-        display: flex;
+        color: #efe6ff;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.02em;
+        line-height: 1;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(76, 29, 149, 0.58) 0%,
+            rgba(15, 23, 42, 0.95) 80%
+          );
+        border-color: rgba(196, 181, 253, 0.42);
+        box-shadow:
+          0 6px 14px rgba(2, 6, 23, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        cursor: pointer;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 22px;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+        border-width: 1px;
+        border-style: solid;
+        transition:
+          transform 0.16s ease,
+          box-shadow 0.22s ease,
+          border-color 0.22s ease,
+          background 0.22s ease,
+          color 0.22s ease;
+      }
+
+      .next-step-button[hidden] {
+        display: none;
+      }
+
+      .next-step-button__text {
+        max-width: 146px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .share-location-button:active {
         transform: scale(0.96);
       }
 
+      .next-step-button:active {
+        transform: scale(0.98);
+      }
+
+      .next-step-button:focus-visible {
+        outline: none;
+        border-color: rgba(226, 232, 240, 0.72);
+        box-shadow:
+          0 0 0 3px rgba(148, 163, 184, 0.2),
+          0 8px 16px rgba(2, 6, 23, 0.32),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+
       .share-location-button svg {
-        width: 26px;
-        height: 26px;
+        width: 20px;
+        height: 20px;
         display: block;
         fill: currentColor;
       }
@@ -1264,32 +2030,21 @@
       }
 
       .compass-button {
-        position: fixed;
         right: var(--floating-button-right);
         bottom: calc(
-          var(--floating-button-bottom) + (var(--floating-button-size) * 3) +
-            (var(--floating-button-gap) * 3)
+          var(--floating-button-bottom-live, var(--floating-button-bottom)) + (var(--floating-button-size) * 4) +
+            (var(--floating-button-gap) * 4)
         );
 
         z-index: 40;
-
-        width: var(--floating-button-size);
-        height: var(--floating-button-size);
-
-        border: 0;
-        border-radius: 999px;
-
-        background: var(--bg-surface-strong);
-        color: #14b8a6;
-
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
-
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-
-        cursor: pointer;
-        padding: 0;
+        color: #67e8f9;
+        background:
+          linear-gradient(
+            160deg,
+            rgba(8, 145, 178, 0.34) 0%,
+            rgba(15, 23, 42, 0.95) 76%
+          );
+        border-color: rgba(103, 232, 249, 0.42);
       }
 
       .compass-button[hidden] {
@@ -1317,7 +2072,7 @@
 
         display: block;
 
-        color: #14b8a6;
+        color: currentColor;
 
         transform-origin: center;
         transition: transform 0.12s linear;
@@ -1342,8 +2097,17 @@
 
       @media (max-width: 480px) {
         :root {
-          --floating-button-gap: 12px;
+          --floating-button-size: 42px;
+          --floating-button-gap: 18px;
           --floating-button-right: 14px;
+          --route-card-side-offset: 24px;
+          --route-card-height-estimate: clamp(186px, 30vh, 238px);
+          --floating-button-bottom: calc(
+            var(--route-card-bottom-offset) +
+            var(--route-card-height-estimate) +
+            clamp(40px, 8vh, 64px)
+          );
+          --field-log-top: calc(122px + env(safe-area-inset-top));
           --status-stack-gap-below-switcher: 9px;
           --route-card-stack-height: 132px;
           --status-stack-gap: 2px;
@@ -1397,25 +2161,24 @@
         margin-bottom: 4px;
       }
 
-      .help-primary::after {
-        content: " →";
-        color: var(--text-muted);
-      }
-
       .toast {
         position: fixed;
-        bottom: 110px; /* sits above your bottom buttons */
+        bottom: var(--toast-bottom-offset);
         left: 50%;
         transform: translateX(-50%);
 
         background: rgba(10, 15, 31, 0.95);
         color: white;
 
-        padding: 10px 14px;
-        border-radius: 999px;
+        padding: 12px 16px;
+        border-radius: 14px;
 
-        font-size: 13px;
-        white-space: nowrap;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.32;
+        max-width: min(90vw, 420px);
+        white-space: normal;
+        text-align: center;
 
         opacity: 0;
         pointer-events: none;
@@ -1423,7 +2186,7 @@
           opacity 0.2s ease,
           transform 0.2s ease;
 
-        z-index: 50;
+        z-index: 60;
       }
 
       .toast.show {
@@ -1434,7 +2197,8 @@
       .field-log-button {
         position: fixed;
         left: 14px;
-        bottom: calc(94px + env(safe-area-inset-bottom));
+        top: var(--field-log-top);
+        bottom: auto;
         z-index: 45;
         border: none;
         border-radius: 999px;
@@ -1785,22 +2549,22 @@
 
       @media (max-width: 480px) {
         .topbar {
-          padding-top: calc(16px + env(safe-area-inset-top));
+          padding-top: calc(10px + env(safe-area-inset-top));
           padding-right: 116px;
-          padding-bottom: 22px;
+          padding-bottom: 12px;
           padding-left: 12px;
         }
 
         .topbar__brand {
-          top: calc(8px + env(safe-area-inset-top));
+          top: calc(10px + env(safe-area-inset-top));
           right: 14px;
 
           margin-bottom: 0;
         }
 
         .topbar__logo {
-          height: 15px;
-          max-width: 90px;
+          height: 19px;
+          max-width: 109px;
         }
 
         .topbar h1 {
@@ -1814,28 +2578,54 @@
 
         .topbar h1,
         .topbar p {
-          transform: translateY(15px);
+          transform: none;
         }
 
         .warning {
           left: 12px;
           right: 12px;
+          top: calc(98px + env(safe-area-inset-top));
           padding: 11px 12px;
           font-size: 13px;
         }
 
         .route-card {
-          left: 12px;
-          right: 12px;
           padding: 11px 12px;
-          align-items: flex-start;
         }
 
         .route-card__value {
           font-size: 18px;
         }
 
-        .route-card__meta {
+        .route-card__ring {
+          width: 42px;
+          height: 42px;
+          font-size: 10px;
+        }
+
+        .route-card__next-step-anchor {
+          right: 12px;
+          bottom: 10px;
+        }
+
+        .route-card__stats {
+          gap: 8px;
+        }
+
+        .route-card__stat-label {
+          font-size: 9px;
+        }
+
+        #distance-value,
+        #route-estimated-time-value {
+          font-size: 18px;
+        }
+
+        .route-card__track {
+          height: 10px;
+        }
+
+        #next-thing-value {
           font-size: 11px;
         }
 
@@ -1858,8 +2648,17 @@
 
       @media (max-width: 360px) {
         :root {
-          --floating-button-gap: 10px;
+          --floating-button-size: 40px;
+          --floating-button-gap: 16px;
           --floating-button-right: 12px;
+          --route-card-side-offset: 22px;
+          --route-card-height-estimate: clamp(180px, 32vh, 224px);
+          --floating-button-bottom: calc(
+            var(--route-card-bottom-offset) +
+            var(--route-card-height-estimate) +
+            38px
+          );
+          --field-log-top: calc(116px + env(safe-area-inset-top));
           --status-stack-gap-below-switcher: 10px;
           --route-card-stack-height: 142px;
           --status-stack-gap: 2px;
@@ -1869,13 +2668,30 @@
           font-size: 16px;
         }
         .route-card {
-          flex-direction: column;
+          gap: 10px;
+        }
+
+        .route-card__next-step-anchor {
+          right: 10px;
+          bottom: 8px;
+        }
+
+        .route-card__header {
+          grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+          row-gap: 8px;
+        }
+
+        .route-card__stats {
+          grid-template-columns: 1fr;
+        }
+
+        .route-card__stat--align-right {
+          text-align: left;
           align-items: flex-start;
         }
 
-        .route-card__badge {
-          width: 100%;
-          text-align: center;
+        .route-card__track {
+          height: 9px;
         }
 
         .bottom-panel {
@@ -1897,6 +2713,8 @@
         .route-center-button,
         .follow-toggle-button,
         .share-location-button,
+        .need-help-button,
+        .next-step-button,
         .compass-button,
         .help-panel,
         .help-backdrop,
@@ -1937,6 +2755,10 @@
         .route-card.is-locating::before {
           animation: none;
         }
+
+        .help-primary::after {
+          animation: none;
+        }
       }
     </style>
   </head>
@@ -1960,16 +2782,45 @@
             Participants will set off in small groups, following a designated landside route around the airport perimeter.
           </p>
           <p id="landing-copy-middle">
-            The full route is approximately 10 miles and is expected to take between 3 and 4 hours, with shorter options available for those who prefer a different level of participation.
+            The route follows marked roads and paths around airport operations, so stay alert and follow event safety guidance at all times.
           </p>
           <p id="landing-copy-end">
-            This map provides guided navigation, highlighting key checkpoints and potential hazards to help you follow the route with confidence.
+            Use the app during the walk to track progress, view guidance, and share your location when needed.
           </p>
         </div>
 
         <div class="landing-screen__meta">
-          <p id="landing-location-value">Heathrow Perimeter Walk</p>
+          <p id="landing-location-value">Loading checkpoint location...</p>
           <p id="landing-distance-time-value">Route distance calculating…</p>
+        </div>
+
+        <div class="route-test-switcher" aria-label="Test route switcher">
+          <a href="index.html" id="route-link-heathrow">Heathrow</a>
+          <a href="index.html?route=bledlow" id="route-link-bledlow"
+            >Bledlow test</a
+          >
+          <a href="index.html?route=dogwalk" id="route-link-dogwalk"
+            >Dog walk</a
+          >
+        </div>
+
+        <div class="landing-share-hint" aria-label="Share button explanation">
+          <svg
+            class="landing-share-hint__icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 2C8.7 2 6 4.7 6 8c0 4.2 6 12 6 12s6-7.8 6-12c0-3.3-2.7-6-6-6Zm0 8.5A2.5 2.5 0 1 1 12 5.5a2.5 2.5 0 0 1 0 5ZM20 9h-2v2h2v2l3-3-3-3v2ZM4 9l-3 3 3 3v-2h2v-2H4V9Z"
+              fill="currentColor"
+            />
+          </svg>
+          <div>
+            <p class="landing-share-hint__title">Send tracking link</p>
+            <p class="landing-share-hint__text">
+              Use Share location during your walk so others can see where you are in real time.
+            </p>
+          </div>
         </div>
 
         <div class="landing-marker-guide" aria-label="Marker legend">
@@ -2016,39 +2867,124 @@
       <p id="app-subtitle">Infrastructure Charity Event</p>
     </div>
 
-    <div class="route-test-switcher" aria-label="Test route switcher">
-      <a href="index.html" id="route-link-heathrow">Heathrow</a>
-      <a href="index.html?route=bledlow" id="route-link-bledlow"
-        >Bledlow test</a
-      >
-      <a href="index.html?route=dogwalk" id="route-link-dogwalk"
-        >Dog walk</a
-      >
-    </div>
-
     <div class="warning" id="warning">You may be off the official route</div>
 
     <div class="route-card is-locating" id="route-card">
-      <div class="route-card__main">
-        <div class="route-card__text">
-          <span class="route-card__label">Route progress</span>
-          <span class="route-card__value" id="progress-value">Locating…</span>
+      <div class="route-card__header">
+        <div class="route-card__lead">
+          <div class="route-card__text">
+            <span class="route-card__value" id="progress-value">Locating…</span>
+          </div>
         </div>
 
-        <div class="route-card__meta">
-<span id="distance-value">Finding your position</span>
-<span id="route-summary-value">Route distance calculating…</span>
-<span id="next-thing-value">Next: checking route…</span>
-<span class="route-card__source"
-  >Route source: Heathrow perimeter</span
->
+        <div class="route-card__ring" id="route-progress-ring" aria-hidden="true">
+          <span id="route-progress-ring-value">0%</span>
+        </div>
+
+        <div class="route-card__header-actions">
+          <span class="route-card__badge preparing" id="route-badge">Preparing</span>
         </div>
       </div>
 
-      <span class="route-card__badge preparing" id="route-badge">Preparing</span>
+      <div class="route-card__stats">
+        <div class="route-card__stat">
+          <span class="route-card__stat-label">Distance</span>
+          <span id="distance-value">Finding your position</span>
+          <span id="next-thing-value">Next: checking route…</span>
+        </div>
 
-      <div class="route-card__gps-status" id="route-gps-status" hidden>
-        <span id="route-gps-status-text"></span>
+        <div class="route-card__stat route-card__stat--align-right">
+          <span class="route-card__stat-label">Time</span>
+          <span id="route-estimated-time-value">Route distance calculating…</span>
+        </div>
+      </div>
+
+      <div class="route-card__track" aria-hidden="true">
+        <span class="route-card__track-fill" id="route-progress-track-fill"></span>
+      </div>
+
+      <div class="route-card__time-strip" id="route-time-strip">
+        <span class="route-card__time-item">
+          <span class="route-card__time-label">Start</span>
+          <span class="route-card__time-value" id="route-time-start">—</span>
+        </span>
+        <span class="route-card__time-item route-card__time-item--align-right">
+          <span class="route-card__time-label">Finish</span>
+          <span class="route-card__time-value" id="route-time-finish">—</span>
+        </span>
+      </div>
+
+      <div class="route-card__status-rail">
+        <div class="route-card__summary">
+          <span id="route-summary-value">Now: Waiting for route data</span>
+        </div>
+
+        <div class="route-card__gps-status" id="route-gps-status">
+          <span id="route-gps-status-text">Next: —</span>
+        </div>
+      </div>
+
+      <div class="route-complete-banner" id="route-complete-banner" hidden>
+        <span class="route-complete-banner__icon" aria-hidden="true">✓</span>
+        <span>Route completed</span>
+      </div>
+
+      <div class="route-card__next-step-anchor">
+        <div class="ahead-sheet" id="ahead-sheet" aria-hidden="true">
+          <div class="ahead-sheet__summary">
+            <div class="ahead-sheet__row">
+              <span class="ahead-sheet__label">Next checkpoint</span>
+              <span class="ahead-sheet__value" id="ahead-checkpoint-value"
+                >Waiting for route data</span
+              >
+            </div>
+            <div class="ahead-sheet__row">
+              <span class="ahead-sheet__label">Nearest hazard</span>
+              <span class="ahead-sheet__value" id="ahead-hazard-value"
+                >No hazard flagged ahead</span
+              >
+            </div>
+            <div class="ahead-sheet__row">
+              <span class="ahead-sheet__label">Nearest rest</span>
+              <span class="ahead-sheet__value" id="ahead-rest-value"
+                >No rest stop ahead</span
+              >
+            </div>
+          </div>
+
+          <div class="ahead-sheet__expand">
+            <button class="ahead-sheet__toggle" id="ahead-sheet-toggle" type="button">
+              Show more
+            </button>
+
+            <div class="ahead-sheet__details" id="ahead-sheet-details" aria-hidden="true">
+              <div class="ahead-sheet__list-group">
+                <span class="ahead-sheet__group-label">Upcoming hazards</span>
+                <div class="ahead-sheet__list" id="ahead-hazard-list">
+                  <span class="ahead-sheet__empty">No hazard flagged ahead</span>
+                </div>
+              </div>
+
+              <div class="ahead-sheet__list-group">
+                <span class="ahead-sheet__group-label">Upcoming rest stops</span>
+                <div class="ahead-sheet__list" id="ahead-rest-list">
+                  <span class="ahead-sheet__empty">No rest stop ahead</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button
+          class="next-step-button"
+          id="next-step-button"
+          aria-label="Show what is ahead"
+          title="What is ahead"
+        >
+          <span class="next-step-button__text" id="next-step-button-text"
+            >Ahead</span
+          >
+        </button>
       </div>
     </div>
 
@@ -2121,6 +3057,15 @@
           fill="currentColor"
         />
       </svg>
+    </button>
+
+    <button
+      class="need-help-button"
+      id="need-help-button"
+      aria-label="Need help"
+      title="Need help"
+    >
+      Help
     </button>
 
     <button
@@ -2283,7 +3228,7 @@
           Save note
         </button>
         <button class="field-log-action field-log-action--export" id="field-log-export-button">
-          Export JSON
+          Share / Export
         </button>
       </div>
 
@@ -2315,6 +3260,8 @@
   geojsonUrl: "heathrow-perimeter-route.geojson",
   title: "Perimeter Walk",
   subtitle: "Infrastructure Charity Event",
+    routePreviewZoom: 16.5,
+    liveFollowZoom: 16,
   landingHeading: "Walking the perimeter for charity",
     landingLead:
       "Participants will set off in small groups, following a designated landside route around the airport perimeter.",
@@ -2349,6 +3296,8 @@ bledlow: {
   geojsonUrl: "bledlow-test/bledlow-test-route.geojson",
   title: "Bledlow Test",
   subtitle: "GPS test route",
+  routePreviewZoom: 16.5,
+  liveFollowZoom: 16,
   landingHeading: "Walking the test route",
   landingLead:
     "Use this lighter pre-start screen to brief the test walk before live tracking begins.",
@@ -2380,13 +3329,15 @@ dogwalk: {
   gpsLockAccuracyMeters: 45,
   title: "Dog Walk",
   subtitle: "Local route test",
+  routePreviewZoom: 17,
+  liveFollowZoom: 18,
   landingHeading: "Walking the local dog route",
   landingLead:
     "Use this local route for quick confidence checks on GPS lock, recovery, and follow behaviour.",
   landingCopyMiddle:
     "This route is intended for frequent short tests in familiar surroundings where you can quickly repeat scenarios.",
   landingCopyEnd:
-    "Replace the template line with your real walk route when ready.",
+    "",
   landingRouteLabel: "Local Dog Walk",
   helpIntro: "Dog walk route active.",
   helpSummary: "Use this route for short local GPS confidence checks.",
@@ -2404,6 +3355,12 @@ dogwalk: {
       };
       const routeParams = new URLSearchParams(window.location.search);
       const requestedRouteKey = routeParams.get("route");
+      const forwardHighlightParam =
+        (routeParams.get("forwardHighlight") || "").toLowerCase();
+      const enableForwardRouteHighlight =
+        forwardHighlightParam === "1" ||
+        forwardHighlightParam === "true" ||
+        forwardHighlightParam === "yes";
 
       let activeRouteKey = ROUTES[requestedRouteKey]
         ? requestedRouteKey
@@ -2544,7 +3501,7 @@ dogwalk: {
       let cachedRouteFeature = null;
       let routeStartMarker = null;
       let routeFinishMarker = null;
-      let hasRouteLoaded = false
+      let hasRouteLoaded = false;
       let isAppVisible = true;
       let geolocationWatchId = null;
       let geolocationStarted = false;
@@ -2605,11 +3562,41 @@ localStorage.setItem(
       const MIN_SPEED_FOR_FOLLOW = 0.4;
       const POSITION_UPDATE_MIN_METERS = 15; // Increased from 12m for battery efficiency
       const POSITION_UPDATE_MIN_MS = 10000; // Increased from 8000ms for battery efficiency
+      const DIRECTION_MIN_SAMPLE_METERS = 4;
       const GPS_LOCK_ACCURACY_METERS = 30;
       const GPS_WEAK_ACCURACY_METERS = 65;
+      // Number of consecutive lockable-accuracy fixes required before the app
+      // grants a full "locked" state when coming up from weak/lost. Prevents a
+      // single lucky fix from flipping the UI to fully-trusted.
+      const GPS_LOCK_STREAK_REQUIRED = 3;
+      // After dropping out of lock (or a geolocation error), stay in a cautious
+      // recovering state for at least this long before re-granting lock, so a
+      // fresh fix isn't trusted the instant signal returns.
+      const GPS_RECOVERY_HOLD_MS = 6000;
+      // Fixes worse than this are treated as garbage (e.g. a bad reading right
+      // after resuming) - the marker holds its last good position instead of
+      // teleporting. The auto-route-jump detector still logs the spike.
+      const GPS_MAX_USABLE_ACCURACY_METERS = 150;
       const MIN_LOCATING_ANIMATION_MS = 3000;
       const START_APPROACH_DISTANCE = 30;
       const FINISH_APPROACH_DISTANCE = 30;
+      // Require a short run of good finish-proximity fixes before declaring the
+      // route complete, so a single noisy fix can't trigger completion early.
+      const FINISH_CONFIRM_FIXES = 2;
+      // Require sustained evidence before raising a "far off route" alert,
+      // so one spiky fix doesn't fire a false off-route warning.
+      const OFF_ROUTE_CONFIRM_FIXES = 2;
+      // The map view only snaps to the route while the walker is genuinely
+      // near it. Beyond the release distance the view follows the real GPS
+      // point so it isn't pulled back onto the route when off course.
+      // Hysteresis (engage < release) prevents the centre oscillating.
+      const ROUTE_SNAP_ENGAGE_METERS = 30;
+      const ROUTE_SNAP_RELEASE_METERS = 55;
+      // Automatic route-jump detection: flag GPS fixes that imply an
+      // impossible walking speed between consecutive positions.
+      const AUTO_ROUTE_JUMP_SPEED_MPS = 8; // ~28.8 km/h - faster than any walker/jogger
+      const AUTO_ROUTE_JUMP_MIN_METERS = 25; // ignore small GPS jitter
+      const AUTO_ROUTE_JUMP_COOLDOWN_MS = 8000; // avoid spamming during sustained drift
       const SURFACE_TOOLTIP_HIDE_ZOOM = 16.8;
       const COMPASS_SHOW_BEARING = 4;
       const COMPASS_HIDE_BEARING = 0.5;
@@ -2627,10 +3614,14 @@ localStorage.setItem(
       const GPS_CONFIDENCE_WEAK = "weak";
       const GPS_CONFIDENCE_LOST = "lost";
       const GPS_CONFIDENCE_CACHED = "cached";
+      const FORWARD_ROUTE_HIGHLIGHT_AHEAD_METERS = 240;
       const FIELD_LOG_GAP_MS = 45000;
       const FIELD_LOG_MAX_ENTRIES = 800;
+      const FIELD_LOG_SESSION_RESUME_WINDOW_MS = 45 * 60 * 1000;
       const FIELD_LOG_ENTRIES_STORAGE_KEY = getRouteStorageKey("fieldLogEntries");
       const FIELD_LOG_FIRST_USE_STORAGE_KEY = getRouteStorageKey("fieldLogFirstUseSeen");
+      const FIELD_LOG_SESSION_ID_STORAGE_KEY = getRouteStorageKey("fieldLogSessionId");
+      const FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY = getRouteStorageKey("fieldLogSessionStartedAt");
       const ROUTE_TOAST_COOLDOWN_MS = 25000;
       const ROUTE_STATE_REPEAT_COOLDOWN_MS = 180000;
       const POINT_ALERT_RESET_AHEAD_METERS = 220;
@@ -2649,6 +3640,24 @@ localStorage.setItem(
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M12 2a1 1 0 0 1 1 1v1.08A8.01 8.01 0 0 1 19.92 11H21a1 1 0 1 1 0 2h-1.08A8.01 8.01 0 0 1 13 19.92V21a1 1 0 1 1-2 0v-1.08A8.01 8.01 0 0 1 4.08 13H3a1 1 0 1 1 0-2h1.08A8.01 8.01 0 0 1 11 4.08V3a1 1 0 0 1 1-1Zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3.2a2.8 2.8 0 1 1 0 5.6 2.8 2.8 0 0 1 0-5.6Z"
+            fill="currentColor"
+          />
+        </svg>
+      `;
+
+      const FOLLOW_ON_ICON = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm0 16.4A6.4 6.4 0 1 1 18.4 12 6.407 6.407 0 0 1 12 18.4Zm0-10.2a3.8 3.8 0 1 0 3.8 3.8A3.804 3.804 0 0 0 12 8.2Z"
+            fill="currentColor"
+          />
+        </svg>
+      `;
+
+      const FOLLOW_OFF_ICON = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M4.3 3.2 3.2 4.3l2.5 2.5A9.96 9.96 0 0 0 2 12a10 10 0 0 0 16.5 7.6l1.2 1.2 1.1-1.1L4.3 3.2Zm7.7 15.2A6.4 6.4 0 0 1 5.6 12c0-1.3.4-2.5 1-3.5l8.9 8.9a6.35 6.35 0 0 1-3.5 1Zm6.4-2.9A9.96 9.96 0 0 0 22 12 10 10 0 0 0 8.2 2.5l1.1 1.1A8.4 8.4 0 0 1 20.4 12c0 1.1-.2 2.1-.6 3.1l-1.4-1.4Z"
             fill="currentColor"
           />
         </svg>
@@ -2690,6 +3699,25 @@ localStorage.setItem(
           },
           {
             name: "Finish section",
+            milestone: "Finish point",
+          },
+        ],
+
+        dogwalk: [
+          {
+            name: "Start section",
+            milestone: "First bend",
+          },
+          {
+            name: "Village stretch",
+            milestone: "Main street corner",
+          },
+          {
+            name: "Loop return",
+            milestone: "Approach finish",
+          },
+          {
+            name: "Final section",
             milestone: "Finish point",
           },
         ],
@@ -2924,6 +3952,8 @@ localStorage.setItem(
       let userMarkerElement = null;
       let lastActualPosition = null;
       let lastSnappedPosition = null;
+      let lastRawSnapPoint = null;
+      let isViewSnappedToRoute = true;
       let hasInitialPosition = false;
       let isWaitingForFirstLocation = true;
       let isIntro = true; // Track if we're in intro sequence
@@ -2935,8 +3965,16 @@ localStorage.setItem(
       let lastPositionTime = 0;
       let lastProcessedPosition = null;
       let lastProcessedPositionTime = 0;
+      let lastJumpSamplePosition = null;
+      let lastJumpSampleTime = 0;
+      let lastAutoRouteJumpLoggedAt = 0;
+      let isRouteCardMetaCompact = false;
       let lastLocationAccuracy = null;
+      let lastDirectionHeading = null;
+      let lastDirectionSamplePoint = null;
       let gpsConfidenceState = GPS_CONFIDENCE_LOST;
+      let consecutiveLockableFixes = 0;
+      let gpsRecoveryHoldUntil = 0;
       let lastStableDistanceToRoute = null;
       let lastStableRouteProgress = 0;
       let lastStableSegmentInfo = null;
@@ -2955,13 +3993,162 @@ localStorage.setItem(
       let isMapInteracting = false;
       let isCompassVisible = false;
       let fieldLogEntries = [];
+      let fieldLogSessionId = "";
       let fieldLogSessionStartedAt = 0;
+      let fieldLogSessionSequence = 0;
       let fieldLogLastHiddenAt = 0;
       let fieldLogLastSegmentNumber = null;
       let lastOperationalToastAt = 0;
       let lastRouteStatusToastState = "";
       let routeStatusToastByState = {};
       let pointAlertState = {};
+      let hasRouteCompletionCelebrated = false;
+      let finishProximityStreak = 0;
+      let offRouteFarStreak = 0;
+      let nextStepGuidance = null;
+      let toastHideTimer = null;
+      let aheadSheetOpen = false;
+      let aheadSheetExpanded = false;
+      let lastAheadUserPoint = null;
+      let lastAheadSegmentInfo = null;
+
+      function setAheadSheetExpanded(expanded) {
+        const aheadSheet = document.getElementById("ahead-sheet");
+        const aheadSheetDetails = document.getElementById("ahead-sheet-details");
+        const aheadSheetToggle = document.getElementById("ahead-sheet-toggle");
+
+        aheadSheetExpanded = Boolean(expanded);
+
+        if (aheadSheet) {
+          aheadSheet.classList.toggle("expanded", aheadSheetExpanded);
+        }
+
+        if (aheadSheetDetails) {
+          aheadSheetDetails.setAttribute(
+            "aria-hidden",
+            aheadSheetExpanded ? "false" : "true",
+          );
+        }
+
+        if (aheadSheetToggle) {
+          aheadSheetToggle.textContent = aheadSheetExpanded
+            ? "Show less"
+            : "Show more";
+        }
+      }
+
+      function setAheadSheet(open) {
+        const aheadSheet = document.getElementById("ahead-sheet");
+
+        if (!aheadSheet) {
+          aheadSheetOpen = false;
+          return;
+        }
+
+        aheadSheetOpen = Boolean(open);
+        aheadSheet.classList.toggle("open", aheadSheetOpen);
+        aheadSheet.setAttribute("aria-hidden", aheadSheetOpen ? "false" : "true");
+
+        if (!aheadSheetOpen) {
+          setAheadSheetExpanded(false);
+        }
+      }
+
+      function renderAheadList(listElement, items, getText, emptyText) {
+        if (!listElement) {
+          return;
+        }
+
+        listElement.innerHTML = "";
+
+        if (!Array.isArray(items) || items.length === 0) {
+          const emptyItem = document.createElement("span");
+          emptyItem.className = "ahead-sheet__empty";
+          emptyItem.textContent = emptyText;
+          listElement.appendChild(emptyItem);
+          return;
+        }
+
+        items.forEach((item) => {
+          const row = document.createElement("span");
+          row.className = "ahead-sheet__item";
+          row.textContent = getText(item);
+          listElement.appendChild(row);
+        });
+      }
+
+      function updateAheadSheet(userPoint, segmentInfo = null) {
+        const checkpointValue = document.getElementById("ahead-checkpoint-value");
+        const hazardValue = document.getElementById("ahead-hazard-value");
+        const restValue = document.getElementById("ahead-rest-value");
+        const hazardList = document.getElementById("ahead-hazard-list");
+        const restList = document.getElementById("ahead-rest-list");
+
+        if (!checkpointValue || !hazardValue || !restValue || !hazardList || !restList) {
+          return;
+        }
+
+        lastAheadUserPoint = Array.isArray(userPoint) ? [...userPoint] : null;
+        lastAheadSegmentInfo = segmentInfo || null;
+
+        if (segmentInfo && segmentInfo.nextMilestone) {
+          const distanceText = Number.isFinite(segmentInfo.distanceToMilestone)
+            ? ` (${formatDistance(segmentInfo.distanceToMilestone)})`
+            : "";
+          checkpointValue.textContent = `${segmentInfo.nextMilestone}${distanceText}`;
+        } else {
+          checkpointValue.textContent = "Waiting for route data";
+        }
+
+        if (!Array.isArray(userPoint) || !isHeathrowRoute()) {
+          hazardValue.textContent = "Not available on this route";
+          restValue.textContent = "Not available on this route";
+
+          renderAheadList(
+            hazardList,
+            [],
+            (item) => item,
+            "Not available on this route",
+          );
+          renderAheadList(
+            restList,
+            [],
+            (item) => item,
+            "Not available on this route",
+          );
+          return;
+        }
+
+        const upcomingHazards = getUpcomingHazardsAhead(userPoint, 3);
+        const hazardAhead = upcomingHazards[0] || null;
+        if (hazardAhead) {
+          hazardValue.textContent = `${hazardAhead.type} in ${formatDistance(hazardAhead.distanceAhead)}`;
+        } else {
+          hazardValue.textContent = "No hazard flagged ahead";
+        }
+
+        renderAheadList(
+          hazardList,
+          upcomingHazards,
+          (hazard) => `${hazard.type} - ${formatDistance(hazard.distanceAhead)}`,
+          "No hazard flagged ahead",
+        );
+
+        const upcomingRestStops = getUpcomingRestAhead(userPoint, 2);
+        const restAhead = upcomingRestStops[0] || null;
+        if (restAhead) {
+          restValue.textContent = `${restAhead.label} in ${formatDistance(restAhead.distanceAhead)}`;
+        } else {
+          restValue.textContent = "No rest stop ahead";
+        }
+
+        renderAheadList(
+          restList,
+          upcomingRestStops,
+          (restStop) => `${restStop.label} - ${formatDistance(restStop.distanceAhead)}`,
+          "No rest stop ahead",
+        );
+      }
 
       const hazards = [
         {
@@ -3052,6 +4239,103 @@ localStorage.setItem(
 
       function toRadians(value) {
         return value * (Math.PI / 180);
+      }
+
+      function toDegrees(value) {
+        return value * (180 / Math.PI);
+      }
+
+      function normalizeHeadingDegrees(value) {
+        if (!Number.isFinite(value)) {
+          return null;
+        }
+
+        return ((value % 360) + 360) % 360;
+      }
+
+      function getHeadingDegreesBetweenPoints(pointA, pointB) {
+        if (!pointA || !pointB) {
+          return null;
+        }
+
+        const lat1 = toRadians(pointA[1]);
+        const lat2 = toRadians(pointB[1]);
+        const lngDelta = toRadians(pointB[0] - pointA[0]);
+
+        const y = Math.sin(lngDelta) * Math.cos(lat2);
+        const x =
+          Math.cos(lat1) * Math.sin(lat2) -
+          Math.sin(lat1) * Math.cos(lat2) * Math.cos(lngDelta);
+
+        return normalizeHeadingDegrees(toDegrees(Math.atan2(y, x)));
+      }
+
+      function createRouteEndpointMarker(type) {
+        const markerElement = document.createElement("div");
+        markerElement.className = `route-endpoint-marker route-endpoint-marker--${type}`;
+
+        const tagText = type === "start" ? "START" : "FINISH";
+        const glyph =
+          type === "start"
+            ? `
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 5.5a1 1 0 0 1 1 1V18a1 1 0 1 1-2 0V6.5a1 1 0 0 1 1-1Zm3 1.2c0-.6.5-1 1-1h7.1c.8 0 1.2 1 .7 1.6l-2.2 2.6 2.2 2.6c.5.6.1 1.6-.7 1.6H10a1 1 0 0 1-1-1V6.7Z" />
+              </svg>
+            `
+            : `
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 4.5a1 1 0 0 1 1 1v13a1 1 0 1 1-2 0v-13a1 1 0 0 1 1-1Zm3 1h8a1 1 0 0 1 .9 1.4l-1.1 2.3 1.1 2.3a1 1 0 0 1-.9 1.4H9a1 1 0 0 1-1-1v-5.4a1 1 0 0 1 1-1Z" />
+              </svg>
+            `;
+
+        markerElement.innerHTML = `
+          <div class="route-endpoint-marker__tag">${tagText}</div>
+          <div class="route-endpoint-marker__pin">
+            <span class="route-endpoint-marker__glyph">${glyph}</span>
+          </div>
+        `;
+
+        return markerElement;
+      }
+
+      function resolveDirectionHeading(position) {
+        if (!position || !position.coords) {
+          return lastDirectionHeading;
+        }
+
+        const { latitude, longitude, heading } = position.coords;
+        const currentPoint = [longitude, latitude];
+        const sensorHeading = normalizeHeadingDegrees(heading);
+
+        if (Number.isFinite(sensorHeading)) {
+          lastDirectionHeading = sensorHeading;
+          lastDirectionSamplePoint = currentPoint;
+          return lastDirectionHeading;
+        }
+
+        if (lastDirectionSamplePoint) {
+          const movedMeters = haversineDistanceMeters(
+            lastDirectionSamplePoint,
+            currentPoint,
+          );
+
+          if (movedMeters >= DIRECTION_MIN_SAMPLE_METERS) {
+            const inferredHeading = getHeadingDegreesBetweenPoints(
+              lastDirectionSamplePoint,
+              currentPoint,
+            );
+
+            if (Number.isFinite(inferredHeading)) {
+              lastDirectionHeading = inferredHeading;
+            }
+
+            lastDirectionSamplePoint = currentPoint;
+          }
+        } else {
+          lastDirectionSamplePoint = currentPoint;
+        }
+
+        return lastDirectionHeading;
       }
 
       function getCurrentSegment(userPoint) {
@@ -3202,10 +4486,10 @@ localStorage.setItem(
 
         if (bounds) {
           const topOffset =
-            document.querySelector(".route-card")?.offsetHeight || 140;
+            document.querySelector(".topbar")?.offsetHeight || 110;
 
           const bottomOffset =
-            document.querySelector(".bottom-panel")?.offsetHeight || 180;
+            document.querySelector(".route-card")?.offsetHeight || 260;
 
           const uiGap = 60;
           const isLandscape = window.innerWidth > window.innerHeight;
@@ -3217,11 +4501,9 @@ localStorage.setItem(
             ],
             {
               padding: {
-                top: isLandscape
-                  ? topOffset + 20 // ↓ LESS space in landscape
-                  : topOffset + uiGap,
+                top: isLandscape ? topOffset + 16 : topOffset + 26,
 
-                bottom: isLandscape ? bottomOffset + 20 : bottomOffset + uiGap,
+                bottom: isLandscape ? bottomOffset + 28 : bottomOffset + 74,
 
                 left: 60, // give more horizontal breathing room in landscape
                 right: 60,
@@ -3263,12 +4545,23 @@ localStorage.setItem(
         const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
 
         if (followButton) {
-          followButton.style.opacity = "1";
+          updateFollowButtonState();
         }
+
+        // Zoom in close on the walker's position. Use the route's live-follow
+        // zoom if it's higher, otherwise a tight default so "back to position"
+        // gives a clear, close-up view.
+        const activeRoute = getActiveRoute();
+        const positionZoom = Math.max(
+          17.8,
+          Number.isFinite(activeRoute.liveFollowZoom)
+            ? activeRoute.liveFollowZoom
+            : 0,
+        );
 
         map.easeTo({
           center: target,
-          zoom: 16,
+          zoom: positionZoom,
           duration: 700,
         });
       }
@@ -3453,7 +4746,7 @@ function formatRouteDistance(distanceMeters) {
     return `${(distanceMeters / 1000).toFixed(1)} km`;
   }
 
-  return `${Math.round(distanceMeters)} m`;
+  return `${Math.round(distanceMeters)}m`;
 }
 
 function formatEstimatedWalkTime(distanceMeters) {
@@ -3482,23 +4775,128 @@ function formatEstimatedWalkTime(distanceMeters) {
   return `${walkHours} hr ${walkMinutes} min walk`;
 }
 
-function updateRouteSummaryDisplay() {
+function estimateWalkMinutes(distanceMeters) {
+  const activeRoute = getActiveRoute();
+  const walkingSpeedKmh = activeRoute.walkingSpeedKmh || 4.8;
+
+  if (!Number.isFinite(distanceMeters) || distanceMeters <= 0) {
+    return null;
+  }
+
+  const distanceKm = distanceMeters / 1000;
+  const hours = distanceKm / walkingSpeedKmh;
+  return Math.max(1, Math.round(hours * 60));
+}
+
+function formatMinutesCompact(totalMinutes) {
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) {
+    return "—";
+  }
+
+  if (totalMinutes < 60) {
+    return `${totalMinutes} min`;
+  }
+
+  const walkHours = Math.floor(totalMinutes / 60);
+  const walkMinutes = totalMinutes % 60;
+
+  if (walkMinutes === 0) {
+    return `${walkHours} hr`;
+  }
+
+  return `${walkHours} hr ${walkMinutes} min`;
+}
+
+function formatClockAmPm(timestampMs) {
+  if (!Number.isFinite(timestampMs) || timestampMs <= 0) {
+    return "—";
+  }
+
+  const formatted = new Date(timestampMs).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return formatted.replace(" AM", "am").replace(" PM", "pm");
+}
+
+function updateRouteSummaryDisplay(options = {}) {
+  const { updateTime = true, forceTimeUpdate = false } = options;
   const routeSummaryValue = document.getElementById("route-summary-value");
+  const routeEstimatedTimeValue = document.getElementById(
+    "route-estimated-time-value",
+  );
   const landingDistanceTimeValue = document.getElementById(
     "landing-distance-time-value",
   );
 
   const distanceMeters = getRouteDistanceMeters();
   const distanceText = formatRouteDistance(distanceMeters);
-  const timeText = formatEstimatedWalkTime(distanceMeters);
+  const hasValidRouteDistance = Number.isFinite(distanceMeters) && distanceMeters > 0;
+  const timeText = hasValidRouteDistance
+    ? formatEstimatedWalkTime(distanceMeters)
+    : "time unavailable";
+  const timeTextCompact = hasValidRouteDistance
+    ? timeText.replace(/ walk$/, "")
+    : "—";
 
   if (routeSummaryValue) {
-    routeSummaryValue.textContent = `Route: ${distanceText} · approx. ${timeText}`;
+    if (gpsConfidenceState !== GPS_CONFIDENCE_LOCKED) {
+      routeSummaryValue.textContent = "Now: Waiting for route data";
+    } else {
+      routeSummaryValue.textContent = `Now: Route ${distanceText} · approx. ${timeText}`;
+    }
+  }
+
+  const canShowCardTime =
+    updateTime &&
+    (forceTimeUpdate || gpsConfidenceState === GPS_CONFIDENCE_LOCKED);
+
+  if (routeEstimatedTimeValue && canShowCardTime) {
+    routeEstimatedTimeValue.textContent =
+      timeTextCompact === "—" ? "—" : `~${timeTextCompact}`;
   }
 
   if (landingDistanceTimeValue) {
     landingDistanceTimeValue.textContent = `${distanceText} • approx. ${timeText}`;
   }
+}
+
+function buildCoveredRemainingText(progressPercent, options = {}) {
+  const totalDistance = getRouteDistanceMeters();
+  if (!Number.isFinite(totalDistance) || totalDistance <= 0) {
+    return '<span class="distance-value__context">Route distance unavailable</span>';
+  }
+
+  const safeProgress = Math.min(100, Math.max(0, progressPercent || 0));
+  const coveredMeters = totalDistance * (safeProgress / 100);
+  const remainingMeters = Math.max(0, totalDistance - coveredMeters);
+
+  const formatDistanceCompact = (meters) => {
+    if (!Number.isFinite(meters) || meters <= 0) {
+      return "0m";
+    }
+
+    if (meters >= 1000) {
+      return `${(meters / 1000).toFixed(1)}km`;
+    }
+
+    return `${Math.round(meters)}m`;
+  };
+
+  const coveredText = formatDistanceCompact(coveredMeters);
+  const remainingText = formatDistanceCompact(remainingMeters);
+  const sectionRemainingMeters = Number(options.sectionRemainingMeters);
+
+  const metric = (value) => `<span class="distance-value__metric">${value}</span>`;
+  const context = (value) => `<span class="distance-value__context">${value}</span>`;
+
+  if (Number.isFinite(sectionRemainingMeters) && sectionRemainingMeters > 0) {
+    return `${context("Covered")} ${metric(coveredText)} ${context("· Section left")} ${metric(formatDistanceCompact(sectionRemainingMeters))}`;
+  }
+
+  return `${context("Covered")} ${metric(coveredText)} ${context("· Remaining")} ${metric(remainingText)}`;
 }
 
       function getClosestPointOnRoute(userPoint) {
@@ -3730,12 +5128,16 @@ function updateRouteSummaryDisplay() {
       }
 
       function getNextHazardAhead(userPoint) {
+        return getUpcomingHazardsAhead(userPoint, 1)[0] || null;
+      }
+
+      function getUpcomingHazardsAhead(userPoint, limit = 3) {
         if (!isHeathrowRoute()) {
-          return null;
+          return [];
         }
 
         if (routeCoordinates.length < 2) {
-          return null;
+          return [];
         }
 
         const userMeasure = getRouteMeasure(userPoint);
@@ -3756,16 +5158,20 @@ function updateRouteSummaryDisplay() {
           .filter((h) => h.distanceAhead > 25)
           .sort((a, b) => a.distanceAhead - b.distanceAhead);
 
-        return upcomingHazards[0] || null;
+        return upcomingHazards.slice(0, Math.max(1, limit));
       }
 
       function getNextRestAhead(userPoint) {
+        return getUpcomingRestAhead(userPoint, 1)[0] || null;
+      }
+
+      function getUpcomingRestAhead(userPoint, limit = 2) {
         if (!isHeathrowRoute()) {
-          return null;
+          return [];
         }
 
         if (routeCoordinates.length < 2) {
-          return null;
+          return [];
         }
 
         const userMeasure = getRouteMeasure(userPoint);
@@ -3786,7 +5192,7 @@ function updateRouteSummaryDisplay() {
           .filter((r) => r.distanceAhead > 25)
           .sort((a, b) => a.distanceAhead - b.distanceAhead);
 
-        return upcomingRestStops[0] || null;
+        return upcomingRestStops.slice(0, Math.max(1, limit));
       }
 
       function showOperationalToast(message, options = {}) {
@@ -3810,7 +5216,10 @@ function updateRouteSummaryDisplay() {
         let routeState = "";
         let message = "";
 
-        if (distanceToRoute > ROUTE_ALERT_DISTANCE) {
+        if (
+          distanceToRoute > ROUTE_ALERT_DISTANCE &&
+          offRouteFarStreak >= OFF_ROUTE_CONFIRM_FIXES
+        ) {
           routeState = "far";
           message = "Far from route";
         } else if (distanceToRoute > ROUTE_WARNING_DISTANCE) {
@@ -3832,6 +5241,12 @@ function updateRouteSummaryDisplay() {
         if (showOperationalToast(message, { bypassCooldown: routeState === "far" })) {
           lastRouteStatusToastState = routeState;
           routeStatusToastByState[routeState] = now;
+          if (routeState === "far") {
+            logFieldEvent("off-route-confirmed", {
+              distanceMeters: Math.round(distanceToRoute),
+              streak: offRouteFarStreak,
+            });
+          }
         }
       }
 
@@ -3899,9 +5314,12 @@ function updateRouteSummaryDisplay() {
         }
 
         if (!isHeathrowRoute()) {
-          nextThingValue.textContent = "Test route active";
+          nextThingValue.textContent = "";
+          nextThingValue.hidden = true;
           return;
         }
+
+        nextThingValue.hidden = false;
 
         const nextThing = getNextThingAhead(userPoint);
 
@@ -3921,6 +5339,45 @@ function updateRouteSummaryDisplay() {
         const distance = formatDistance(nextThing.distanceAhead);
 
         nextThingValue.textContent = `Next: ${icon} ${nextThing.label} in ${distance}`;
+      }
+
+      function updateNextStepPill(userPoint, segmentInfo = null) {
+        const nextStepButtonText = document.getElementById("next-step-button-text");
+
+        if (!nextStepButtonText) {
+          return;
+        }
+
+        nextStepGuidance = null;
+
+        if (Array.isArray(userPoint) && isHeathrowRoute()) {
+          const nextThing = getNextThingAhead(userPoint);
+
+          if (nextThing) {
+            const distance = formatDistance(nextThing.distanceAhead);
+            nextStepButtonText.textContent = "Ahead";
+            nextStepGuidance = {
+              kind: nextThing.type,
+              label: nextThing.label,
+              distance: distance,
+            };
+            return;
+          }
+        }
+
+        if (segmentInfo && segmentInfo.nextMilestone) {
+          nextStepButtonText.textContent = "Ahead";
+          nextStepGuidance = {
+            kind: "milestone",
+            label: segmentInfo.nextMilestone,
+            distance: Number.isFinite(segmentInfo.distanceToMilestone)
+              ? formatDistance(segmentInfo.distanceToMilestone)
+              : null,
+          };
+          return;
+        }
+
+        nextStepButtonText.textContent = "Ahead";
       }
 
       function showWarning(message, level = "") {
@@ -4127,12 +5584,18 @@ function updateRouteSummaryDisplay() {
         const toast = document.getElementById("toast");
         if (!toast) return;
 
+        if (toastHideTimer) {
+          clearTimeout(toastHideTimer);
+          toastHideTimer = null;
+        }
+
         toast.textContent = message;
         toast.classList.add("show");
 
-        setTimeout(() => {
+        toastHideTimer = setTimeout(() => {
           toast.classList.remove("show");
-        }, 2500);
+          toastHideTimer = null;
+        }, 4200);
       }
 
       function applyRouteAwareMarkerControls() {
@@ -4202,10 +5665,23 @@ function updateRouteSummaryDisplay() {
       }
 
       function formatDistance(distance) {
+        if (!Number.isFinite(distance) || distance < 0) {
+          return "—";
+        }
         if (distance >= 1000) {
           return `${(distance / 1000).toFixed(1)} km`;
         }
-        return `${Math.round(distance)} m`;
+        // Round to cleaner increments so small GPS jitter doesn't make the
+        // number flicker; stay precise as the user gets close.
+        let rounded;
+        if (distance >= 100) {
+          rounded = Math.round(distance / 10) * 10; // nearest 10m at range
+        } else if (distance >= 20) {
+          rounded = Math.round(distance / 5) * 5; // nearest 5m mid-range
+        } else {
+          rounded = Math.round(distance); // exact on approach
+        }
+        return `${rounded}m`;
       }
 
       function getRouteProgress(userPoint) {
@@ -4279,14 +5755,6 @@ function updateRouteSummaryDisplay() {
         }
 
         const progress = (bestProgress / totalLength) * 100;
-        const distanceToStart = haversineDistanceMeters(
-          userPoint,
-          routeCoordinates[0],
-        );
-
-        if (distanceToStart > START_APPROACH_DISTANCE) {
-          return 0;
-        }
 
         if (progress >= 99 && bestDistance > FINISH_APPROACH_DISTANCE) {
           return 99;
@@ -4300,12 +5768,18 @@ function updateRouteSummaryDisplay() {
         gpsConfidenceState = nextState;
 
         if (previousState !== nextState) {
+          const recoveryHoldMsRemaining = Math.max(
+            0,
+            gpsRecoveryHoldUntil - Date.now(),
+          );
           logFieldEvent("gps-state-change", {
             from: previousState,
             to: nextState,
             accuracyMeters: Number.isFinite(lastLocationAccuracy)
               ? Math.round(lastLocationAccuracy)
               : null,
+            lockStreak: consecutiveLockableFixes,
+            recoveryHoldMsRemaining,
           });
         }
       }
@@ -4327,17 +5801,73 @@ function updateRouteSummaryDisplay() {
           Date.now() - geolocationStartedAt >= MIN_LOCATING_ANIMATION_MS;
 
         if (!Number.isFinite(accuracy)) {
+          consecutiveLockableFixes = 0;
           return GPS_CONFIDENCE_LOST;
         }
 
-        if (
-          accuracy <= gpsLockAccuracyMeters &&
-          hasMinimumLocatingElapsed
-        ) {
+        // Hysteresis margins to reduce GPS state churn.
+        // Transitions into a better state require accuracy to EXCEED a lower threshold (- margin).
+        // Transitions into a worse state require accuracy to EXCEED a higher threshold (+ margin).
+        const hysteresisMargin = 5;
+
+        const meetsLockAccuracy = accuracy <= gpsLockAccuracyMeters - hysteresisMargin;
+        const withinLockHold = accuracy <= gpsLockAccuracyMeters + hysteresisMargin;
+        const withinWeakHold = accuracy <= gpsWeakAccuracyMeters + hysteresisMargin;
+        const meetsWeakAccuracy = accuracy <= gpsWeakAccuracyMeters - hysteresisMargin;
+
+        // Item 1: track a run of consecutive lockable-accuracy fixes. A single
+        // good reading is not enough to earn full lock from a lower state.
+        if (meetsLockAccuracy) {
+          consecutiveLockableFixes = Math.min(
+            consecutiveLockableFixes + 1,
+            GPS_LOCK_STREAK_REQUIRED + 3,
+          );
+        } else {
+          consecutiveLockableFixes = 0;
+        }
+
+        if (gpsConfidenceState === GPS_CONFIDENCE_LOCKED) {
+          // Stay locked unless accuracy degrades well past lock threshold
+          if (withinLockHold) {
+            return GPS_CONFIDENCE_LOCKED;
+          }
+          // Item 2: leaving lock opens a recovery-hold window so we don't
+          // immediately re-trust a fresh fix once signal bounces back.
+          gpsRecoveryHoldUntil = Date.now() + GPS_RECOVERY_HOLD_MS;
+          // Degrade to weak before lost — never skip weak
+          if (withinWeakHold) {
+            return GPS_CONFIDENCE_WEAK;
+          }
+          return GPS_CONFIDENCE_LOST;
+        }
+
+        // Coming up from weak/lost/cached: gate the upgrade to LOCKED behind
+        // the streak (item 1) and the recovery-hold window (item 2).
+        const recoveryHoldActive = Date.now() < gpsRecoveryHoldUntil;
+        const hasLockStreak = consecutiveLockableFixes >= GPS_LOCK_STREAK_REQUIRED;
+        const canUpgradeToLock =
+          meetsLockAccuracy &&
+          hasMinimumLocatingElapsed &&
+          hasLockStreak &&
+          !recoveryHoldActive;
+
+        if (gpsConfidenceState === GPS_CONFIDENCE_WEAK) {
+          if (canUpgradeToLock) {
+            return GPS_CONFIDENCE_LOCKED;
+          }
+          // Stay weak unless accuracy degrades well past weak threshold
+          if (withinWeakHold) {
+            return GPS_CONFIDENCE_WEAK;
+          }
+          return GPS_CONFIDENCE_LOST;
+        }
+
+        // Currently lost or cached — require the streak and no active hold
+        if (canUpgradeToLock) {
           return GPS_CONFIDENCE_LOCKED;
         }
 
-        if (accuracy <= gpsWeakAccuracyMeters) {
+        if (meetsWeakAccuracy) {
           return GPS_CONFIDENCE_WEAK;
         }
 
@@ -4353,8 +5883,80 @@ function updateRouteSummaryDisplay() {
         const distanceValue = document.getElementById(DISTANCE_VALUE_ID);
         const progressValue = document.getElementById(PROGRESS_VALUE_ID);
         const routeBadge = document.getElementById(ROUTE_BADGE_ID);
+        const routeSummaryValue = document.getElementById("route-summary-value");
+        const routeGpsStatus = document.getElementById("route-gps-status");
+        const routeGpsStatusText = document.getElementById(
+          "route-gps-status-text",
+        );
+        const routeEstimatedTimeValue = document.getElementById(
+          "route-estimated-time-value",
+        );
+        const routeProgressRingValue = document.getElementById(
+          "route-progress-ring-value",
+        );
+        const routeProgressTrackFill = document.getElementById(
+          "route-progress-track-fill",
+        );
+        const routeTimeStrip = document.getElementById("route-time-strip");
+        const routeTimeStart = document.getElementById("route-time-start");
+        const routeTimeFinish = document.getElementById("route-time-finish");
         const routeCard = document.getElementById("route-card");
         const activeRoute = getActiveRoute();
+
+        const setNowNext = (nowText, nextText) => {
+          if (routeSummaryValue) {
+            routeSummaryValue.textContent = nowText;
+          }
+
+          if (routeGpsStatusText) {
+            routeGpsStatusText.textContent = nextText;
+          }
+
+          if (routeGpsStatus) {
+            routeGpsStatus.className = "route-card__gps-status";
+            routeGpsStatus.hidden = false;
+          }
+        };
+
+        const buildNextGuidanceText = (currentSegmentInfo) => {
+          if (Array.isArray(lastActualPosition) && isHeathrowRoute()) {
+            const nextThing = getNextThingAhead(lastActualPosition);
+            if (nextThing) {
+              const icon = nextThing.type === "hazard" ? "Hazard" : "Rest";
+              return `Next: ${icon} ${nextThing.label} in ${formatDistance(nextThing.distanceAhead)}`;
+            }
+
+            return "Next: Finish ahead";
+          }
+
+          if (currentSegmentInfo && currentSegmentInfo.nextMilestone) {
+            return `Next: ${currentSegmentInfo.nextMilestone}`;
+          }
+
+          return "Next: Continue on route";
+        };
+
+        const setRouteTimeStrip = (travelMinutes = null) => {
+          if (!routeTimeStrip || !routeTimeStart || !routeTimeFinish) {
+            return;
+          }
+
+          const startTimestamp = Number.isFinite(geolocationStartedAt)
+            ? geolocationStartedAt
+            : null;
+          const hasTravel = Number.isFinite(travelMinutes) && travelMinutes > 0;
+          // Finish is a live ETA: current time + remaining walking minutes, so
+          // it naturally pushes back if the walker stops or slows down.
+          const finishTimestamp = hasTravel
+            ? Date.now() + travelMinutes * 60 * 1000
+            : travelMinutes === 0
+              ? Date.now()
+              : null;
+
+          routeTimeStart.textContent = formatClockAmPm(startTimestamp);
+          routeTimeFinish.textContent = formatClockAmPm(finishTimestamp);
+          routeTimeStrip.hidden = false;
+        };
 
         const hasValidDistance = Number.isFinite(distance);
         const hasReliableGpsLock = gpsState === GPS_CONFIDENCE_LOCKED;
@@ -4364,6 +5966,40 @@ function updateRouteSummaryDisplay() {
             !hasValidDistance || !hasReliableGpsLock,
           );
         }
+
+        const setRouteCompletionState = (completed) => {
+          const completeBanner = document.getElementById("route-complete-banner");
+          const nextStepButton = document.getElementById("next-step-button");
+
+          if (routeCard) {
+            routeCard.classList.toggle("is-complete", completed);
+          }
+
+          if (completeBanner) {
+            completeBanner.hidden = !completed;
+          }
+
+          if (nextStepButton) {
+            nextStepButton.hidden = completed;
+          }
+
+          if (completed) {
+            setAheadSheet(false);
+          }
+
+          if (completed && !hasRouteCompletionCelebrated) {
+            hasRouteCompletionCelebrated = true;
+            showToast("Route completed");
+            logFieldEvent("route-completed", {
+              progress: Number.isFinite(progress)
+                ? Math.round(Math.min(100, Math.max(0, progress)))
+                : null,
+              distanceToRoute: Number.isFinite(distance)
+                ? Math.round(Math.max(0, distance))
+                : null,
+            });
+          }
+        };
         const normalizedDistance = hasValidDistance
           ? Math.max(0, distance)
           : null;
@@ -4375,58 +6011,229 @@ function updateRouteSummaryDisplay() {
             : progress;
 
         if (!hasValidDistance || normalizedDistance === null) {
-          progressValue.textContent = `Section 1/${getTotalSegments()}`;
-          distanceValue.textContent = "Waiting for start";
+          setRouteCompletionState(false);
+          progressValue.textContent = "Locating…";
+          distanceValue.textContent = "Waiting for start...";
+          if (routeEstimatedTimeValue) {
+            routeEstimatedTimeValue.textContent = "—";
+          }
+          if (routeCard) {
+            routeCard.style.setProperty("--route-progress", "0%");
+          }
+          if (routeProgressRingValue) {
+            routeProgressRingValue.textContent = "0%";
+          }
+          if (routeProgressTrackFill) {
+            routeProgressTrackFill.style.width = "0%";
+          }
+          updateRouteSummaryDisplay();
+          setRouteTimeStrip(null);
+          setNowNext(
+            "Now: Waiting for route data",
+            "Next: —",
+          );
           routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
           routeBadge.className = "route-card__badge preparing";
           return;
         }
 
         if (!hasReliableGpsLock) {
+          setRouteCompletionState(false);
+          if (routeEstimatedTimeValue) {
+            routeEstimatedTimeValue.textContent = "—";
+          }
+          
+          // Top-left shows current section; ring/bar keep overall percentage
           if (
             lastStableSegmentInfo &&
             Number.isFinite(lastStableDistanceToRoute)
           ) {
-            progressValue.textContent = `Section ${lastStableSegmentInfo.currentSegmentNumber}/${lastStableSegmentInfo.totalSegments}`;
+            progressValue.textContent = `Section ${lastStableSegmentInfo.currentSegmentNumber}`;
           } else {
             progressValue.textContent = "Locating…";
           }
 
           if (gpsState === GPS_CONFIDENCE_WEAK) {
-            distanceValue.textContent = "GPS weak - holding last confident position";
-            routeBadge.textContent = "GPS weak";
+            if (Date.now() < gpsRecoveryHoldUntil) {
+              distanceValue.textContent = "Recovering GPS - re-establishing lock";
+              routeBadge.textContent = "Recovering";
+            } else {
+              distanceValue.textContent = "GPS weak - holding last confident position";
+              routeBadge.textContent = "GPS weak";
+            }
           } else if (gpsState === GPS_CONFIDENCE_CACHED) {
             distanceValue.textContent = "Using last known position";
             routeBadge.textContent = "Cached";
           } else {
-            distanceValue.textContent = "GPS lost - waiting to recover";
-            routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
+            if (Date.now() < gpsRecoveryHoldUntil) {
+              distanceValue.textContent = "Recovering GPS - waiting for a strong fix";
+              routeBadge.textContent = "Recovering";
+            } else {
+              distanceValue.textContent = "GPS lost - waiting to recover";
+              routeBadge.textContent = activeRoute.badgePreparing || "Preparing";
+            }
+          }
+
+          if (routeCard) {
+            routeCard.style.setProperty("--route-progress", `${Math.round(Math.min(100, Math.max(0, progress || 0)))}%`);
+          }
+
+          if (routeProgressRingValue) {
+            routeProgressRingValue.textContent = `${Math.round(Math.min(100, Math.max(0, progress || 0)))}%`;
+          }
+
+          if (routeProgressTrackFill) {
+            routeProgressTrackFill.style.width = `${Math.round(Math.min(100, Math.max(0, progress || 0)))}%`;
           }
 
           routeBadge.className = "route-card__badge preparing";
+
+          updateRouteSummaryDisplay({ updateTime: false });
+          setRouteTimeStrip(null);
+          setNowNext(
+            lastStableSegmentInfo
+              ? `Now: Section ${lastStableSegmentInfo.currentSegmentNumber}`
+              : "Now: Locating GPS",
+            buildNextGuidanceText(lastStableSegmentInfo || segmentInfo),
+          );
+
+          if (
+            routeEstimatedTimeValue &&
+            lastStableSegmentInfo &&
+            Number.isFinite(lastStableSegmentInfo.distanceToMilestone)
+          ) {
+            routeEstimatedTimeValue.textContent = `~${formatEstimatedWalkTime(
+              Math.max(0, lastStableSegmentInfo.distanceToMilestone),
+            ).replace(/ walk$/, "")}`;
+          }
           return;
         }
 
         const safeProgress = Math.min(100, Math.max(0, displayProgress));
 
-        if (normalizedDistance > ROUTE_ALERT_DISTANCE) {
+        // Accuracy-aware, sustained finish detection: only count a fix toward
+        // completion when it is genuinely close AND the fix quality is good.
+        const gpsLockAccuracyForFinish =
+          (Number.isFinite(activeRoute.gpsLockAccuracyMeters)
+            ? activeRoute.gpsLockAccuracyMeters
+            : GPS_LOCK_ACCURACY_METERS) + 10;
+        const finishAccuracyOk =
+          !Number.isFinite(lastLocationAccuracy) ||
+          lastLocationAccuracy <= gpsLockAccuracyForFinish;
+        const meetsFinishProximity =
+          safeProgress >= 99 &&
+          normalizedDistance <= FINISH_APPROACH_DISTANCE &&
+          finishAccuracyOk;
+
+        if (meetsFinishProximity) {
+          finishProximityStreak = Math.min(
+            finishProximityStreak + 1,
+            FINISH_CONFIRM_FIXES + 2,
+          );
+        } else {
+          finishProximityStreak = 0;
+        }
+
+        // Once completed for this walk, latch it so a later noisy fix doesn't
+        // bounce the card out of the completed state.
+        const isCompleted =
+          hasRouteCompletionCelebrated ||
+          finishProximityStreak >= FINISH_CONFIRM_FIXES;
+
+        // Sustained off-route confirmation for the card + alert toast.
+        const isFarFromRoute = normalizedDistance > ROUTE_ALERT_DISTANCE;
+        if (isFarFromRoute) {
+          offRouteFarStreak = Math.min(
+            offRouteFarStreak + 1,
+            OFF_ROUTE_CONFIRM_FIXES + 2,
+          );
+        } else {
+          offRouteFarStreak = 0;
+        }
+        const offRouteConfirmed = offRouteFarStreak >= OFF_ROUTE_CONFIRM_FIXES;
+        const offRouteUiActive = normalizedDistance > ROUTE_ALERT_DISTANCE;
+
+        const cardProgress = offRouteUiActive
+          ? 0
+          : safeProgress;
+
+        if (routeCard) {
+          routeCard.style.setProperty("--route-progress", `${cardProgress}%`);
+        }
+
+        if (routeProgressRingValue) {
+          routeProgressRingValue.textContent = `${Math.round(cardProgress)}%`;
+        }
+
+        if (routeProgressTrackFill) {
+          routeProgressTrackFill.style.width = `${cardProgress}%`;
+        }
+
+        setRouteCompletionState(isCompleted);
+
+        if (isCompleted) {
+          progressValue.textContent = "Complete";
+          distanceValue.textContent = "Finished";
+          if (routeEstimatedTimeValue) {
+            routeEstimatedTimeValue.textContent = "~0 min";
+          }
+          updateRouteSummaryDisplay({ updateTime: false });
+          setRouteTimeStrip(0);
+          setNowNext("Now: Route completed", "Next: Finish reached");
+          routeBadge.textContent = "Completed";
+          routeBadge.className = "route-card__badge completed";
+          return;
+        }
+
+        if (offRouteUiActive) {
           progressValue.textContent = "Off route";
-          distanceValue.textContent = "Move closer to the purple route";
+          distanceValue.textContent = "Move closer";
+          if (routeEstimatedTimeValue) {
+            routeEstimatedTimeValue.textContent = "—";
+          }
+          setNowNext("Now: Off route", "Next: Move closer");
           routeBadge.textContent = activeRoute.badgeFarOffRoute || "Far off route";
           routeBadge.className = "route-card__badge alert";
           return;
         }
 
-        // Display segment info instead of percentage
+        // Ring and bar show overall route percentage; top-left shows section
         if (segmentInfo) {
-          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}/${segmentInfo.totalSegments}`;
+          progressValue.textContent = `Section ${segmentInfo.currentSegmentNumber}`;
           const nextMilestoneDistance = formatDistance(
             segmentInfo.distanceToMilestone,
           );
-          distanceValue.textContent = `${nextMilestoneDistance} to ${segmentInfo.nextMilestone}`;
+          distanceValue.innerHTML = `<span class="distance-value__metric">${nextMilestoneDistance}</span>`;
+
+          if (routeEstimatedTimeValue) {
+            routeEstimatedTimeValue.textContent = `~${formatEstimatedWalkTime(
+              Math.max(0, segmentInfo.distanceToMilestone),
+            ).replace(/ walk$/, "")}`;
+          }
+
+          setRouteTimeStrip(
+            estimateWalkMinutes(Math.max(0, segmentInfo.distanceToMilestone)),
+          );
+
+          updateRouteSummaryDisplay({ updateTime: false });
+          setNowNext(
+            `Now: Section ${segmentInfo.currentSegmentNumber}`,
+            buildNextGuidanceText(segmentInfo),
+          );
         } else {
-          progressValue.textContent = `${Math.round(safeProgress)}%`;
+          progressValue.textContent = "On route";
           distanceValue.textContent = `${formatDistance(normalizedDistance)} from route`;
+
+          if (routeEstimatedTimeValue) {
+            routeEstimatedTimeValue.textContent = `~${formatEstimatedWalkTime(
+              getRouteDistanceMeters(),
+            ).replace(/ walk$/, "")}`;
+          }
+
+          setRouteTimeStrip(estimateWalkMinutes(getRouteDistanceMeters()));
+
+          updateRouteSummaryDisplay({ updateTime: false });
+          setNowNext("Now: On route", buildNextGuidanceText(segmentInfo));
         }
 
         if (normalizedDistance > ROUTE_WARNING_DISTANCE) {
@@ -4443,18 +6250,23 @@ function updateRouteSummaryDisplay() {
         gpsState = GPS_CONFIDENCE_LOST,
       ) {
         const now = Date.now();
+        const isRecoveringGps = now < gpsRecoveryHoldUntil;
         let nextState = "";
         let nextLevel = "";
 
         if (gpsState === GPS_CONFIDENCE_WEAK) {
-          nextState = "GPS weak - route judgement paused";
-          nextLevel = "gps-weak";
+          nextState = isRecoveringGps
+            ? "Recovering GPS - route judgement paused"
+            : "GPS weak - route judgement paused";
+          nextLevel = isRecoveringGps ? "gps-recovering" : "gps-weak";
         } else if (gpsState === GPS_CONFIDENCE_CACHED) {
           nextState = "Using cached location - route judgement paused";
           nextLevel = "gps-cached";
         } else if (gpsState !== GPS_CONFIDENCE_LOCKED || !Number.isFinite(distanceToRoute)) {
-          nextState = "GPS lost - route judgement paused";
-          nextLevel = "gps-lost";
+          nextState = isRecoveringGps
+            ? "Recovering GPS - route judgement paused"
+            : "GPS lost - route judgement paused";
+          nextLevel = isRecoveringGps ? "gps-recovering" : "gps-lost";
         } else {
           nextState = "";
           nextLevel = "";
@@ -4464,7 +6276,6 @@ function updateRouteSummaryDisplay() {
           now - lastWarningUpdate >= WARNING_UPDATE_INTERVAL ||
           nextLevel !== lastWarningState
         ) {
-          showWarning(nextState, nextLevel);
           if (nextLevel !== lastWarningState) {
             logFieldEvent("warning-state-change", {
               level: nextLevel,
@@ -4480,18 +6291,61 @@ function updateRouteSummaryDisplay() {
         lng,
         lat,
         gpsState = GPS_CONFIDENCE_LOCKED,
+        directionHeading = null,
       ) {
         const actualPosition = [lng, lat];
         lastActualPosition = actualPosition;
 
         const routeSnapshot = getClosestPointOnRoute(actualPosition);
-        const previousSnappedPosition = lastSnappedPosition;
+        const snapDistance = routeSnapshot.distance;
 
-        lastSnappedPosition = routeSnapshot.point;
+        // Hysteresis: engage view-snapping only when close to the route, and
+        // release it once clearly off route, so the centre doesn't flip back
+        // and forth near the threshold.
+        if (Number.isFinite(snapDistance)) {
+          if (isViewSnappedToRoute && snapDistance > ROUTE_SNAP_RELEASE_METERS) {
+            isViewSnappedToRoute = false;
 
-        if (previousSnappedPosition) {
+            logFieldEvent("route-snap-released", {
+              distanceFromRoute: Math.round(snapDistance),
+              gpsState,
+              accuracyMeters: Number.isFinite(lastLocationAccuracy)
+                ? Math.round(lastLocationAccuracy)
+                : null,
+            });
+          } else if (
+            !isViewSnappedToRoute &&
+            snapDistance <= ROUTE_SNAP_ENGAGE_METERS
+          ) {
+            isViewSnappedToRoute = true;
+
+            logFieldEvent("route-snap-engaged", {
+              distanceFromRoute: Math.round(snapDistance),
+              gpsState,
+              accuracyMeters: Number.isFinite(lastLocationAccuracy)
+                ? Math.round(lastLocationAccuracy)
+                : null,
+            });
+          }
+        }
+
+        // Track the raw closest point purely for jump diagnostics, independent
+        // of whether we snap the view this fix.
+        const previousRawSnapPoint = lastRawSnapPoint;
+        lastRawSnapPoint = routeSnapshot.point;
+
+        // Only expose a snapped position while near the route AND holding a
+        // confident lock; when off route or GPS is weak/lost this is null so
+        // the map (and recenters) follow the real GPS point rather than
+        // pretending route-level confidence.
+        const canUseRouteSnap =
+          gpsState === GPS_CONFIDENCE_LOCKED && isViewSnappedToRoute;
+
+        lastSnappedPosition = canUseRouteSnap ? routeSnapshot.point : null;
+
+        if (previousRawSnapPoint) {
           const snappedJumpMeters = haversineDistanceMeters(
-            previousSnappedPosition,
+            previousRawSnapPoint,
             routeSnapshot.point,
           );
 
@@ -4521,6 +6375,21 @@ function updateRouteSummaryDisplay() {
           }
 
           if (userMarkerElement) {
+            const canShowDirection =
+              gpsState === GPS_CONFIDENCE_LOCKED ||
+              gpsState === GPS_CONFIDENCE_WEAK;
+
+            const headingForDisplay = Number.isFinite(directionHeading)
+              ? directionHeading
+              : Number.isFinite(lastDirectionHeading)
+                ? lastDirectionHeading
+                : canShowDirection
+                  ? 0
+                  : null;
+
+            const hasDirection =
+              Number.isFinite(headingForDisplay) && canShowDirection;
+
             userMarkerElement.classList.toggle(
               "is-weak",
               gpsState === GPS_CONFIDENCE_WEAK,
@@ -4529,6 +6398,16 @@ function updateRouteSummaryDisplay() {
               "is-cached",
               gpsState === GPS_CONFIDENCE_CACHED,
             );
+            userMarkerElement.classList.toggle("has-direction", hasDirection);
+
+            if (hasDirection) {
+              userMarkerElement.style.setProperty(
+                "--direction-heading",
+                `${Math.round(headingForDisplay)}`,
+              );
+            } else {
+              userMarkerElement.style.removeProperty("--direction-heading");
+            }
           }
         }
 
@@ -4538,6 +6417,10 @@ function updateRouteSummaryDisplay() {
       function updateMapView(lng, lat) {
         if (!map) return; // Map unavailable in fallback mode
         if (isIntro) return; // Skip updates during intro sequence
+        const activeRoute = getActiveRoute();
+        const liveFollowZoom = Number.isFinite(activeRoute.liveFollowZoom)
+          ? activeRoute.liveFollowZoom
+          : 16;
 
         // Use snapped position to keep route centered
         const displayPosition = lastSnappedPosition || [lng, lat];
@@ -4548,16 +6431,12 @@ function updateRouteSummaryDisplay() {
           map.flyTo({
             center: newCenter,
             speed: 0.8,
-            zoom: 16,
+            zoom: liveFollowZoom,
           });
           hasInitialPosition = true;
           lastViewCenter = newCenter;
           lastPosition = newCenter;
           lastPositionTime = now;
-          return;
-        }
-
-        if (!followMode) {
           return;
         }
 
@@ -4571,10 +6450,24 @@ function updateRouteSummaryDisplay() {
           newCenter,
         );
 
+        const routeCard = document.getElementById("route-card");
+        const setRouteCardMetaCompact = (compact) => {
+          if (!routeCard || compact === isRouteCardMetaCompact) {
+            return;
+          }
+
+          isRouteCardMetaCompact = compact;
+          routeCard.classList.toggle("route-card--compact-meta", compact);
+        };
+
+        let speedMps = 0;
+
         if (lastPosition && lastPositionTime) {
           const elapsed = Math.max(1, now - lastPositionTime);
-          const speedMps =
+          speedMps =
             haversineDistanceMeters(lastPosition, newCenter) / (elapsed / 1000);
+
+          setRouteCardMetaCompact(speedMps >= MIN_SPEED_FOR_FOLLOW);
 
           if (
             speedMps < MIN_SPEED_FOR_FOLLOW &&
@@ -4584,9 +6477,17 @@ function updateRouteSummaryDisplay() {
             lastPositionTime = now;
             return;
           }
+        } else {
+          setRouteCardMetaCompact(false);
         }
 
-        if (distanceMoved >= VIEW_UPDATE_DISTANCE) {
+        if (!followMode) {
+          lastPosition = newCenter;
+          lastPositionTime = now;
+          return;
+        }
+
+        if (distanceMoved >= VIEW_UPDATE_DISTANCE || speedMps >= MIN_SPEED_FOR_FOLLOW) {
           map.easeTo({
             center: newCenter,
             duration: 1000,
@@ -4596,6 +6497,38 @@ function updateRouteSummaryDisplay() {
 
         lastPosition = newCenter;
         lastPositionTime = now;
+      }
+
+      function detectAutoRouteJump(userPoint, gpsState) {
+        const now = Date.now();
+
+        if (lastJumpSamplePosition && lastJumpSampleTime > 0) {
+          const jumpMeters = haversineDistanceMeters(
+            lastJumpSamplePosition,
+            userPoint,
+          );
+          const elapsedSeconds = (now - lastJumpSampleTime) / 1000;
+
+          if (elapsedSeconds > 0 && jumpMeters >= AUTO_ROUTE_JUMP_MIN_METERS) {
+            const speedMps = jumpMeters / elapsedSeconds;
+
+            if (
+              speedMps >= AUTO_ROUTE_JUMP_SPEED_MPS &&
+              now - lastAutoRouteJumpLoggedAt >= AUTO_ROUTE_JUMP_COOLDOWN_MS
+            ) {
+              lastAutoRouteJumpLoggedAt = now;
+              logFieldEvent("auto-route-jump", {
+                jumpMeters: Math.round(jumpMeters),
+                elapsedMs: Math.round(now - lastJumpSampleTime),
+                speedMps: Math.round(speedMps * 10) / 10,
+                gpsState,
+              });
+            }
+          }
+        }
+
+        lastJumpSamplePosition = userPoint;
+        lastJumpSampleTime = now;
       }
 
       function shouldProcessLocationUpdate(lng, lat) {
@@ -4614,7 +6547,6 @@ function updateRouteSummaryDisplay() {
             });
           }
         }
-
         if (!lastProcessedPosition) {
           lastProcessedPosition = [lng, lat];
           lastProcessedPositionTime = now;
@@ -4648,6 +6580,169 @@ function updateRouteSummaryDisplay() {
             coordinates,
           },
         };
+      }
+
+      function buildEmptyFeatureCollection() {
+        return {
+          type: "FeatureCollection",
+          features: [],
+        };
+      }
+
+      function interpolateCoordinate(start, end, ratio) {
+        const clampedRatio = Math.max(0, Math.min(1, ratio));
+
+        return [
+          start[0] + (end[0] - start[0]) * clampedRatio,
+          start[1] + (end[1] - start[1]) * clampedRatio,
+        ];
+      }
+
+      function extractRouteCoordinatesSliceByDistance(startDistance, endDistance) {
+        if (routeCoordinates.length < 2) {
+          return [];
+        }
+
+        const safeStartDistance = Math.max(0, startDistance || 0);
+        const safeEndDistance = Math.max(safeStartDistance, endDistance || 0);
+
+        let cumulativeDistance = 0;
+        const sliceCoordinates = [];
+
+        for (let i = 0; i < routeCoordinates.length - 1; i += 1) {
+          const start = routeCoordinates[i];
+          const end = routeCoordinates[i + 1];
+          const segmentLength = haversineDistanceMeters(start, end);
+
+          if (!Number.isFinite(segmentLength) || segmentLength <= 0) {
+            continue;
+          }
+
+          const segmentStart = cumulativeDistance;
+          const segmentEnd = cumulativeDistance + segmentLength;
+          cumulativeDistance = segmentEnd;
+
+          const overlapStart = Math.max(safeStartDistance, segmentStart);
+          const overlapEnd = Math.min(safeEndDistance, segmentEnd);
+
+          if (overlapEnd < overlapStart) {
+            continue;
+          }
+
+          const startRatio = (overlapStart - segmentStart) / segmentLength;
+          const endRatio = (overlapEnd - segmentStart) / segmentLength;
+
+          const startPoint = interpolateCoordinate(start, end, startRatio);
+          const endPoint = interpolateCoordinate(start, end, endRatio);
+
+          if (!sliceCoordinates.length) {
+            sliceCoordinates.push(startPoint);
+          } else {
+            const lastPoint = sliceCoordinates[sliceCoordinates.length - 1];
+            if (haversineDistanceMeters(lastPoint, startPoint) > 0.4) {
+              sliceCoordinates.push(startPoint);
+            }
+          }
+
+          const currentLastPoint = sliceCoordinates[sliceCoordinates.length - 1];
+          if (haversineDistanceMeters(currentLastPoint, endPoint) > 0.4) {
+            sliceCoordinates.push(endPoint);
+          }
+
+          if (segmentEnd >= safeEndDistance) {
+            break;
+          }
+        }
+
+        return sliceCoordinates.length >= 2 ? sliceCoordinates : [];
+      }
+
+      function buildRouteSectionBreaksFeatureCollection() {
+        const segments = getRouteSegments();
+        const features = [];
+
+        for (let i = 0; i < segments.length; i += 1) {
+          const boundaryIndex = segments[i].startIdx;
+          const boundaryCoordinate = routeCoordinates[boundaryIndex];
+
+          if (!boundaryCoordinate || boundaryCoordinate.length < 2) {
+            continue;
+          }
+
+          features.push({
+            type: "Feature",
+            properties: {
+              segmentNumber: i + 1,
+            },
+            geometry: {
+              type: "Point",
+              coordinates: boundaryCoordinate,
+            },
+          });
+        }
+
+        return {
+          type: "FeatureCollection",
+          features,
+        };
+      }
+
+      function setForwardHighlightData(data) {
+        if (!map) {
+          return;
+        }
+
+        const source = map.getSource("route-forward");
+        if (source) {
+          source.setData(data);
+        }
+      }
+
+      function clearForwardRouteHighlight() {
+        setForwardHighlightData(buildEmptyFeatureCollection());
+      }
+
+      function updateForwardRouteHighlight(userPoint, gpsState = GPS_CONFIDENCE_LOST) {
+        if (!enableForwardRouteHighlight) {
+          return;
+        }
+
+        if (
+          !map ||
+          !Array.isArray(userPoint) ||
+          userPoint.length < 2 ||
+          gpsState !== GPS_CONFIDENCE_LOCKED
+        ) {
+          clearForwardRouteHighlight();
+          return;
+        }
+
+        const routeMeasure = getRouteMeasure(userPoint);
+        const startDistance = routeMeasure.distanceAlongRoute;
+        const endDistance = startDistance + FORWARD_ROUTE_HIGHLIGHT_AHEAD_METERS;
+        const highlightCoordinates = extractRouteCoordinatesSliceByDistance(
+          startDistance,
+          endDistance,
+        );
+
+        if (highlightCoordinates.length < 2) {
+          clearForwardRouteHighlight();
+          return;
+        }
+
+        setForwardHighlightData({
+          type: "FeatureCollection",
+          features: [
+            {
+              type: "Feature",
+              properties: {},
+              geometry: {
+                type: "LineString",
+                coordinates: highlightCoordinates,
+              },
+            },
+          ],
+        });
       }
 
       function addRouteToMap(routeFeature) {
@@ -4688,7 +6783,7 @@ function updateRouteSummaryDisplay() {
               "line-color": "#7c3aed",
               "line-width": 2,
               "line-dasharray": [0, 1.5, 0.8, 1.5],
-              "line-opacity": 0.75,
+              "line-opacity": enableForwardRouteHighlight ? 0 : 0.75,
             },
           });
 
@@ -4702,8 +6797,92 @@ function updateRouteSummaryDisplay() {
               "line-opacity": 0.95,
             },
           });
+
+          map.addSource("route-section-breaks", {
+            type: "geojson",
+            data: buildRouteSectionBreaksFeatureCollection(),
+          });
+
+          map.addLayer({
+            id: "route-section-breaks-halo",
+            type: "circle",
+            source: "route-section-breaks",
+            paint: {
+              "circle-radius": 5,
+              "circle-color": "#0b1223",
+              "circle-opacity": 0.82,
+            },
+          });
+
+          map.addLayer({
+            id: "route-section-breaks",
+            type: "circle",
+            source: "route-section-breaks",
+            paint: {
+              "circle-radius": 2.8,
+              "circle-color": "#ddd6fe",
+              "circle-stroke-width": 1,
+              "circle-stroke-color": "#7c3aed",
+              "circle-opacity": 0.95,
+            },
+          });
+
+          map.addLayer({
+            id: "route-section-break-labels",
+            type: "symbol",
+            source: "route-section-breaks",
+            layout: {
+              "text-field": [
+                "concat",
+                "S",
+                ["to-string", ["get", "segmentNumber"]],
+              ],
+              "text-size": 11,
+              "text-offset": [0, -1.25],
+              "text-anchor": "bottom",
+              "text-allow-overlap": true,
+            },
+            paint: {
+              "text-color": "#f3e8ff",
+              "text-halo-color": "#0b1223",
+              "text-halo-width": 1.2,
+              "text-opacity": 0.92,
+            },
+          });
+
+          if (enableForwardRouteHighlight) {
+            map.addSource("route-forward", {
+              type: "geojson",
+              data: buildEmptyFeatureCollection(),
+            });
+
+            map.addLayer({
+              id: "route-forward-highlight",
+              type: "line",
+              source: "route-forward",
+              layout: {
+                "line-cap": "round",
+                "line-join": "round",
+              },
+              paint: {
+                "line-color": "#c4b5fd",
+                "line-width": 4.8,
+                "line-opacity": 0.28,
+              },
+            });
+          }
         } else {
           map.getSource("route").setData(routeFeature);
+
+          const sectionBreaksSource = map.getSource("route-section-breaks");
+          if (sectionBreaksSource) {
+            sectionBreaksSource.setData(buildRouteSectionBreaksFeatureCollection());
+          }
+        }
+
+        if (enableForwardRouteHighlight) {
+          const targetPoint = lastSnappedPosition || lastActualPosition;
+          updateForwardRouteHighlight(targetPoint, gpsConfidenceState);
         }
 
         if (routeSurfaceSummary) {
@@ -4716,38 +6895,28 @@ function updateRouteSummaryDisplay() {
           const finishCoordinate =
             routeCoordinates[routeCoordinates.length - 1];
 
-          const startLabel = activeRoute.startLabel || "Start";
-          const startDescription =
-            activeRoute.startDescription || "Route begins here";
-
-          const finishLabel = activeRoute.finishLabel || "Finish";
-          const finishDescription =
-            activeRoute.finishDescription || "End of route";
-
-          const startPopupHtml =
-            "<h3>" + startLabel + "</h3><p>" + startDescription + "</p>";
-
-          const finishPopupHtml =
-            "<h3>" + finishLabel + "</h3><p>" + finishDescription + "</p>";
-
           if (!routeStartMarker) {
-            routeStartMarker = new mapboxgl.Marker({ color: "#22c55e" });
+            routeStartMarker = new mapboxgl.Marker({
+              element: createRouteEndpointMarker("start"),
+              anchor: "bottom",
+            });
           }
 
           routeStartMarker
             .setLngLat(startCoordinate)
-            .setPopup(new mapboxgl.Popup().setHTML(startPopupHtml))
             .addTo(map);
 
           routeStartMarker.getElement().style.zIndex = "20";
 
           if (!routeFinishMarker) {
-            routeFinishMarker = new mapboxgl.Marker({ color: "#f97316" });
+            routeFinishMarker = new mapboxgl.Marker({
+              element: createRouteEndpointMarker("finish"),
+              anchor: "bottom",
+            });
           }
 
           routeFinishMarker
             .setLngLat(finishCoordinate)
-            .setPopup(new mapboxgl.Popup().setHTML(finishPopupHtml))
             .addTo(map);
 
           routeFinishMarker.getElement().style.zIndex = "20";
@@ -4797,6 +6966,147 @@ function runRouteIntroAfterLoad() {
         }
       }
 
+      function loadFieldLogSessionState() {
+        try {
+          const storedSessionId = localStorage.getItem(
+            FIELD_LOG_SESSION_ID_STORAGE_KEY,
+          );
+          const storedStartedAt = Number(
+            localStorage.getItem(FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY),
+          );
+
+          fieldLogSessionId = storedSessionId || "";
+          fieldLogSessionStartedAt = Number.isFinite(storedStartedAt)
+            ? storedStartedAt
+            : 0;
+        } catch (error) {
+          fieldLogSessionId = "";
+          fieldLogSessionStartedAt = 0;
+        }
+
+        if (fieldLogSessionId) {
+          let lastSequence = 0;
+          for (const entry of fieldLogEntries) {
+            if (
+              entry &&
+              entry.sessionId === fieldLogSessionId &&
+              Number.isFinite(entry.sessionSequence)
+            ) {
+              lastSequence = Math.max(lastSequence, entry.sessionSequence);
+            }
+          }
+          fieldLogSessionSequence = lastSequence;
+        } else {
+          fieldLogSessionSequence = 0;
+        }
+      }
+
+      function saveFieldLogSessionState() {
+        try {
+          if (fieldLogSessionId) {
+            localStorage.setItem(FIELD_LOG_SESSION_ID_STORAGE_KEY, fieldLogSessionId);
+            localStorage.setItem(
+              FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY,
+              String(fieldLogSessionStartedAt || Date.now()),
+            );
+          } else {
+            localStorage.removeItem(FIELD_LOG_SESSION_ID_STORAGE_KEY);
+            localStorage.removeItem(FIELD_LOG_SESSION_STARTED_AT_STORAGE_KEY);
+          }
+        } catch (error) {
+          console.warn("Failed to persist field log session state:", error);
+        }
+      }
+
+      function createFieldLogSessionId() {
+        const randomSuffix = Math.random().toString(36).slice(2, 8);
+        return `walk-${Date.now().toString(36)}-${randomSuffix}`;
+      }
+
+      function ensureFieldLogSession() {
+        if (fieldLogSessionId) {
+          return fieldLogSessionId;
+        }
+
+        fieldLogSessionId = createFieldLogSessionId();
+        fieldLogSessionStartedAt = Date.now();
+        fieldLogSessionSequence = 0;
+        saveFieldLogSessionState();
+        return fieldLogSessionId;
+      }
+
+      function startNewFieldLogSession() {
+        fieldLogSessionId = createFieldLogSessionId();
+        fieldLogSessionStartedAt = Date.now();
+        fieldLogSessionSequence = 0;
+        saveFieldLogSessionState();
+        return fieldLogSessionId;
+      }
+
+      function getLastFieldLogEntryForSession(sessionId) {
+        if (!sessionId) {
+          return null;
+        }
+
+        for (let i = fieldLogEntries.length - 1; i >= 0; i -= 1) {
+          const entry = fieldLogEntries[i];
+          if (entry && entry.sessionId === sessionId) {
+            return entry;
+          }
+        }
+
+        return null;
+      }
+
+      function beginFieldLogSessionForWalk() {
+        if (!fieldLogSessionId) {
+          return startNewFieldLogSession();
+        }
+
+        const hasWalkStart = hasWalkStartForCurrentSession();
+        if (!hasWalkStart) {
+          return ensureFieldLogSession();
+        }
+
+        const now = Date.now();
+        const lastEntry = getLastFieldLogEntryForSession(fieldLogSessionId);
+        const lastEntryTime = lastEntry ? Date.parse(lastEntry.timestamp) : NaN;
+        const lastEntryAgeMs = Number.isFinite(lastEntryTime)
+          ? now - lastEntryTime
+          : Number.POSITIVE_INFINITY;
+
+        if (lastEntryAgeMs <= FIELD_LOG_SESSION_RESUME_WINDOW_MS) {
+          return ensureFieldLogSession();
+        }
+
+        return startNewFieldLogSession();
+      }
+
+      function hasWalkStartForCurrentSession() {
+        if (!fieldLogSessionId) {
+          return false;
+        }
+
+        return fieldLogEntries.some(
+          (entry) =>
+            entry &&
+            entry.sessionId === fieldLogSessionId &&
+            entry.eventType === "walk-start",
+        );
+      }
+
+      function logWalkStartIfNeeded() {
+        ensureFieldLogSession();
+
+        if (hasWalkStartForCurrentSession()) {
+          return;
+        }
+
+        logFieldEvent("walk-start", {
+          routeName: getActiveRoute().fullName || getActiveRoute().name,
+        });
+      }
+
       function saveFieldLogEntries() {
         try {
           localStorage.setItem(
@@ -4820,10 +7130,23 @@ function runRouteIntroAfterLoad() {
 
       function logFieldEvent(type, detail = {}) {
         const now = Date.now();
+        const sessionId =
+          appMode === APP_MODE_ACTIVE_WALK ? ensureFieldLogSession() : fieldLogSessionId;
+
+        if (sessionId) {
+          fieldLogSessionSequence += 1;
+        }
+
         const entry = {
           id: `${now}-${Math.floor(Math.random() * 10000)}`,
           timestamp: new Date(now).toISOString(),
           eventType: type,
+          sessionId: sessionId || null,
+          sessionSequence: sessionId ? fieldLogSessionSequence : null,
+          sessionStartedAt:
+            sessionId && Number.isFinite(fieldLogSessionStartedAt)
+              ? new Date(fieldLogSessionStartedAt).toISOString()
+              : null,
           route: activeRouteKey,
           appMode,
           gpsState: gpsConfidenceState,
@@ -4846,7 +7169,144 @@ function runRouteIntroAfterLoad() {
         }
 
         saveFieldLogEntries();
+        saveFieldLogSessionState();
         updateFieldLogMeta();
+      }
+
+      function buildFieldLogSummary(entries) {
+        if (!Array.isArray(entries) || entries.length === 0) {
+          return {
+            totalEntries: 0,
+          };
+        }
+
+        const eventCounts = {};
+        const gpsTransitionCounts = {};
+        const geolocationErrorCodes = {};
+        const sessionIds = new Set();
+        const hiddenDurationsMs = [];
+        const gapDurationsMs = [];
+        const pendingResumeTimes = [];
+        const relockDurationsMs = [];
+
+        let firstTimestamp = null;
+        let lastTimestamp = null;
+
+        for (const entry of entries) {
+          if (!entry || typeof entry !== "object") {
+            continue;
+          }
+
+          const entryTime = Date.parse(entry.timestamp);
+          if (Number.isFinite(entryTime)) {
+            if (!Number.isFinite(firstTimestamp) || entryTime < firstTimestamp) {
+              firstTimestamp = entryTime;
+            }
+            if (!Number.isFinite(lastTimestamp) || entryTime > lastTimestamp) {
+              lastTimestamp = entryTime;
+            }
+          }
+
+          if (entry.sessionId) {
+            sessionIds.add(entry.sessionId);
+          }
+
+          const eventType = entry.eventType || "unknown";
+          eventCounts[eventType] = (eventCounts[eventType] || 0) + 1;
+
+          if (eventType === "gps-state-change") {
+            const fromState = entry.detail && entry.detail.from ? entry.detail.from : "unknown";
+            const toState = entry.detail && entry.detail.to ? entry.detail.to : "unknown";
+            const key = `${fromState}->${toState}`;
+            gpsTransitionCounts[key] = (gpsTransitionCounts[key] || 0) + 1;
+
+            if (toState === GPS_CONFIDENCE_LOCKED && Number.isFinite(entryTime)) {
+              while (pendingResumeTimes.length && pendingResumeTimes[0] <= entryTime) {
+                const resumeTime = pendingResumeTimes.shift();
+                relockDurationsMs.push(entryTime - resumeTime);
+              }
+            }
+          }
+
+          if (eventType === "geolocation-error") {
+            const code =
+              entry.detail && Number.isFinite(entry.detail.code)
+                ? String(entry.detail.code)
+                : "unknown";
+            geolocationErrorCodes[code] = (geolocationErrorCodes[code] || 0) + 1;
+          }
+
+          if (eventType === "app-resumed") {
+            const hiddenDuration = entry.detail && Number.isFinite(entry.detail.hiddenDurationMs)
+              ? entry.detail.hiddenDurationMs
+              : null;
+
+            if (Number.isFinite(hiddenDuration)) {
+              hiddenDurationsMs.push(hiddenDuration);
+            }
+
+            if (Number.isFinite(entryTime)) {
+              pendingResumeTimes.push(entryTime);
+            }
+          }
+
+          if (eventType === "tracking-gap" || eventType === "location-update-gap") {
+            const gapMs = entry.detail && Number.isFinite(entry.detail.gapMs)
+              ? entry.detail.gapMs
+              : null;
+            if (Number.isFinite(gapMs)) {
+              gapDurationsMs.push(gapMs);
+            }
+          }
+        }
+
+        const sum = (values) => values.reduce((total, value) => total + value, 0);
+        const average = (values) =>
+          values.length ? Math.round(sum(values) / values.length) : null;
+        const maximum = (values) =>
+          values.length ? Math.max(...values) : null;
+
+        return {
+          generatedAt: new Date().toISOString(),
+          totalEntries: entries.length,
+          timeRange:
+            Number.isFinite(firstTimestamp) && Number.isFinite(lastTimestamp)
+              ? {
+                  start: new Date(firstTimestamp).toISOString(),
+                  end: new Date(lastTimestamp).toISOString(),
+                  durationMs: Math.max(0, lastTimestamp - firstTimestamp),
+                }
+              : null,
+          sessions: {
+            count: sessionIds.size,
+            currentSessionId: fieldLogSessionId || null,
+          },
+          visibility: {
+            hiddenEventCount: eventCounts["app-hidden"] || 0,
+            resumedEventCount: eventCounts["app-resumed"] || 0,
+            totalHiddenDurationMs: sum(hiddenDurationsMs),
+            averageHiddenDurationMs: average(hiddenDurationsMs),
+            maxHiddenDurationMs: maximum(hiddenDurationsMs),
+          },
+          gps: {
+            stateChangeCount: eventCounts["gps-state-change"] || 0,
+            transitions: gpsTransitionCounts,
+            geolocationErrorCount: eventCounts["geolocation-error"] || 0,
+            geolocationErrorCodes,
+            relockAfterResumeCount: relockDurationsMs.length,
+            averageRelockAfterResumeMs: average(relockDurationsMs),
+            maxRelockAfterResumeMs: maximum(relockDurationsMs),
+            resumesWithoutRelock: pendingResumeTimes.length,
+          },
+          gaps: {
+            trackingGapCount: eventCounts["tracking-gap"] || 0,
+            locationUpdateGapCount: eventCounts["location-update-gap"] || 0,
+            totalGapDurationMs: sum(gapDurationsMs),
+            averageGapDurationMs: average(gapDurationsMs),
+            maxGapDurationMs: maximum(gapDurationsMs),
+          },
+          events: eventCounts,
+        };
       }
 
       function setFieldLogPanel(open) {
@@ -4912,7 +7372,7 @@ function runRouteIntroAfterLoad() {
         showToast("Note saved");
       }
 
-      function exportFieldLogJson() {
+      async function exportFieldLogJson() {
         if (!fieldLogEntries.length) {
           showToast("No log entries yet");
           return;
@@ -4921,18 +7381,71 @@ function runRouteIntroAfterLoad() {
         const payload = {
           exportedAt: new Date().toISOString(),
           route: activeRouteKey,
+          summary: buildFieldLogSummary(fieldLogEntries),
           entries: fieldLogEntries,
         };
 
-        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        const jsonText = JSON.stringify(payload, null, 2);
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const filename = `field-log-${activeRouteKey}-${timestamp}.json`;
+
+        // Prefer native share sheet on mobile (especially iPhone), then clipboard, then download.
+        if (navigator.share) {
+          try {
+            if (
+              typeof File !== "undefined" &&
+              typeof navigator.canShare === "function"
+            ) {
+              const file = new File([jsonText], filename, {
+                type: "application/json",
+              });
+
+              if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                  title: "Field test log",
+                  text: `Route: ${activeRouteKey} (${fieldLogEntries.length} entries)`,
+                  files: [file],
+                });
+                showToast("Field log shared");
+                return;
+              }
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(jsonText);
+              await navigator.share({
+                title: "Field test log",
+                text: `Field log copied to clipboard (${fieldLogEntries.length} entries). Paste into message/email.`,
+              });
+              showToast("Log copied and share sheet opened");
+              return;
+            }
+          } catch (error) {
+            if (error && error.name === "AbortError") {
+              showToast("Share cancelled");
+              return;
+            }
+          }
+        }
+
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(jsonText);
+            showToast("Field log copied to clipboard");
+            return;
+          } catch (error) {
+            // Fall through to download when clipboard is unavailable.
+          }
+        }
+
+        const blob = new Blob([jsonText], {
           type: "application/json",
         });
         const url = URL.createObjectURL(blob);
-        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
         const link = document.createElement("a");
 
         link.href = url;
-        link.download = `field-log-${activeRouteKey}-${timestamp}.json`;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -4947,7 +7460,11 @@ function runRouteIntroAfterLoad() {
         }
 
         fieldLogEntries = [];
+        fieldLogSessionId = "";
+        fieldLogSessionStartedAt = 0;
+        fieldLogSessionSequence = 0;
         saveFieldLogEntries();
+        saveFieldLogSessionState();
         updateFieldLogMeta();
         showToast("Field log cleared");
       }
@@ -4962,6 +7479,13 @@ function runRouteIntroAfterLoad() {
           "mode-active-walk",
           nextMode === APP_MODE_ACTIVE_WALK,
         );
+
+        if (nextMode === APP_MODE_PRE_EVENT) {
+          isRouteCardMetaCompact = false;
+          document
+            .getElementById("route-card")
+            ?.classList.remove("route-card--compact-meta");
+        }
       }
 
       function bindMapEventsIfNeeded() {
@@ -5021,6 +7545,14 @@ function runRouteIntroAfterLoad() {
         map.on("rotateend", () => {
           updateCompassButton();
         });
+
+        map.on("mouseenter", "route-section-breaks", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        map.on("mouseleave", "route-section-breaks", () => {
+          map.getCanvas().style.cursor = "";
+        });
       }
 
       function startGeolocationTracking() {
@@ -5029,13 +7561,34 @@ function runRouteIntroAfterLoad() {
         }
 
         geolocationStarted = true;
+        hasRouteCompletionCelebrated = false;
         geolocationStartedAt = Date.now();
         setGpsConfidenceState(GPS_CONFIDENCE_LOST);
+        consecutiveLockableFixes = 0;
+        gpsRecoveryHoldUntil = 0;
+        finishProximityStreak = 0;
+        offRouteFarStreak = 0;
+        fieldLogLastSegmentNumber = null;
+        lastRawSnapPoint = null;
+        isViewSnappedToRoute = true;
+        lastDirectionHeading = null;
+        lastDirectionSamplePoint = null;
         lastStableDistanceToRoute = null;
         lastStableRouteProgress = 0;
         lastStableSegmentInfo = null;
         lastWarningUpdate = 0;
         lastWarningState = "";
+        lastJumpSamplePosition = null;
+        lastJumpSampleTime = 0;
+        lastAutoRouteJumpLoggedAt = 0;
+        clearForwardRouteHighlight();
+
+        logFieldEvent("walk-started", {
+          totalSegments: getTotalSegments(),
+          routeDistanceMeters: Number.isFinite(getRouteDistanceMeters())
+            ? Math.round(getRouteDistanceMeters())
+            : null,
+        });
 
         if (!("geolocation" in navigator)) {
           isWaitingForFirstLocation = false;
@@ -5061,11 +7614,26 @@ function runRouteIntroAfterLoad() {
               ? position.coords.accuracy
               : null;
             const gpsState = deriveGpsConfidenceState(lastLocationAccuracy);
+            const directionHeading = resolveDirectionHeading(position);
             setGpsConfidenceState(gpsState);
 
             if (isWaitingForFirstLocation) {
               isWaitingForFirstLocation = false;
               clearTimeout(firstLocationTimeout);
+            }
+
+            // Automatically flag physically impossible GPS jumps (every raw fix)
+            detectAutoRouteJump([lng, lat], gpsState);
+
+            // Reject garbage fixes (absurd accuracy, e.g. right after resuming):
+            // keep the last good marker position instead of teleporting, while
+            // still reflecting the lost state in the UI.
+            if (
+              Number.isFinite(lastLocationAccuracy) &&
+              lastLocationAccuracy > GPS_MAX_USABLE_ACCURACY_METERS
+            ) {
+              updateWarningState(lastStableDistanceToRoute, gpsState);
+              return;
             }
 
             cachePosition(lng, lat);
@@ -5074,10 +7642,11 @@ function runRouteIntroAfterLoad() {
               return;
             }
 
-            updateUserMarker(lng, lat, gpsState);
+            updateUserMarker(lng, lat, gpsState, directionHeading);
             updateMapView(lng, lat);
 
             const userPoint = [lng, lat];
+            updateForwardRouteHighlight(userPoint, gpsState);
 
             if (showHelp && isAppVisible) {
               updateHelpLocationPanel();
@@ -5090,6 +7659,8 @@ function runRouteIntroAfterLoad() {
             const segmentInfo = getCurrentSegment(userPoint);
 
             if (
+              !hasRouteCompletionCelebrated &&
+              gpsState === GPS_CONFIDENCE_LOCKED &&
               segmentInfo &&
               segmentInfo.currentSegmentNumber !== fieldLogLastSegmentNumber
             ) {
@@ -5143,15 +7714,22 @@ function runRouteIntroAfterLoad() {
               displayRouteProgress,
               fallbackSegmentInfo,
             );
+            updateNextStepPill(userPoint, displaySegmentInfo || fallbackSegmentInfo);
+            updateAheadSheet(userPoint, displaySegmentInfo || fallbackSegmentInfo);
 
             updateWarningState(displayDistanceToRoute, gpsState);
             notifyRouteState(displayDistanceToRoute, gpsState);
           },
           (error) => {
             const cachedPos = loadCachedPosition();
+            // A geolocation error means the next good fix should not be trusted
+            // instantly; ease back in via the recovery-hold window (item 2).
+            consecutiveLockableFixes = 0;
+            gpsRecoveryHoldUntil = Date.now() + GPS_RECOVERY_HOLD_MS;
             setGpsConfidenceState(
               cachedPos ? GPS_CONFIDENCE_CACHED : GPS_CONFIDENCE_LOST,
             );
+            clearForwardRouteHighlight();
 
             logFieldEvent("geolocation-error", {
               code: error && Number.isFinite(error.code) ? error.code : null,
@@ -5180,8 +7758,8 @@ function runRouteIntroAfterLoad() {
             }
           },
           {
-            enableHighAccuracy: false,
-            maximumAge: 30000,
+            enableHighAccuracy: true,
+            maximumAge: 5000,
             timeout: 30000,
           },
         );
@@ -5193,13 +7771,10 @@ function runRouteIntroAfterLoad() {
         }
 
         setAppMode(APP_MODE_ACTIVE_WALK);
-        if (!fieldLogSessionStartedAt) {
-          fieldLogSessionStartedAt = Date.now();
-          logFieldEvent("walk-start", {
-            routeName: getActiveRoute().fullName || getActiveRoute().name,
-          });
-          showFieldLogFirstRunIfNeeded();
-        }
+        hasRouteCompletionCelebrated = false;
+        beginFieldLogSessionForWalk();
+        logWalkStartIfNeeded();
+        showFieldLogFirstRunIfNeeded();
         await initializeMapIfNeeded();
 
         if (map) {
@@ -5296,14 +7871,6 @@ function runRouteIntroAfterLoad() {
 addRouteToMap(routeFeature);
 updateRouteSummaryDisplay();
 runRouteIntroAfterLoad();
-
-const routeSourceLabel = document.querySelector(
-  ".route-card__source",
-);
-
-            if (routeSourceLabel) {
-              routeSourceLabel.textContent = `Route source: ${getActiveRoute().sourceLabel}`;
-            }
           })
           .catch((error) => {
             console.error(error);
@@ -5341,19 +7908,119 @@ updateRouteSummaryDisplay();
       const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
       const compassButton = document.getElementById(COMPASS_BUTTON_ID);
       const compassLabel = document.getElementById(COMPASS_LABEL_ID);
+
+      function updateFollowButtonState() {
+        const button = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
+
+        if (!button) {
+          return;
+        }
+
+        button.classList.toggle("is-on", followMode);
+        button.classList.toggle("is-off", !followMode);
+        button.innerHTML = followMode ? FOLLOW_ON_ICON : FOLLOW_OFF_ICON;
+        button.setAttribute(
+          "aria-label",
+          followMode ? "Follow mode on" : "Follow mode off",
+        );
+        button.setAttribute(
+          "title",
+          followMode ? "Follow mode on" : "Follow mode off",
+        );
+      }
+
+      updateFollowButtonState();
+
+      const routeCardElement = document.getElementById("route-card");
+      let floatingButtonLayoutFrame = null;
+
+      function syncFloatingButtonOffset() {
+        const rootStyle = document.documentElement?.style;
+
+        if (!rootStyle || !routeCardElement) {
+          return;
+        }
+
+        if (document.body.classList.contains("mode-pre-event")) {
+          rootStyle.removeProperty("--floating-button-bottom-live");
+          return;
+        }
+
+        const routeCardRect = routeCardElement.getBoundingClientRect();
+        if (!routeCardRect || routeCardRect.height <= 0) {
+          rootStyle.removeProperty("--floating-button-bottom-live");
+          return;
+        }
+
+        const viewportHeight = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight;
+        const clearance = window.innerWidth <= 480 ? 18 : 16;
+        const liveOffset = Math.max(
+          0,
+          Math.ceil(viewportHeight - routeCardRect.top + clearance),
+        );
+
+        rootStyle.setProperty("--floating-button-bottom-live", `${liveOffset}px`);
+      }
+
+      function queueFloatingButtonOffsetSync() {
+        if (floatingButtonLayoutFrame !== null) {
+          cancelAnimationFrame(floatingButtonLayoutFrame);
+        }
+
+        floatingButtonLayoutFrame = requestAnimationFrame(() => {
+          floatingButtonLayoutFrame = null;
+          syncFloatingButtonOffset();
+        });
+      }
+
+      queueFloatingButtonOffsetSync();
+      window.addEventListener("resize", queueFloatingButtonOffsetSync);
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener(
+          "resize",
+          queueFloatingButtonOffsetSync,
+        );
+      }
+
+      if ("ResizeObserver" in window && routeCardElement) {
+        const routeCardResizeObserver = new ResizeObserver(() => {
+          queueFloatingButtonOffsetSync();
+        });
+
+        routeCardResizeObserver.observe(routeCardElement);
+      }
+
       document
         .getElementById(FOLLOW_TOGGLE_BUTTON_ID)
         .addEventListener("click", () => {
           followMode = !followMode;
 
-          followButton.style.opacity = followMode ? "1" : "0.5";
+          showToast(
+            followMode
+              ? "Follow on - map recenters as you move"
+              : "Follow off - map stays where you place it",
+          );
 
-          if (followMode && lastSnappedPosition) {
-            map.easeTo({
-              center: lastSnappedPosition,
-              zoom: 16,
-              duration: 600,
-            });
+          updateFollowButtonState();
+
+          if (followMode) {
+            const followRecenterTarget =
+              lastSnappedPosition || lastActualPosition;
+
+            if (followRecenterTarget) {
+              const activeRoute = getActiveRoute();
+              const liveFollowZoom = Number.isFinite(activeRoute.liveFollowZoom)
+                ? activeRoute.liveFollowZoom
+                : 16;
+              map.easeTo({
+                center: followRecenterTarget,
+                zoom: liveFollowZoom,
+                duration: 600,
+              });
+            }
           }
 
           if (
@@ -5381,11 +8048,22 @@ updateRouteSummaryDisplay();
 
       // Share button
       const shareBtn = document.getElementById("share-location-button");
+      const nextStepButton = document.getElementById("next-step-button");
+      const aheadSheetToggleButton = document.getElementById("ahead-sheet-toggle");
 
       if (shareBtn) {
         shareBtn.addEventListener("click", async () => {
           if (!lastActualPosition) {
             showToast("Location not available yet");
+            return;
+          }
+
+          const confirmShare = window.confirm(
+            "Share location with event team?",
+          );
+
+          if (!confirmShare) {
+            showToast("Location share cancelled");
             return;
           }
 
@@ -5411,6 +8089,35 @@ updateRouteSummaryDisplay();
         });
       }
 
+      if (nextStepButton) {
+        nextStepButton.addEventListener("click", () => {
+          if (lastAheadUserPoint || lastAheadSegmentInfo) {
+            updateAheadSheet(lastAheadUserPoint, lastAheadSegmentInfo);
+          }
+
+          setAheadSheet(!aheadSheetOpen);
+        });
+      }
+
+      if (aheadSheetToggleButton) {
+        aheadSheetToggleButton.addEventListener("click", () => {
+          setAheadSheetExpanded(!aheadSheetExpanded);
+        });
+      }
+
+      document.addEventListener("click", (event) => {
+        if (!aheadSheetOpen) {
+          return;
+        }
+
+        const anchor = document.querySelector(".route-card__next-step-anchor");
+        if (anchor && anchor.contains(event.target)) {
+          return;
+        }
+
+        setAheadSheet(false);
+      });
+
       const fieldLogButton = document.getElementById("field-log-button");
       const fieldLogCloseButton = document.getElementById("field-log-close-button");
       const fieldLogSaveButton = document.getElementById("field-log-save-button");
@@ -5420,6 +8127,7 @@ updateRouteSummaryDisplay();
       const fieldIssueButtons = document.querySelectorAll("[data-field-issue]");
 
       loadFieldLogEntries();
+      loadFieldLogSessionState();
       updateFieldLogMeta();
 
       if (fieldLogButton) {
@@ -5497,7 +8205,9 @@ updateRouteSummaryDisplay();
       applyRouteAwareMarkerControls();
 
       // Help button
-      const helpButton = document.getElementById("help-button");
+      const helpButton =
+        document.getElementById("need-help-button") ||
+        document.getElementById("help-button");
       const helpPanel = document.getElementById("help-panel");
       const helpBackdrop = document.getElementById("help-backdrop");
       const helpCloseButton = document.getElementById("help-close-button");
@@ -5542,6 +8252,10 @@ updateRouteSummaryDisplay();
       function setHelpPanel(open) {
         showHelp = open;
 
+        if (showHelp) {
+          setAheadSheet(false);
+        }
+
         helpButton.classList.toggle("on", showHelp);
         helpPanel.classList.toggle("open", showHelp);
         helpBackdrop.classList.toggle("open", showHelp);
@@ -5551,9 +8265,11 @@ updateRouteSummaryDisplay();
         }
       }
 
-      helpButton.addEventListener("click", () => {
-        setHelpPanel(!showHelp);
-      });
+      if (helpButton) {
+        helpButton.addEventListener("click", () => {
+          setHelpPanel(!showHelp);
+        });
+      }
 
       helpCloseButton.addEventListener("click", () => {
         setHelpPanel(false);
@@ -5612,6 +8328,8 @@ updateRouteSummaryDisplay();
               landing.style.display = "none";
             }
 
+            queueFloatingButtonOffsetSync();
+
             if (map) {
               setTimeout(() => {
                 map.resize();
@@ -5652,10 +8370,14 @@ updateRouteSummaryDisplay();
       function setInitialViewToRouteStart() {
         if (!map || !routeCoordinates.length) return;
 
+        const activeRoute = getActiveRoute();
+        const routePreviewZoom = Number.isFinite(activeRoute.routePreviewZoom)
+          ? activeRoute.routePreviewZoom
+          : 16.5;
         const startPoint = routeCoordinates[0];
         map.flyTo({
           center: startPoint,
-          zoom: 16.5,
+          zoom: routePreviewZoom,
           speed: 1.2,
           duration: 1500,
         });
@@ -5668,9 +8390,13 @@ updateRouteSummaryDisplay();
 
         const cachedPos = loadCachedPosition();
         if (cachedPos) {
+          const activeRoute = getActiveRoute();
+          const liveFollowZoom = Number.isFinite(activeRoute.liveFollowZoom)
+            ? activeRoute.liveFollowZoom
+            : 16;
           map.easeTo({
             center: [cachedPos.lng, cachedPos.lat],
-            zoom: 16,
+            zoom: liveFollowZoom,
             duration: 800,
           });
           lastViewCenter = [cachedPos.lng, cachedPos.lat];
@@ -5774,7 +8500,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-06-2";
+          const SERVICE_WORKER_VERSION = "2026-07-20-1";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
