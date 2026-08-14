@@ -3552,6 +3552,20 @@ dogwalk: {
 
       const MAPBOX_CSS_URL = "https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css";
       const MAPBOX_JS_URL = "https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js";
+      const ONLINE_MAP_STYLE = "mapbox://styles/mapbox/dark-v11";
+      const OFFLINE_MAP_STYLE = {
+        version: 8,
+        sources: {},
+        layers: [
+          {
+            id: "offline-background",
+            type: "background",
+            paint: {
+              "background-color": "#0f172a",
+            },
+          },
+        ],
+      };
 
       const APP_MODE_PRE_EVENT = "pre-event";
       const APP_MODE_ACTIVE_WALK = "active-walk";
@@ -3972,7 +3986,7 @@ localStorage.setItem(
 
           map = new mapboxgl.Map({
             container: "map",
-            style: "mapbox://styles/mapbox/dark-v11",
+            style: navigator.onLine ? ONLINE_MAP_STYLE : OFFLINE_MAP_STYLE,
             center: [-2, 54],
             zoom: 4,
             pitch: 0,
@@ -7065,28 +7079,30 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             },
           });
 
-          map.addLayer({
-            id: "route-section-break-labels",
-            type: "symbol",
-            source: "route-section-breaks",
-            layout: {
-              "text-field": [
-                "concat",
-                "S",
-                ["to-string", ["get", "segmentNumber"]],
-              ],
-              "text-size": 11,
-              "text-offset": [0, -1.25],
-              "text-anchor": "bottom",
-              "text-allow-overlap": true,
-            },
-            paint: {
-              "text-color": "#f3e8ff",
-              "text-halo-color": "#0b1223",
-              "text-halo-width": 1.2,
-              "text-opacity": 0.92,
-            },
-          });
+          if (map.getStyle()?.glyphs) {
+            map.addLayer({
+              id: "route-section-break-labels",
+              type: "symbol",
+              source: "route-section-breaks",
+              layout: {
+                "text-field": [
+                  "concat",
+                  "S",
+                  ["to-string", ["get", "segmentNumber"]],
+                ],
+                "text-size": 11,
+                "text-offset": [0, -1.25],
+                "text-anchor": "bottom",
+                "text-allow-overlap": true,
+              },
+              paint: {
+                "text-color": "#f3e8ff",
+                "text-halo-color": "#0b1223",
+                "text-halo-width": 1.2,
+                "text-opacity": 0.92,
+              },
+            });
+          }
 
           if (enableForwardRouteHighlight) {
             map.addSource("route-forward", {
@@ -8802,7 +8818,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-08-14-3";
+          const SERVICE_WORKER_VERSION = "2026-08-14-5";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
