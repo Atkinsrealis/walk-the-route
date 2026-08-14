@@ -2216,6 +2216,12 @@
         transform: scale(0.97);
       }
 
+      body:not(.field-log-enabled) .field-log-button,
+      body:not(.field-log-enabled) .field-log-panel,
+      body:not(.field-log-enabled) .field-log-first-run {
+        display: none;
+      }
+
       .field-log-panel {
         position: fixed;
         left: 12px;
@@ -2794,16 +2800,6 @@
           <p id="landing-distance-time-value">Route distance calculating…</p>
         </div>
 
-        <div class="route-test-switcher" aria-label="Test route switcher">
-          <a href="index.html" id="route-link-heathrow">Heathrow</a>
-          <a href="index.html?route=bledlow" id="route-link-bledlow"
-            >Bledlow test</a
-          >
-          <a href="index.html?route=dogwalk" id="route-link-dogwalk"
-            >Dog walk</a
-          >
-        </div>
-
         <div class="landing-share-hint" aria-label="Share button explanation">
           <svg
             class="landing-share-hint__icon"
@@ -3361,6 +3357,13 @@ dogwalk: {
         forwardHighlightParam === "1" ||
         forwardHighlightParam === "true" ||
         forwardHighlightParam === "yes";
+      const fieldLogParam = (routeParams.get("fieldLog") || "").toLowerCase();
+      const fieldLogEnabled =
+        fieldLogParam === "1" ||
+        fieldLogParam === "true" ||
+        fieldLogParam === "yes";
+
+      document.body.classList.toggle("field-log-enabled", fieldLogEnabled);
 
       let activeRouteKey = ROUTES[requestedRouteKey]
         ? requestedRouteKey
@@ -3456,6 +3459,7 @@ dogwalk: {
         activeRouteKey,
         routeGeoJsonUrl,
         activeRoute: getActiveRoute(),
+        fieldLogEnabled,
       };
 
       console.log("Route debug:", window.routeDebug);
@@ -7059,6 +7063,10 @@ function runRouteIntroAfterLoad() {
       }
 
       function beginFieldLogSessionForWalk() {
+        if (!fieldLogEnabled) {
+          return "";
+        }
+
         if (!fieldLogSessionId) {
           return startNewFieldLogSession();
         }
@@ -7096,6 +7104,10 @@ function runRouteIntroAfterLoad() {
       }
 
       function logWalkStartIfNeeded() {
+        if (!fieldLogEnabled) {
+          return;
+        }
+
         ensureFieldLogSession();
 
         if (hasWalkStartForCurrentSession()) {
@@ -7129,6 +7141,10 @@ function runRouteIntroAfterLoad() {
       }
 
       function logFieldEvent(type, detail = {}) {
+        if (!fieldLogEnabled) {
+          return;
+        }
+
         const now = Date.now();
         const sessionId =
           appMode === APP_MODE_ACTIVE_WALK ? ensureFieldLogSession() : fieldLogSessionId;
@@ -7320,6 +7336,10 @@ function runRouteIntroAfterLoad() {
       }
 
       function showFieldLogFirstRunIfNeeded() {
+        if (!fieldLogEnabled) {
+          return;
+        }
+
         const firstRun = document.getElementById("field-log-first-run");
         if (!firstRun) {
           return;
