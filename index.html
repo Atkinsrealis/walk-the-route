@@ -3667,6 +3667,7 @@ localStorage.setItem(
       const ROUTE_STATE_REPEAT_COOLDOWN_MS = 180000;
       const POINT_ALERT_RESET_AHEAD_METERS = 220;
       const POINT_ALERT_RESET_BEHIND_METERS = -80;
+      const CO_LOCATED_ROUTE_ITEM_METERS = 50;
 
       const ROUTE_VIEW_ICON = `
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -5437,6 +5438,13 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
         }
 
         const hazardAhead = getNextHazardAhead(userPoint);
+        const restAhead = getNextRestAhead(userPoint);
+        const hasCoLocatedRest =
+          hazardAhead &&
+          restAhead &&
+          Math.abs(hazardAhead.distanceAhead - restAhead.distanceAhead) <=
+            CO_LOCATED_ROUTE_ITEM_METERS;
+
         if (hazardAhead) {
           const hazardThresholds = [400, 150];
 
@@ -5444,23 +5452,29 @@ function buildCoveredRemainingText(progressPercent, options = {}) {
             const alertKey = `hazard-${hazardAhead.id}-${threshold}`;
             if (shouldFirePointAlert(alertKey, hazardAhead.distanceAhead, threshold)) {
               const meters = Math.round(hazardAhead.distanceAhead);
-              showOperationalToast(`Hazard ahead: ${hazardAhead.type} in ${meters}m`, {
+              const message = hasCoLocatedRest
+                ? `Hazard ahead: ${hazardAhead.type} in ${meters}m. Refreshments: ${restAhead.label}.`
+                : `Hazard ahead: ${hazardAhead.type} in ${meters}m`;
+              showOperationalToast(message, {
                 bypassCooldown: threshold === 150,
               });
             }
           });
         }
 
-        const restAhead = getNextRestAhead(userPoint);
-        if (restAhead) {
-          const hasWater = /water/i.test(restAhead.label || "");
+        if (restAhead && !hasCoLocatedRest) {
+          const hasRefreshments = /drinks|water/i.test(
+            `${restAhead.label || ""} ${restAhead.details || ""}`,
+          );
           const restThresholds = [300, 100];
 
           restThresholds.forEach((threshold) => {
             const alertKey = `${restAhead.id}-${threshold}`;
             if (shouldFirePointAlert(alertKey, restAhead.distanceAhead, threshold)) {
               const meters = Math.round(restAhead.distanceAhead);
-              const prefix = hasWater ? "Water/rest ahead" : "Rest area ahead";
+              const prefix = hasRefreshments
+                ? "Refreshments ahead"
+                : "Rest area ahead";
               showOperationalToast(`${prefix}: ${restAhead.label} in ${meters}m`);
             }
           });
