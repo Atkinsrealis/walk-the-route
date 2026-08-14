@@ -89,8 +89,9 @@ the current codebase as a de-risked spec of exactly how the product should work.
 
 ## 📌 Handy reminders
 
-- **Before a real test walk:** open the field log (**Log issues**) → tap
-  **Clear local log** → then **Start Walk**, so the export is clean.
+- **Before a real test walk:** use `index.html?route=bledlow&fieldLog=1`
+  (or `index.html?fieldLog=1` for Heathrow), then tap **Clear local log** →
+  **Start Walk**, so the export is clean.
 - **After the walk:** **Share / Export** to save the JSON. Don't clear the log
   until you've confirmed the export saved.
 - **Service worker:** bump `SERVICE_WORKER_VERSION` (in `index.html`) and
