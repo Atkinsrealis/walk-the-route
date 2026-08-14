@@ -3257,7 +3257,7 @@
   name: "Heathrow",
   fullName: "Heathrow Perimeter",
   sourceLabel: "Heathrow perimeter",
-  geojsonUrl: "heathrow-perimeter-route.geojson",
+    geojsonUrl: "heathrow-perimeter-route confirmed v1.geojson",
   title: "Perimeter Walk",
   subtitle: "Infrastructure Charity Event",
     routePreviewZoom: 16.5,
@@ -7806,6 +7806,81 @@ function runRouteIntroAfterLoad() {
       }
 
 
+      function getRouteFeatureFromGeoJson(geojson) {
+        const features =
+          geojson && geojson.type === "FeatureCollection"
+            ? geojson.features
+            : [geojson];
+        const lineFeatures = (features || []).filter(
+          (feature) =>
+            feature &&
+            feature.geometry &&
+            feature.geometry.type === "LineString" &&
+            Array.isArray(feature.geometry.coordinates),
+        );
+
+        if (!lineFeatures.length) {
+          return null;
+        }
+
+        if (lineFeatures.length === 1) {
+          return lineFeatures[0];
+        }
+
+        const remainingFeatures = lineFeatures.slice(1);
+        const coordinates = [...lineFeatures[0].geometry.coordinates];
+
+        while (remainingFeatures.length) {
+          const routeEnd = coordinates[coordinates.length - 1];
+          let closestFeatureIndex = -1;
+          let reverseClosestFeature = false;
+          let closestDistance = Number.POSITIVE_INFINITY;
+
+          remainingFeatures.forEach((feature, index) => {
+            const featureCoordinates = feature.geometry.coordinates;
+            const startDistance = haversineDistanceMeters(
+              routeEnd,
+              featureCoordinates[0],
+            );
+            const endDistance = haversineDistanceMeters(
+              routeEnd,
+              featureCoordinates[featureCoordinates.length - 1],
+            );
+
+            if (startDistance < closestDistance) {
+              closestFeatureIndex = index;
+              reverseClosestFeature = false;
+              closestDistance = startDistance;
+            }
+
+            if (endDistance < closestDistance) {
+              closestFeatureIndex = index;
+              reverseClosestFeature = true;
+              closestDistance = endDistance;
+            }
+          });
+
+          if (closestFeatureIndex < 0 || closestDistance > 40) {
+            throw new Error("Route LineString features are not contiguous.");
+          }
+
+          const [nextFeature] = remainingFeatures.splice(closestFeatureIndex, 1);
+          const nextCoordinates = reverseClosestFeature
+            ? [...nextFeature.geometry.coordinates].reverse()
+            : nextFeature.geometry.coordinates;
+          coordinates.push(...nextCoordinates);
+        }
+
+        return {
+          type: "Feature",
+          properties: lineFeatures[0].properties || {},
+          geometry: {
+            type: "LineString",
+            coordinates,
+          },
+        };
+      }
+
       function loadRouteGeoJson() {
         if (window.location.protocol === "file:") {
           cachedRouteFeature = buildRouteFeatureFromCoordinates(
@@ -7830,31 +7905,7 @@ function runRouteIntroAfterLoad() {
             return response.json();
           })
           .then((geojson) => {
-            let routeFeature = geojson;
-
-            if (
-              geojson &&
-              geojson.type === "FeatureCollection" &&
-              Array.isArray(geojson.features)
-            ) {
-              routeFeature =
-                geojson.features.find(
-                  (feature) =>
-                    feature &&
-                    feature.geometry &&
-                    feature.geometry.type === "LineString",
-                ) || geojson.features[0];
-            }
-
-            if (routeFeature && routeFeature.type === "FeatureCollection") {
-              routeFeature =
-                routeFeature.features.find(
-                  (feature) =>
-                    feature &&
-                    feature.geometry &&
-                    feature.geometry.type === "LineString",
-                ) || routeFeature.features[0];
-            }
+            const routeFeature = getRouteFeatureFromGeoJson(geojson);
 
             const geometry = routeFeature && routeFeature.geometry;
 
@@ -8500,7 +8551,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-07-20-1";
+          const SERVICE_WORKER_VERSION = "2026-08-14-1";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
