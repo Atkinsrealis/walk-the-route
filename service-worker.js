@@ -1,4 +1,4 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v55";
+const CACHE_NAME = "heathrow-perimeter-walk-v56";
 const MAPBOX_CACHE_NAME = "heathrow-mapbox-v1";
 const NETWORK_FIRST_PATHS = new Set([
   "/",
@@ -16,6 +16,7 @@ const APP_ASSETS = [
   "/heathrow-perimeter-route%20confirmed%20v1.geojson",
   "/dog-walk/dog-walk-route.geojson",
   "/route-surface-summary.json",
+  "/assets/heathrow-logo-purple.svg",
   "/assets/heathrow-logo-white.svg",
   "/Icons/icon-192.png",
   "/Icons/icon-512.png",
@@ -49,7 +50,10 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
+          .filter(
+            (cacheName) =>
+              cacheName !== CACHE_NAME && cacheName !== MAPBOX_CACHE_NAME,
+          )
           .map((cacheName) => caches.delete(cacheName))
       );
     })
