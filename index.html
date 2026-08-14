@@ -4027,6 +4027,7 @@ localStorage.setItem(
       let hazardMarkers = [];
       let showRest = true;
       let restMarkers = [];
+      let showAllRouteMarkers = false;
       let hasHeathrowMarkers = false;
       let showHelp = false;
       let surfaceTooltipMarker = null;
@@ -4388,21 +4389,31 @@ localStorage.setItem(
           return;
         }
 
-        const declutterMarkers =
+        if (showAllRouteMarkers) {
+          hazardMarkers.forEach((marker) => {
+            marker.getElement().style.display = showHazards ? "block" : "none";
+          });
+          restMarkers.forEach((marker) => {
+            marker.getElement().style.display = showRest ? "block" : "none";
+          });
+          return;
+        }
+
+        const showFocusedMarkers =
           map &&
           Array.isArray(lastActualPosition) &&
           map.getZoom() >= MARKER_DECLUTTER_ZOOM;
-        const nextHazard = declutterMarkers
+        const nextHazard = showFocusedMarkers
           ? getNextHazardAhead(lastActualPosition)
           : null;
-        const nextRest = declutterMarkers
+        const nextRest = showFocusedMarkers
           ? getNextRestAhead(lastActualPosition)
           : null;
 
         hazardMarkers.forEach((marker, index) => {
           const isNextHazard = nextHazard && hazards[index]?.id === nextHazard.id;
           marker.getElement().style.display =
-            showHazards && (!declutterMarkers || isNextHazard) ? "block" : "none";
+            showHazards && showFocusedMarkers && isNextHazard ? "block" : "none";
         });
 
         restMarkers.forEach((marker, index) => {
@@ -4411,7 +4422,7 @@ localStorage.setItem(
             restStops[index]?.lng === nextRest.lng &&
             restStops[index]?.lat === nextRest.lat;
           marker.getElement().style.display =
-            showRest && (!declutterMarkers || isNextRest) ? "block" : "none";
+            showRest && showFocusedMarkers && isNextRest ? "block" : "none";
         });
       }
 
@@ -4751,6 +4762,8 @@ localStorage.setItem(
           return;
         }
 
+        showAllRouteMarkers = false;
+        updateRouteMarkerVisibility();
         followMode = true;
 
         const followButton = document.getElementById(FOLLOW_TOGGLE_BUTTON_ID);
@@ -8187,6 +8200,8 @@ updateRouteSummaryDisplay();
         .getElementById(ROUTE_CENTER_BUTTON_ID)
         .addEventListener("click", () => {
           if (routeCenterMode === "route") {
+            showAllRouteMarkers = true;
+            updateRouteMarkerVisibility();
             centerMapOnRoute();
             routeCenterMode = "position";
           } else {
