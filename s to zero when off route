@@ -1,0 +1,23 @@
+[1mdiff --git a/index.html b/index.html[m
+[1mindex 53085de..b622e90 100644[m
+[1m--- a/index.html[m
+[1m+++ b/index.html[m
+[36m@@ -6153,14 +6153,14 @@[m [mfunction buildCoveredRemainingText(progressPercent, options = {}) {[m
+         const offRouteConfirmed = offRouteFarStreak >= OFF_ROUTE_CONFIRM_FIXES;[m
+         const offRouteUiActive = normalizedDistance > ROUTE_ALERT_DISTANCE;[m
+ [m
+[31m-        if (routeCard) {[m
+[31m-          routeCard.style.setProperty("--route-progress", `${safeProgress}%`);[m
+[31m-        }[m
+[31m-[m
+         const cardProgress = offRouteUiActive[m
+           ? 0[m
+           : safeProgress;[m
+ [m
+[32m+[m[32m        if (routeCard) {[m
+[32m+[m[32m          routeCard.style.setProperty("--route-progress", `${cardProgress}%`);[m
+[32m+[m[32m        }[m
+[32m+[m
+         if (routeProgressRingValue) {[m
+           routeProgressRingValue.textContent = `${Math.round(cardProgress)}%`;[m
+         }[m

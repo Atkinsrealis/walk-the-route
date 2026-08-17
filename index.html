@@ -142,7 +142,7 @@
         margin: 0 auto;
         position: relative;
         z-index: 1;
-        padding-bottom: 120px;
+        padding-bottom: 230px;
       }
 
       .landing-screen h1 {
@@ -178,6 +178,40 @@
         line-height: 1.62;
       }
 
+      .landing-event-image {
+        margin: 18px 0 0;
+        aspect-ratio: 16 / 9;
+        min-height: 150px;
+        display: grid;
+        place-items: center;
+        border: 1px dashed rgba(90, 47, 145, 0.34);
+        border-radius: 8px;
+        background:
+          linear-gradient(rgba(90, 47, 145, 0.04), rgba(90, 47, 145, 0.1)),
+          repeating-linear-gradient(
+            135deg,
+            transparent 0,
+            transparent 12px,
+            rgba(90, 47, 145, 0.035) 12px,
+            rgba(90, 47, 145, 0.035) 24px
+          );
+        color: #6a4ca1;
+      }
+
+      .landing-event-image svg {
+        width: 30px;
+        height: 30px;
+        display: block;
+      }
+
+      .landing-event-image span {
+        display: block;
+        margin-top: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+      }
+
       .landing-screen__meta {
         margin-top: 18px;
         display: grid;
@@ -194,59 +228,6 @@
         background: rgba(243, 241, 245, 0.96);
         color: #6a4ca1;
         font-size: 13px;
-      }
-
-      .landing-marker-guide {
-        margin-top: 14px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        border: 1px solid rgba(126, 108, 161, 0.12);
-        background: rgba(243, 241, 245, 0.9);
-      }
-
-      .landing-marker-guide__title {
-        margin: 0;
-        color: #5e5769;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-      }
-
-      .landing-marker-guide__items {
-        margin-top: 8px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px 10px;
-      }
-
-      .landing-marker-guide__item {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        color: #5e5769;
-        font-size: 11px;
-        font-weight: 600;
-      }
-
-      .landing-marker-guide__dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        border: 2px solid #fff;
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
-      }
-
-      .landing-marker-guide__dot--live {
-        background: #00aeef;
-      }
-
-      .landing-marker-guide__dot--weak {
-        background: #f5b920;
-      }
-
-      .landing-marker-guide__dot--cached {
-        background: #94a3b8;
       }
 
       .landing-share-hint {
@@ -294,6 +275,37 @@
         backdrop-filter: blur(10px);
         box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.06);
         z-index: 100;
+      }
+
+      .landing-confirmation {
+        width: min(100%, 520px);
+        margin: 0 auto 12px;
+      }
+
+      .landing-confirmation__label {
+        display: grid;
+        grid-template-columns: 20px 1fr;
+        gap: 9px;
+        align-items: start;
+        color: #312e35;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.4;
+        cursor: pointer;
+      }
+
+      .landing-confirmation__label input {
+        width: 18px;
+        height: 18px;
+        margin: 0;
+        accent-color: #5a2f91;
+      }
+
+      .landing-confirmation__disclaimer {
+        margin: 7px 0 0 29px !important;
+        color: #69636d;
+        font-size: 10px;
+        line-height: 1.35;
       }
 
       .landing-button {
@@ -361,6 +373,17 @@
 
       .landing-button:active {
         transform: scale(0.99);
+      }
+
+      .landing-button:disabled {
+        color: rgba(17, 17, 17, 0.48);
+        background: #d8d6d2;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+
+      .landing-button:disabled::after {
+        display: none;
       }
 
       .landing-footer-text {
@@ -2832,6 +2855,22 @@
           </p>
         </div>
 
+        <div
+          class="landing-event-image"
+          role="img"
+          aria-label="Placeholder for the event team image"
+        >
+          <div>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M4 5.5h16v13H4v-13Zm2 2v7.7l3.8-3.8 2.6 2.6 1.8-1.8 3.8 3.8V7.5H6Zm9 3.2a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>Event image placeholder</span>
+          </div>
+        </div>
+
         <div class="landing-screen__meta">
           <p id="landing-location-value">Loading checkpoint location...</p>
           <p id="landing-distance-time-value">Route distance calculating…</p>
@@ -2856,27 +2895,22 @@
           </div>
         </div>
 
-        <div class="landing-marker-guide" aria-label="Marker legend">
-          <p class="landing-marker-guide__title">Marker guide</p>
-
-          <div class="landing-marker-guide__items">
-            <span class="landing-marker-guide__item">
-              <span class="landing-marker-guide__dot landing-marker-guide__dot--live"></span>
-              Live GPS
-            </span>
-            <span class="landing-marker-guide__item">
-              <span class="landing-marker-guide__dot landing-marker-guide__dot--weak"></span>
-              GPS weak
-            </span>
-            <span class="landing-marker-guide__item">
-              <span class="landing-marker-guide__dot landing-marker-guide__dot--cached"></span>
-              Cached
-            </span>
-          </div>
-        </div>
-
         <div class="landing-footer">
-          <button id="start-walk-button" class="landing-button">
+          <div class="landing-confirmation">
+            <label class="landing-confirmation__label" for="safety-confirmation">
+              <input id="safety-confirmation" type="checkbox" />
+              <span>
+                I confirm that I have read and understood the RAMS and attended
+                the morning briefing.
+              </span>
+            </label>
+            <p class="landing-confirmation__disclaimer">
+              This app supports route guidance and does not replace the RAMS,
+              briefing, or instructions from event staff.
+            </p>
+          </div>
+
+          <button id="start-walk-button" class="landing-button" disabled>
             Start Walk
           </button>
 
@@ -3299,7 +3333,7 @@
     landingLead:
       "Participants will set off in small groups, following a designated landside route around the airport perimeter.",
     landingCopyMiddle:
-      "The full route is approximately 10 miles and is expected to take between 3 and 4 hours, with shorter options available for those who prefer a different level of participation.",
+      "The full route is approximately 16.6 km and is expected to take between 3 and 4 hours, with shorter options available for those who prefer a different level of participation.",
     landingCopyEnd:
       "This map provides guided navigation, highlighting key checkpoints and potential hazards to help you follow the route with confidence.",
     landingRouteLabel: "Heathrow Perimeter Walk",
@@ -8621,6 +8655,24 @@ updateRouteSummaryDisplay();
       setHelpPanel(false);
 
       const startWalkButton = document.getElementById(START_WALK_BUTTON_ID);
+      const safetyConfirmation = document.getElementById("safety-confirmation");
+
+      if (startWalkButton && safetyConfirmation) {
+        const updateStartWalkAvailability = () => {
+          startWalkButton.disabled = !safetyConfirmation.checked;
+          startWalkButton.setAttribute(
+            "aria-disabled",
+            startWalkButton.disabled ? "true" : "false",
+          );
+        };
+
+        safetyConfirmation.addEventListener(
+          "change",
+          updateStartWalkAvailability,
+        );
+        updateStartWalkAvailability();
+      }
+
       if (startWalkButton) {
         startWalkButton.addEventListener("click", () => {
           if (startWalkButton.disabled) {
@@ -8818,7 +8870,7 @@ updateRouteSummaryDisplay();
 
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
-          const SERVICE_WORKER_VERSION = "2026-08-14-5";
+          const SERVICE_WORKER_VERSION = "2026-08-17-1";
 
           navigator.serviceWorker
             .register(`service-worker.js?v=${SERVICE_WORKER_VERSION}`)
