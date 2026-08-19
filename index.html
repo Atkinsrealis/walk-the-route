@@ -178,39 +178,21 @@
         line-height: 1.62;
       }
 
-      .landing-event-image {
-        margin: 18px 0 0;
-        aspect-ratio: 16 / 9;
-        min-height: 150px;
-        display: grid;
-        place-items: center;
-        border: 1px dashed rgba(90, 47, 145, 0.34);
-        border-radius: 8px;
-        background:
-          linear-gradient(rgba(90, 47, 145, 0.04), rgba(90, 47, 145, 0.1)),
-          repeating-linear-gradient(
-            135deg,
-            transparent 0,
-            transparent 12px,
-            rgba(90, 47, 145, 0.035) 12px,
-            rgba(90, 47, 145, 0.035) 24px
-          );
-        color: #6a4ca1;
-      }
+.landing-event-image {
+  margin: 18px 0 0;
+  aspect-ratio: 16 / 9;
+  min-height: 150px;
+  overflow: hidden;
+  border-radius: 8px;
+}
 
-      .landing-event-image svg {
-        width: 30px;
-        height: 30px;
-        display: block;
-      }
+.landing-event-image img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
 
-      .landing-event-image span {
-        display: block;
-        margin-top: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        text-align: center;
-      }
 
       .landing-screen__meta {
         margin-top: 18px;
@@ -2855,21 +2837,16 @@
           </p>
         </div>
 
-        <div
-          class="landing-event-image"
-          role="img"
-          aria-label="Placeholder for the event team image"
-        >
-          <div>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M4 5.5h16v13H4v-13Zm2 2v7.7l3.8-3.8 2.6 2.6 1.8-1.8 3.8 3.8V7.5H6Zm9 3.2a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
-                fill="currentColor"
-              />
-            </svg>
-            <span>Event image placeholder</span>
-          </div>
-        </div>
+<div
+  class="landing-event-image"
+  role="img"
+  aria-label="Heathrow Charity Perimeter Walk participants"
+>
+  <img
+    src="assets/charity-perimeter-walk.jpg"
+    alt="Participants taking part in the Heathrow Charity Perimeter Walk"
+  />
+</div>
 
         <div class="landing-screen__meta">
           <p id="landing-location-value">Loading checkpoint location...</p>
