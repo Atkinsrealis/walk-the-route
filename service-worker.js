@@ -1,4 +1,4 @@
-const CACHE_NAME = "heathrow-perimeter-walk-v59";
+const CACHE_NAME = "heathrow-perimeter-walk-v60";
 const MAPBOX_CACHE_NAME = "heathrow-mapbox-v1";
 const NETWORK_FIRST_PATHS = new Set([
   "/",
@@ -16,6 +16,7 @@ const APP_ASSETS = [
   "/heathrow-perimeter-route%20confirmed%20v1.geojson",
   "/dog-walk/dog-walk-route.geojson",
   "/route-surface-summary.json",
+  "/assets/charity-perimeter-walk.jpg",
   "/assets/heathrow-logo-purple.svg",
   "/assets/heathrow-logo-white.svg",
   "/Icons/icon-192.png",
